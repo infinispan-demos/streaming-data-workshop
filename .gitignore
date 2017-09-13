@@ -1,0 +1,22 @@
+# ignore eclipse files
+.project
+.classpath
+.settings
+.scala_dependencies
+.externalToolBuilders
+.factorypath
+.cache-main
+.cache-tests
+
+# ignore IDEA files
+*.iml
+*.ipr
+*.iws
+.idea
+atlassian-ide-plugin.xml
+maven-ant-tasks.jar
+test-output
+classes
+
+# ignore Maven files
+target
