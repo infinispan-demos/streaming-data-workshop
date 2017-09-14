@@ -1,0 +1,6 @@
+{
+  "url": {
+    "train_position_snapshot": "/api/position",
+    "station_board": "/api/stationboard"
+  }
+}

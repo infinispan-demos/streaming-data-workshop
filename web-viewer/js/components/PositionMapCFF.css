@@ -1,0 +1,85 @@
+svg.train_overlay{
+
+}
+
+rect.masking{
+  fill:white;
+  opacity:0.75;
+}
+.positionText {
+  font-size: 10px;
+  color: red
+}
+
+.trainSymbol text {
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.trainSymbol {
+  fill: white;
+  fill-opacity: 0.95;
+}
+
+g.trainSymbol circle{
+  fill: blue;
+
+}
+.trainSymbol path.bearingArrow {
+  fill: blue;
+}
+
+
+.trainSymbol:hover {
+  fill: white;
+  fill-opacity: 0;
+  stroke: red
+}
+
+.trainDetails {
+  fill:dark gray;
+  opacity:0.85
+}
+
+.trainDetails text {
+  //font-size: 120%;
+}
+
+
+.trainMarker:hover .trainDetails {
+  fill:black;
+  opacity:1.0;
+  font-weight: bold;
+}
+
+
+.train-cat_re circle, .train-cat_r circle, .train-cat_s circle {
+}
+
+.train-cat_ice circle, .train-cat_ic circle, .train-cat_icn circle, .train-cat_ir circle, .train-cat_bat circle {
+}
+
+.train-cat_ter circle, .train-cat_tgv circle {
+}
+
+
+.stopped circle{
+  stroke: red;
+  stroke-width:3;
+
+}
+
+g.station-board-stats circle{
+  fill:green;
+  fill-opacity: 0.7;
+}
+g.station-board-stats:hover {
+  stroke:gray;
+  stroke-width: 3;
+}
+
+
+path.stationboard_delayed{
+  fill:orange;
+
+}

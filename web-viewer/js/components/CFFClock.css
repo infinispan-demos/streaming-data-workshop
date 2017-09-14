@@ -1,0 +1,39 @@
+g.ticks path {
+  stroke: black;
+}
+
+g.ticks g.minute path {
+  stroke-width: 7;
+}
+
+g.ticks g.hour path {
+  stroke-width: 17;
+}
+
+g.hands path {
+  stroke: black;
+}
+
+g.hands g.minutes path {
+  stroke-width: 1.5;
+  fill: black
+
+}
+
+g.hands g.hours path {
+  stroke-width: 1;
+  fill: black
+}
+
+g.hands g.seconds path {
+  stroke-width: 3.5;
+  stroke: red;
+}
+
+g.hands g.seconds circle {
+  fill: red;
+}
+
+g.hands circle.middle_nail{
+  fill:#cb7c7a;
+}

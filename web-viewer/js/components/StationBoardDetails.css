@@ -1,0 +1,31 @@
+div.station_board{
+  //border:black solid 1px;
+  margin:3px;
+  overflow-y: auto;
+}
+
+div.station_board td{
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+
+table.trainEvents{
+  border:white solid 1px;
+}
+div.stopName{
+  font-size: 170%;
+  font-weight: bold;
+  padding-left:2px;
+}
+
+tr.trainEvent{
+  background: blue;
+  color:white;
+  border-bottom: white solid 1px;
+}
+
+span.delayed{
+  color:orange;
+  font-weight:bolder;
+  font-size:105%
+}

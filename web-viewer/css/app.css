@@ -1,0 +1,36 @@
+body {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+}
+
+main {
+  flex: 1 0 auto;
+}
+
+div.helpButtonContainer{
+  position:relative;
+}
+
+.helpButton{
+  position:absolute;
+  top:0;
+  right:0;
+}
+
+.helpButton i{
+  color: dodgerblue;
+  height:1em;
+  border-radius: 0.5em;
+}
+
+header{
+  height:2.4em;
+  padding-top: 0.7em;
+  background: lightgray;
+}
+
+footer{
+  height:2.4em;
+  background: lightgray;
+}

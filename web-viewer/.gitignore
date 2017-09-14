@@ -1,0 +1,11 @@
+/pouch__all_dbs__
+/skimdb
+.DS_Store
+dist/**
+node_modules/
+.idea
+*.iml
+/_replicator
+/binarydb
+/_users
+static

@@ -1,0 +1,8 @@
+node_modules/
+/pouch__all_dbs__
+/skimdb
+/_replicator
+/binarydb
+/_users
+public/
+.idea
