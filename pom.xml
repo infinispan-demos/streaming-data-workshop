@@ -10,6 +10,7 @@
    <packaging>pom</packaging>
 
    <modules>
+      <module>station-boards-injector</module>
       <module>delayed-train-positions</module>
    </modules>
 
