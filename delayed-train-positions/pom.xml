@@ -28,7 +28,7 @@
    <dependencies>
       <dependency>
          <groupId>io.vertx</groupId>
-         <artifactId>vertx-core</artifactId>
+        <artifactId>vertx-rx-java</artifactId>
       </dependency>
       <dependency>
          <groupId>io.vertx</groupId>

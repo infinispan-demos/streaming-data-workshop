@@ -1,12 +1,11 @@
 {
   "frontend": {
     "url": {
-      "train_position_snapshot":"http://192.168.99.101/api/position",
+      "eventbus": "http://192.168.99.101/api/eventbus",
       "station_board":"http://192.168.99.101/api/stationboard"
     },
     "delay":{
-      "stationBoard":10000,
-      "trainPosition":3000
+      "stationBoard": 10000
     }
   },
   "ports": {
