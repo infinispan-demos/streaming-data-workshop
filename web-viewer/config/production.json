@@ -1,11 +1,12 @@
 {
   "frontend": {
     "url": {
-      "eventbus": "http://-/api/eventbus",
+      "train_position_snapshot":"http://-/api/position",
       "station_board":"http://-/api/stationboard"
     },
     "delay":{
-      "stationBoard": 10000
+      "stationBoard":10000,
+      "trainPosition":3000
     }
   },
   "ports": {

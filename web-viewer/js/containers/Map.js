@@ -1,15 +1,18 @@
 import React, {Component} from 'react';
+import {Provider} from 'react-redux';
 import Dimensions from 'react-dimensions';
+import ReactDOM  from 'react-dom';
 import d3 from 'd3';
 import http from 'http';
 import configureStore from '../store/configureStore';
 import Home from '../components/Home';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 
 import frontendConfig from '../config/FrontendConfig';
-import ActionTypes from '../constants/ActionTypes';
+import  ActionTypes from '../constants/ActionTypes';
 import matStyles from 'materialize-css/bin/materialize.css';
 
-import EventBus from 'vertx3-eventbus-client';
 
 const store = configureStore();
 
@@ -25,20 +28,23 @@ const store = configureStore();
  */
 frontendConfig.get().then(function (config) {
 
-  const eventBus = new EventBus(config.url.eventbus);
-  eventBus.onopen = function () {
-    eventBus.registerHandler('trains.positions', function (error, message) {
-      if (error === null) {
-        console.log(message.body);
-        store.dispatch({
-          type: ActionTypes.TRAIN_POSITION_RECEIVED,
-          tsv: message.body,
-          timestamp: new Date().getTime()
-        });
-      } else {
-        console.error(error, 'trains.positions');
-      }
-    });
+  const fGetTrainPosition = function () {
+    http.get(config.url.train_position_snapshot, function (res) {
+        var tsv = '';
+        res.on('data', function (data) {
+            tsv += data;
+          })
+          .on('end', function () {
+            store.dispatch({
+              type: ActionTypes.TRAIN_POSITION_RECEIVED,
+              tsv: tsv,
+              timestamp: new Date().getTime()
+            })
+          });
+      })
+      .on('error', function (err) {
+        console.error(err, config.url.train_position_snapshot);
+      });
   };
 
   const fGetStationBoardStats = function () {
@@ -60,8 +66,10 @@ frontendConfig.get().then(function (config) {
       });
   };
 
+  fGetTrainPosition();
   fGetStationBoardStats();
 
+  setInterval(fGetTrainPosition, config.delay.trainPosition);
   setInterval(fGetStationBoardStats, config.delay.stationBoard);
 })
 ;
