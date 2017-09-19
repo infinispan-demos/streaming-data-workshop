@@ -15,6 +15,10 @@
     ... make changes
     ./redeploy.sh
 
+## Testing the data grid
+
+After calling either of `datagrid/deploy.sh` or `datagrid/redeploy.sh`, call `datagrid/test.sh` to quickly test that the data grid responds. 
+
 
 # Train position display
 

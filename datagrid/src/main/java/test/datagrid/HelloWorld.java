@@ -7,6 +7,13 @@ import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.RemoteCacheManager;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.net.SocketAddress;
+import java.util.Set;
 
 public class HelloWorld extends AbstractVerticle {
 
@@ -39,12 +46,38 @@ public class HelloWorld extends AbstractVerticle {
          name = "World";
       }
 
-      JsonObject response = new JsonObject()
-         .put("content", String.format(template, name));
+      JsonObject response;
+      RemoteCacheManager client = null;
+      try {
+         client = new RemoteCacheManager();
+         RemoteCache<String, String> cache = client.getCache("default");
+         String content = String.format(template, name);
+
+         String prev = cache.put(name, content);
+         String value = cache.get(name);
+
+         Set<SocketAddress> topology =
+            cache.getCacheTopologyInfo().getSegmentsPerServer().keySet();
+
+         response = new JsonObject()
+            .put("put", prev == null ? "null" : prev)
+            .put("get", value == null ? "null" : value)
+            .put("topology", topology.toString());
+      } catch (Exception e) {
+         response = new JsonObject().put("error", printStackTrace(e));
+      } finally {
+         if (client != null) client.stop();
+      }
 
       rc.response()
          .putHeader(CONTENT_TYPE, "application/json; charset=utf-8")
          .end(response.encodePrettily());
+   }
+
+   private static String printStackTrace(Exception e) {
+      StringWriter errors = new StringWriter();
+      e.printStackTrace(new PrintWriter(errors));
+      return errors.toString();
    }
 
 }
