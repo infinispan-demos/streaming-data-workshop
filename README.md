@@ -1,6 +1,20 @@
 # Requirements
 
 * Install NVM
+* Install `oc`
+  * Requires OpenShift Client 3.6.
+* Install `kubectl`
+  * Requires Kubernetes 1.6
+
+
+# Running data grid 
+
+    ./start-openshift.sh
+    cd datagrid
+    ./deploy.sh
+    ... make changes
+    ./redeploy.sh
+
 
 # Train position display
 
