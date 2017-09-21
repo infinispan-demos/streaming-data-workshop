@@ -33,6 +33,7 @@
 
     <vertx.version>3.4.1</vertx.version>
     <infinispan.version>9.0.3.Final</infinispan.version>
+    <vertx-maven-plugin.version>1.0.6</vertx-maven-plugin.version>
   </properties>
 
   <modules>

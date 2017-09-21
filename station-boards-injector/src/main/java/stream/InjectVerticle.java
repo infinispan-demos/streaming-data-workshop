@@ -21,6 +21,8 @@ import datamodel.Stop;
 import datamodel.Train;
 import io.vertx.rxjava.core.AbstractVerticle;
 import io.vertx.rxjava.core.Vertx;
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.RemoteCacheManager;
 
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Calendar;
@@ -40,6 +42,9 @@ public class InjectVerticle extends AbstractVerticle {
   static Calendar calendar = null;
   static String lastDate = "?";
 
+  RemoteCacheManager client;
+  RemoteCache<String, Stop> stopsCache;
+
   public static void main(String[] args) {
     Vertx vertx = Vertx.vertx();
     vertx.deployVerticle(InjectVerticle.class.getName());
@@ -47,6 +52,9 @@ public class InjectVerticle extends AbstractVerticle {
 
   @Override
   public void start() throws Exception {
+    client = new RemoteCacheManager();
+    stopsCache = client.getCache("default");
+
     int batchSize = 100;
     Util.rxReadGunzippedTextResource("station-boards-dump-3_weeks.tsv.gz")
       .skip(1) // header
@@ -56,7 +64,19 @@ public class InjectVerticle extends AbstractVerticle {
         Map<String, Stop> map = new HashMap<>(batchSize);
         entries.forEach(entry -> map.put(entry.getKey(), entry.getValue()));
         return map;
-      }).subscribe(System.out::println);
+      }).subscribe(batch -> {
+        System.out.printf("Batch(%d):%n", batch.size());
+        stopsCache.putAllAsync(batch);
+    });
+  }
+
+  @Override
+  public void stop() throws Exception {
+    if (stopsCache != null)
+      stopsCache.clear();;
+
+    if (client != null)
+      client.stop();
   }
 
   private Entry<String, Stop> toEntry(String line) {

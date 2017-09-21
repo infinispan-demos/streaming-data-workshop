@@ -63,7 +63,7 @@ public class Train implements Serializable {
 
   @Override
   public String toString() {
-    return "TrainAnalytics{" +
+    return "Train{" +
       "name='" + getName() + '\'' +
       ", to='" + getTo() + '\'' +
       ", cat='" + getCat() + '\'' +

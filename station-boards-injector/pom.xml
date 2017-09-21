@@ -29,6 +29,10 @@
   <artifactId>station-boards-injector</artifactId>
   <version>1.0-SNAPSHOT</version>
 
+  <properties>
+    <vertx.verticle>stream.InjectVerticle</vertx.verticle>
+  </properties>
+
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -68,5 +72,26 @@
     </dependency>
   </dependencies>
 
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>io.fabric8</groupId>
+        <artifactId>vertx-maven-plugin</artifactId>
+        <version>${vertx-maven-plugin.version}</version>
+        <executions>
+          <execution>
+            <id>vmp</id>
+            <goals>
+              <goal>initialize</goal>
+              <goal>package</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <redeploy>true</redeploy>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 
 </project>

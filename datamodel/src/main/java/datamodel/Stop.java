@@ -80,7 +80,7 @@ public class Stop implements Serializable {
 
   @Override
   public String toString() {
-    return "StationBoardEntryAnalytics{" +
+    return "Stop{" +
       "train=" + train +
       ", departureTs=" + departureTs +
       ", platform='" + getPlatform() + '\'' +
