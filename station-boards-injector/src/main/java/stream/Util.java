@@ -16,9 +16,6 @@
 
 package stream;
 
-import io.vertx.rxjava.core.Context;
-import io.vertx.rxjava.core.RxHelper;
-import io.vertx.rxjava.core.Vertx;
 import rx.Observable;
 import rx.observables.StringObservable;
 import rx.schedulers.Schedulers;
@@ -40,12 +37,10 @@ public class Util {
   /**
    * Open a gunzipped classpath resource for reading.
    *
-   * The returned {@link Observable} emits lines of text and operates on the caller {@link Context}.
+   * The returned {@link Observable} emits lines of text and operates on the {@link Schedulers#io() IO-scheduler}.
    */
   public static Observable<String> rxReadGunzippedTextResource(String resource) {
     Objects.requireNonNull(resource);
-    Context context = Vertx.currentContext();
-    Objects.requireNonNull(context);
     URL url = Util.class.getClassLoader().getResource(resource);
     Objects.requireNonNull(url);
     Observable<String> uncompressed = StringObservable.using(() -> {
@@ -56,8 +51,7 @@ public class Util {
     }, StringObservable::from)
       .compose(StringObservable::byLine);
     return uncompressed
-      .subscribeOn(Schedulers.io())
-      .observeOn(RxHelper.scheduler(context));
+      .subscribeOn(Schedulers.io());
   }
 
   private Util() {

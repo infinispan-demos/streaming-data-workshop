@@ -19,6 +19,7 @@ package stream;
 import datamodel.Station;
 import datamodel.Stop;
 import datamodel.Train;
+import io.vertx.core.Future;
 import io.vertx.rxjava.core.AbstractVerticle;
 import io.vertx.rxjava.core.Vertx;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -27,17 +28,18 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TimeZone;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Logger;
 
 /**
  * @author Thomas Segismont
  * @author galderz
  */
 public class InjectVerticle extends AbstractVerticle {
+  private static final Logger log = Logger.getLogger(InjectVerticle.class.getName());
 
   static Calendar calendar = null;
   static String lastDate = "?";
@@ -51,32 +53,42 @@ public class InjectVerticle extends AbstractVerticle {
   }
 
   @Override
-  public void start() throws Exception {
-    client = new RemoteCacheManager();
-    stopsCache = client.getCache("default");
+  public void start(Future<Void> startFuture) throws Exception {
+    vertx.<RemoteCacheManager>rxExecuteBlocking(fut -> fut.complete(new RemoteCacheManager()))
+      .doOnSuccess(remoteCacheManager -> client = remoteCacheManager).<Void>map(x -> null)
+      .flatMap(v -> vertx.<RemoteCache<String, Stop>>rxExecuteBlocking(fut -> fut.complete(client.getCache("default"))))
+      .doOnSuccess(remoteCache -> stopsCache = remoteCache).<Void>map(x -> null)
+      .subscribe(result -> {
+        startFuture.complete(result);
+        startLoading();
+      }, startFuture::fail);
+  }
 
-    int batchSize = 100;
+  private void startLoading() {
+    AtomicLong stopsLoaded = new AtomicLong();
+    long timerId = vertx.setPeriodic(5000L, l -> {
+      log.info(stopsLoaded + " stops loaded");
+    });
     Util.rxReadGunzippedTextResource("station-boards-dump-3_weeks.tsv.gz")
       .skip(1) // header
       .map(this::toEntry)
-      .buffer(batchSize)
-      .map(entries -> {
-        Map<String, Stop> map = new HashMap<>(batchSize);
-        entries.forEach(entry -> map.put(entry.getKey(), entry.getValue()));
-        return map;
-      }).subscribe(batch -> {
-        System.out.printf("Batch(%d):%n", batch.size());
-        stopsCache.putAllAsync(batch);
-    });
+      .doOnNext(entry -> stopsCache.put(entry.getKey(), entry.getValue()))
+      .doOnNext(entry -> stopsLoaded.incrementAndGet())
+      .doAfterTerminate(() -> vertx.cancelTimer(timerId))
+      .subscribe();
   }
 
   @Override
-  public void stop() throws Exception {
-    if (stopsCache != null)
-      stopsCache.clear();;
+  public void stop(Future<Void> stopFuture) throws Exception {
+    vertx.<Void>rxExecuteBlocking(fut -> {
+      if (stopsCache != null)
+        stopsCache.clear();
 
-    if (client != null)
-      client.stop();
+      if (client != null)
+        client.stop();
+
+      fut.complete();
+    }).subscribe(stopFuture::complete, stopFuture::fail);
   }
 
   private Entry<String, Stop> toEntry(String line) {
