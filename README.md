@@ -7,13 +7,15 @@
   * Requires Kubernetes 1.6
 
 
-# Running data grid 
+# Running data grid and injectors 
 
     ./start-openshift.sh
-    cd datagrid
+    cd station-boards-injector
     ./deploy.sh
-    ... make changes
-    ./redeploy.sh
+
+Once data grid is running, changes to datagrid deployment can be made calling `datagrid/redeploy.sh`.
+Injectors can also be redeployed using `station-boards-injector/redeploy.sh`. 
+
 
 ## Testing the data grid
 
