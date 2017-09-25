@@ -4,9 +4,18 @@ set -e -x
 
 APP=datagrid
 USR=developer
-PWD=developer
+PASS=developer
+NUM_NODES=2
+NS=myproject
 
-oc process infinispan-ephemeral -p APPLICATION_NAME=${APP} APPLICATION_USER=${USR} APPLICATION_PASSWORD=${PWD} | oc create -f -
+oc project ${NS}
+
+oc process -n openshift infinispan-ephemeral -p \
+  NUMBER_OF_INSTANCES=${NUM_NODES} \
+  NAMESPACE=${NS} \
+  APPLICATION_NAME=${APP} \
+  APPLICATION_USER=${USR} \
+  APPLICATION_PASSWORD=${PASS} | oc create -f -
 
 
 TEST_APP=test-datagrid
