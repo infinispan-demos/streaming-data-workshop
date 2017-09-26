@@ -46,6 +46,7 @@ public class InjectVerticle extends AbstractVerticle {
 
   RemoteCacheManager client;
   RemoteCache<String, Stop> stopsCache;
+  private long loadStart;
 
   public static void main(String[] args) {
     Vertx vertx = Vertx.vertx();
@@ -66,23 +67,28 @@ public class InjectVerticle extends AbstractVerticle {
 
   private void startLoading() {
     AtomicLong stopsLoaded = new AtomicLong();
-    long start = System.nanoTime();
-    long timerId = vertx.setPeriodic(5000L, l -> {
-      log.info(String.format(
-        "Progress: loaded=%d stored=%d%n", stopsLoaded.get(), stopsCache.size()
-      ));
+    loadStart = System.nanoTime();
+    vertx.setPeriodic(5000L, l -> {
+      vertx.executeBlocking(fut -> {
+        log.info(String.format(
+          "Progress: loaded=%d stored=%d%n", stopsLoaded.get(), stopsCache.size()
+        ));
+        fut.complete();
+      }, false, ar -> {});
     });
     Util.rxReadGunzippedTextResource("cff-stop-2016-02-29__.jsonl.gz")
       .map(this::toEntry)
-      .doOnNext(entry -> stopsCache.put(entry.getKey(), entry.getValue()))
-      .doOnNext(entry -> stopsLoaded.incrementAndGet())
       .doAfterTerminate(() -> {
-        final long duration = System.nanoTime() - start;
+        final long duration = System.nanoTime() - loadStart;
         log.info(String.format(
           "Duration: %d(s) %n", TimeUnit.NANOSECONDS.toSeconds(duration)
         ));
-        vertx.cancelTimer(timerId);
+        loadStart = System.nanoTime();
+        stopsLoaded.set(0);
       })
+      .repeat()
+      .doOnNext(entry -> stopsCache.put(entry.getKey(), entry.getValue()))
+      .doOnNext(entry -> stopsLoaded.incrementAndGet())
       .subscribe(Actions.empty(), t -> log.log(SEVERE, "Error while loading station boards", t));
   }
 
