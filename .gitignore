@@ -20,3 +20,6 @@ classes
 
 # ignore Maven files
 target
+
+# ignore Mac files
+.DS_Store
