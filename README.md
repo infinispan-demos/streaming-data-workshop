@@ -5,6 +5,8 @@
   * Requires OpenShift Client 3.6.
 * Install `kubectl`
   * Requires Kubernetes 1.6
+* Install [`kubetail` 1.2.1](https://github.com/johanhaleby/kubetail/tree/1.2.1)
+  * Helps with keeping track of pods
 
 
 # Running data grid and injectors 
@@ -15,6 +17,14 @@
 
 Once data grid is running, changes to datagrid deployment can be made calling `datagrid/redeploy.sh`.
 Injectors can also be redeployed using `station-boards-injector/redeploy.sh`. 
+
+You can track what the station board injector is doing by calling:
+
+    kubetail -l app=station-boards-injector
+
+You can also track output of datagrid nodes calling:
+
+    kubetail -l application=datagrid
 
 
 ## Testing the data grid
