@@ -54,6 +54,23 @@ public class Util {
       .subscribeOn(Schedulers.io());
   }
 
+  @SuppressWarnings("unchecked")
+  static <T> T orNull(Object obj, T defaultValue) {
+    return Objects.isNull(obj) ? defaultValue : (T) obj;
+  }
+
+  static <T> T s(NoisySupplier<T> s) {
+    try {
+      return s.get();
+    } catch (Exception e) {
+      throw new AssertionError(e);
+    }
+  }
+
+  public interface NoisySupplier<T> {
+    T get() throws Exception;
+  }
+
   private Util() {
     // Utility class
   }

@@ -24,15 +24,18 @@ import io.vertx.rxjava.core.AbstractVerticle;
 import io.vertx.rxjava.core.Vertx;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
 import java.util.AbstractMap.SimpleImmutableEntry;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.Locale;
 import java.util.Map.Entry;
-import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
+
+import static stream.Util.orNull;
+import static stream.Util.s;
 
 /**
  * @author Thomas Segismont
@@ -40,9 +43,6 @@ import java.util.logging.Logger;
  */
 public class InjectVerticle extends AbstractVerticle {
   private static final Logger log = Logger.getLogger(InjectVerticle.class.getName());
-
-  static Calendar calendar = null;
-  static String lastDate = "?";
 
   RemoteCacheManager client;
   RemoteCache<String, Stop> stopsCache;
@@ -66,15 +66,24 @@ public class InjectVerticle extends AbstractVerticle {
 
   private void startLoading() {
     AtomicLong stopsLoaded = new AtomicLong();
+    long start = System.nanoTime();
     long timerId = vertx.setPeriodic(5000L, l -> {
-      log.info(stopsLoaded + " stops loaded");
+      log.info(String.format(
+        "Progress: loaded=%d stored=%d%n", stopsLoaded.get(), stopsCache.size()
+      ));
     });
-    Util.rxReadGunzippedTextResource("station-boards-dump-3_weeks.tsv.gz")
-      .skip(1) // header
+    Util.rxReadGunzippedTextResource("cff-stop-2016-02-29__.jsonl.gz")
       .map(this::toEntry)
+      .doOnError(Throwable::printStackTrace)
       .doOnNext(entry -> stopsCache.put(entry.getKey(), entry.getValue()))
       .doOnNext(entry -> stopsLoaded.incrementAndGet())
-      .doAfterTerminate(() -> vertx.cancelTimer(timerId))
+      .doAfterTerminate(() -> {
+        final long duration = System.nanoTime() - start;
+        log.info(String.format(
+          "Duration: %d(s) %n", TimeUnit.NANOSECONDS.toSeconds(duration)
+        ));
+        vertx.cancelTimer(timerId);
+      })
       .subscribe();
   }
 
@@ -92,83 +101,35 @@ public class InjectVerticle extends AbstractVerticle {
   }
 
   private Entry<String, Stop> toEntry(String line) {
-    String[] parts = line.split("\t");
+    JSONParser parser = new JSONParser();
 
-    String id = parts[0];
-    //Date entryTs = parseTimestamp(parts[1]);
-    //Date entryTs = null;
-    long stopId = Long.parseLong(parts[2]);
-    String stopName = parts[3];
-    Date departureTs = parseTimestamp(parts[4]);
-    String trainName = parts[5];
-    String trainCat = parts[6];
-    String trainOperator = parts[7];
-    String trainTo = parts[8];
-    int delayMin = parts[9].isEmpty() ? 0 : Integer.parseInt(parts[9]);
-    String capacity1st = parts[10];
-    String capacity2nd = parts[11];
-
+    JSONObject json = (JSONObject) s(() -> parser.parse(line));
+    String trainName = (String) json.get("name");
+    String trainTo = (String) json.get("to");
+    String trainCat = (String) json.get("category");
+    String trainOperator = (String) json.get("operator");
+    String capacity1st = (String) json.get("capacity1st");
+    String capacity2nd = (String) json.get("capacity2nd");
     Train train = Train.make(trainName, trainTo, trainCat, trainOperator);
-    Station station = Station.make(stopId, stopName);
-    Stop stop = Stop.make(train, departureTs, null, null, delayMin, station, null, capacity1st, capacity2nd);
 
-    return new SimpleImmutableEntry<>(id, stop);
-  }
+    JSONObject jsonStop = (JSONObject) json.get("stop");
+    JSONObject jsonStation = (JSONObject) jsonStop.get("station");
+    long stationId = Long.parseLong((String) jsonStation.get("id"));
+    String stationName = (String) jsonStation.get("name");
+    Station station = Station.make(stationId, stationName);
 
-  private static Date parseTimestamp(String date) {
-    if (!date.startsWith(lastDate)) {
-      //System.out.println("New date!");
-      Calendar c = Calendar.getInstance(TimeZone.getTimeZone("GMT+1"), Locale.ENGLISH);
-      int year = Integer.parseInt(date.substring(11, 15));
-      int month = toMonth(date.substring(4, 7));
-      int day = Integer.parseInt(date.substring(8, 10));
-//         System.out.println("Year: " + year);
-//         System.out.println("Month: " + month);
-//         System.out.println("Day: " + day);
-      c.set(year, month, day, 0, 0, 0);
-      calendar = c;
-      lastDate = date.substring(0, 15);
-    }
+    Date departureTs = new Date((long) jsonStop.get("departureTimestamp") * 1000);
+    Object delayMin = jsonStop.get("delay");
 
-    String hour = date.substring(16, 18);
-    String minute = date.substring(19, 21);
-//      System.out.println("Hour: " + hour);
-//      System.out.println("Minute: " + minute);
-    calendar.set(Calendar.HOUR_OF_DAY, Integer.parseInt(hour));
-    calendar.set(Calendar.MINUTE, Integer.parseInt(minute));
-//      System.out.println(calendar.getTime());
-    return calendar.getTime();
-  }
+    String stopId = String.format(
+      "%s/%s/%s/%s",
+      stationId, trainName, trainTo, jsonStop.get("departure")
+    );
 
-  private static int toMonth(String m) {
-    switch (m) {
-      case "Jan":
-        return Calendar.JANUARY;
-      case "Feb":
-        return Calendar.FEBRUARY;
-      case "Mar":
-        return Calendar.MARCH;
-      case "Apr":
-        return Calendar.APRIL;
-      case "May":
-        return Calendar.MAY;
-      case "Jun":
-        return Calendar.JUNE;
-      case "Jul":
-        return Calendar.JULY;
-      case "Aug":
-        return Calendar.AUGUST;
-      case "Sep":
-        return Calendar.SEPTEMBER;
-      case "Oct":
-        return Calendar.OCTOBER;
-      case "Nov":
-        return Calendar.NOVEMBER;
-      case "Dec":
-        return Calendar.DECEMBER;
-      default:
-        throw new IllegalArgumentException("Unknown month: `" + m + "`");
-    }
+    Stop stop = Stop.make(train, departureTs, null, null,
+      orNull(delayMin, 0L).intValue(), station, null, capacity1st, capacity2nd);
+
+    return new SimpleImmutableEntry<>(stopId, stop);
   }
 
 }

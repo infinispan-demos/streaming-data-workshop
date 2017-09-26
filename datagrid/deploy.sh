@@ -5,7 +5,7 @@ set -e -x
 APP=datagrid
 USR=developer
 PASS=developer
-NUM_NODES=2
+NUM_NODES=3
 NS=myproject
 
 oc project ${NS}
