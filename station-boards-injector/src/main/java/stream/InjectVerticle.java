@@ -20,12 +20,12 @@ import datamodel.Station;
 import datamodel.Stop;
 import datamodel.Train;
 import io.vertx.core.Future;
+import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava.core.AbstractVerticle;
 import io.vertx.rxjava.core.Vertx;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
+import rx.functions.Actions;
 
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Date;
@@ -34,8 +34,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 
-import static stream.Util.orNull;
-import static stream.Util.s;
+import static java.util.logging.Level.*;
+import static stream.Util.*;
 
 /**
  * @author Thomas Segismont
@@ -74,7 +74,6 @@ public class InjectVerticle extends AbstractVerticle {
     });
     Util.rxReadGunzippedTextResource("cff-stop-2016-02-29__.jsonl.gz")
       .map(this::toEntry)
-      .doOnError(Throwable::printStackTrace)
       .doOnNext(entry -> stopsCache.put(entry.getKey(), entry.getValue()))
       .doOnNext(entry -> stopsLoaded.incrementAndGet())
       .doAfterTerminate(() -> {
@@ -84,7 +83,7 @@ public class InjectVerticle extends AbstractVerticle {
         ));
         vertx.cancelTimer(timerId);
       })
-      .subscribe();
+      .subscribe(Actions.empty(), t -> log.log(SEVERE, "Error while loading station boards", t));
   }
 
   @Override
@@ -101,33 +100,30 @@ public class InjectVerticle extends AbstractVerticle {
   }
 
   private Entry<String, Stop> toEntry(String line) {
-    JSONParser parser = new JSONParser();
-
-    JSONObject json = (JSONObject) s(() -> parser.parse(line));
-    String trainName = (String) json.get("name");
-    String trainTo = (String) json.get("to");
-    String trainCat = (String) json.get("category");
-    String trainOperator = (String) json.get("operator");
-    String capacity1st = (String) json.get("capacity1st");
-    String capacity2nd = (String) json.get("capacity2nd");
+    JsonObject json = new JsonObject(line);
+    String trainName = json.getString("name");
+    String trainTo = json.getString("to");
+    String trainCat = json.getString("category");
+    String trainOperator = json.getString("operator");
+    String capacity1st = json.getString("capacity1st");
+    String capacity2nd = json.getString("capacity2nd");
     Train train = Train.make(trainName, trainTo, trainCat, trainOperator);
 
-    JSONObject jsonStop = (JSONObject) json.get("stop");
-    JSONObject jsonStation = (JSONObject) jsonStop.get("station");
-    long stationId = Long.parseLong((String) jsonStation.get("id"));
-    String stationName = (String) jsonStation.get("name");
+    JsonObject jsonStop = json.getJsonObject("stop");
+    JsonObject jsonStation = jsonStop.getJsonObject("station");
+    long stationId = Long.parseLong(jsonStation.getString("id"));
+    String stationName = jsonStation.getString("name");
     Station station = Station.make(stationId, stationName);
 
-    Date departureTs = new Date((long) jsonStop.get("departureTimestamp") * 1000);
-    Object delayMin = jsonStop.get("delay");
+    Date departureTs = new Date(jsonStop.getLong("departureTimestamp") * 1000);
+    int delayMin = orNull(jsonStop.getValue("delay"), 0);
 
     String stopId = String.format(
       "%s/%s/%s/%s",
-      stationId, trainName, trainTo, jsonStop.get("departure")
+      stationId, trainName, trainTo, jsonStop.getString("departure")
     );
 
-    Stop stop = Stop.make(train, departureTs, null, null,
-      orNull(delayMin, 0L).intValue(), station, null, capacity1st, capacity2nd);
+    Stop stop = Stop.make(train, departureTs, null, null, delayMin, station, null, capacity1st, capacity2nd);
 
     return new SimpleImmutableEntry<>(stopId, stop);
   }
