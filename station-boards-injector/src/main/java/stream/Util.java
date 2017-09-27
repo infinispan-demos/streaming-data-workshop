@@ -16,11 +16,19 @@
 
 package stream;
 
+import datamodel.Station;
+import datamodel.Stop;
+import datamodel.Train;
+import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
+import org.infinispan.protostream.FileDescriptorSource;
+import org.infinispan.protostream.SerializationContext;
 import rx.Observable;
 import rx.observables.StringObservable;
 import rx.schedulers.Schedulers;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -52,6 +60,28 @@ public class Util {
       .compose(StringObservable::byLine);
     return uncompressed
       .subscribeOn(Schedulers.io());
+  }
+
+  public static RemoteCacheManager mkRemoteCacheManager() {
+    RemoteCacheManager client = new RemoteCacheManager();
+    SerializationContext ctx = ProtoStreamMarshaller.getSerializationContext(client);
+    addProtoDescriptorToClient(ctx);
+    addProtoMarshallersToClient(ctx);
+    return client;
+  }
+
+  private static void addProtoDescriptorToClient(SerializationContext ctx) {
+    try {
+      ctx.registerProtoFiles(FileDescriptorSource.fromResources("datamodel.proto"));
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private static void addProtoMarshallersToClient(SerializationContext ctx) {
+    ctx.registerMarshaller(new Stop.Marshaller());
+    ctx.registerMarshaller(new Station.Marshaller());
+    ctx.registerMarshaller(new Train.Marshaller());
   }
 
   @SuppressWarnings("unchecked")

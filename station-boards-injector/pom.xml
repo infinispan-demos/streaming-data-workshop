@@ -30,20 +30,8 @@
   <version>1.0-SNAPSHOT</version>
 
   <properties>
-    <vertx.verticle>stream.InjectVerticle</vertx.verticle>
+    <vertx.verticle>stream.DelayedTrainsHttpVerticle</vertx.verticle>
   </properties>
-
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>io.vertx</groupId>
-        <artifactId>vertx-dependencies</artifactId>
-        <version>${vertx.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
 
   <dependencies>
     <dependency>
@@ -55,6 +43,22 @@
       <groupId>io.vertx</groupId>
       <artifactId>vertx-rx-java</artifactId>
     </dependency>
+
+    <!-- TODO: Should be in a different module -->
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-query-dsl</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-remote-query-client</artifactId>
+    </dependency>
+    <!-- TODO: End -->
+
     <dependency>
       <groupId>io.reactivex</groupId>
       <artifactId>rxjava-string</artifactId>

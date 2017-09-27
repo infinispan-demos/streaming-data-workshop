@@ -75,7 +75,7 @@ public class Station implements Serializable {
 
     @Override
     public String getTypeName() {
-      return "analytics.Station";
+      return "datamodel.Station";
     }
 
   }

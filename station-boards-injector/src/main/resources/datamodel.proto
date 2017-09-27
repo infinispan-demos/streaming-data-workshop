@@ -1,0 +1,71 @@
+package datamodel;
+
+/**
+ * @Indexed
+ */
+message Station {
+
+    /**
+     * @Field(store = Store.YES)
+     */
+    required int64 id = 1;
+
+    /**
+     * @Field(store = Store.YES)
+     */
+    required bytes name = 2;
+
+}
+
+/**
+ * @Indexed
+ */
+message Stop {
+
+    /**
+     * @Field(store = Store.YES)
+     */
+    required Train train = 1;
+
+    /**
+     * @Field(store = Store.YES)
+     */
+    required int32 delayMin = 2;
+
+    /**
+     * @Field(store = Store.YES)
+     */
+    required Station station = 3;
+
+    /**
+     * @Field(store = Store.YES)
+     */
+    required fixed64 departureTs = 4;
+}
+
+/**
+ * @Indexed
+ */
+message Train {
+
+    /**
+     * @Field(store = Store.YES)
+     */
+    required bytes name = 1;
+
+    /**
+     * @Field(store = Store.YES)
+     */
+    required bytes to = 2;
+
+    /**
+     * @Field(store = Store.YES)
+     */
+    required bytes cat = 3; // TODO: Enumeration?
+
+    /**
+     * @Field(store = Store.YES)
+     */
+    required bytes operator = 4;
+
+}
