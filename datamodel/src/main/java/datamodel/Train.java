@@ -53,7 +53,7 @@ public class Train implements Serializable {
     return str(to);
   }
 
-  public String getCat() {
+  public String getCategory() {
     return str(cat);
   }
 
@@ -66,7 +66,7 @@ public class Train implements Serializable {
     return "Train{" +
       "name='" + getName() + '\'' +
       ", to='" + getTo() + '\'' +
-      ", cat='" + getCat() + '\'' +
+      ", category='" + getCategory() + '\'' +
       ", operator='" + getOperator() + '\'' +
       '}';
   }
@@ -97,7 +97,7 @@ public class Train implements Serializable {
 
     @Override
     public String getTypeName() {
-      return "analytics.Train";
+      return "datamodel.Train";
     }
 
   }

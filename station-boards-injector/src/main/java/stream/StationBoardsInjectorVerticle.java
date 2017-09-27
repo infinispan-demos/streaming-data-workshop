@@ -41,8 +41,8 @@ import static stream.Util.*;
  * @author Thomas Segismont
  * @author galderz
  */
-public class InjectVerticle extends AbstractVerticle {
-  private static final Logger log = Logger.getLogger(InjectVerticle.class.getName());
+public class StationBoardsInjectorVerticle extends AbstractVerticle {
+  private static final Logger log = Logger.getLogger(StationBoardsInjectorVerticle.class.getName());
 
   RemoteCacheManager client;
   RemoteCache<String, Stop> stopsCache;
@@ -50,12 +50,12 @@ public class InjectVerticle extends AbstractVerticle {
 
   public static void main(String[] args) {
     Vertx vertx = Vertx.vertx();
-    vertx.deployVerticle(InjectVerticle.class.getName());
+    vertx.deployVerticle(StationBoardsInjectorVerticle.class.getName());
   }
 
   @Override
   public void start(Future<Void> startFuture) throws Exception {
-    vertx.<RemoteCacheManager>rxExecuteBlocking(fut -> fut.complete(new RemoteCacheManager()))
+    vertx.<RemoteCacheManager>rxExecuteBlocking(fut -> fut.complete(mkRemoteCacheManager()))
       .doOnSuccess(remoteCacheManager -> client = remoteCacheManager).<Void>map(x -> null)
       .flatMap(v -> vertx.<RemoteCache<String, Stop>>rxExecuteBlocking(fut -> fut.complete(client.getCache("default"))))
       .doOnSuccess(remoteCache -> stopsCache = remoteCache).<Void>map(x -> null)
@@ -111,8 +111,7 @@ public class InjectVerticle extends AbstractVerticle {
     String trainTo = json.getString("to");
     String trainCat = json.getString("category");
     String trainOperator = json.getString("operator");
-    String capacity1st = json.getString("capacity1st");
-    String capacity2nd = json.getString("capacity2nd");
+
     Train train = Train.make(trainName, trainTo, trainCat, trainOperator);
 
     JsonObject jsonStop = json.getJsonObject("stop");
@@ -129,7 +128,7 @@ public class InjectVerticle extends AbstractVerticle {
       stationId, trainName, trainTo, jsonStop.getString("departure")
     );
 
-    Stop stop = Stop.make(train, departureTs, null, null, delayMin, station, null, capacity1st, capacity2nd);
+    Stop stop = Stop.make(train, delayMin, station, departureTs);
 
     return new SimpleImmutableEntry<>(stopId, stop);
   }
