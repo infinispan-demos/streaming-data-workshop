@@ -32,6 +32,15 @@ You can also track output of datagrid nodes calling:
 After calling either of `datagrid/deploy.sh` or `datagrid/redeploy.sh`, call `datagrid/test.sh` to quickly test that the data grid responds. 
 
 
+# Delayed train dashboard
+
+As a stepping stone for workshop attendees, a Java FX dashboard of delayed trains has been developed.
+
+The dashboard, which can be run from the IDE, connects to a URL exposed by a verticle and it triggers the injection of station boards.
+Behind the scene, a verticle that runs a continuous query looking out for delayed trains publishes those delays to the event bus.
+The event bus messages are then shipped via websocket to the Java FX dashboard.
+
+
 # Train position display
 
 Run `delayed.train.positions.HttpApp` class so that train positions are served via REST API.
