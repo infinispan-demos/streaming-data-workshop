@@ -37,7 +37,7 @@
     <vertx-maven-plugin.version>1.0.6</vertx-maven-plugin.version>
     <vertx.verticle>test.datagrid.HelloWorld</vertx.verticle>
 
-    <infinispan.version>9.0.3.Final</infinispan.version>
+    <infinispan.version>9.1.1.Final</infinispan.version>
   </properties>
 
   <dependencyManagement>
