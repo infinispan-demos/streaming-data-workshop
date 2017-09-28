@@ -16,7 +16,8 @@ import io.vertx.rxjava.core.Vertx;
  */
 public class DelayedTrainsHttpVerticle extends AbstractVerticle {
 
-  private volatile boolean injectorStarted = false;
+  // Does not need to be volatile, it's only read/updated by the verticle EL thread
+  private boolean injectorStarted = false;
 
   public static void main(String[] args) {
     Vertx vertx = Vertx.vertx();
