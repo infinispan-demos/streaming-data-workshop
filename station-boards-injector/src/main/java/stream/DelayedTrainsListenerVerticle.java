@@ -35,7 +35,8 @@ public class DelayedTrainsListenerVerticle extends AbstractVerticle {
         client = res.result();
         addProtoDescriptorToServer(client.getCache(PROTOBUF_METADATA_CACHE_NAME));
 
-        stopsCache = client.getCache("default");
+        client.administration().createCache("station-board-stops", "distributed");
+        stopsCache = client.getCache("station-board-stops");
         stopsCache.clear();
         addDelayedTrainsListener(stopsCache);
       });

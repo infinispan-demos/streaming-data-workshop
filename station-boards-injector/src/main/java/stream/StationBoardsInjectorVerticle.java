@@ -57,7 +57,7 @@ public class StationBoardsInjectorVerticle extends AbstractVerticle {
   public void start(Future<Void> startFuture) throws Exception {
     vertx.<RemoteCacheManager>rxExecuteBlocking(fut -> fut.complete(mkRemoteCacheManager()))
       .doOnSuccess(remoteCacheManager -> client = remoteCacheManager).<Void>map(x -> null)
-      .flatMap(v -> vertx.<RemoteCache<String, Stop>>rxExecuteBlocking(fut -> fut.complete(client.getCache("default"))))
+      .flatMap(v -> vertx.<RemoteCache<String, Stop>>rxExecuteBlocking(fut -> fut.complete(client.getCache("station-board-stops"))))
       .doOnSuccess(remoteCache -> stopsCache = remoteCache).<Void>map(x -> null)
       .subscribe(result -> {
         startFuture.complete(result);

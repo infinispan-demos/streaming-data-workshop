@@ -50,7 +50,7 @@ public class HelloWorld extends AbstractVerticle {
     RemoteCacheManager client = null;
     try {
       client = new RemoteCacheManager();
-      RemoteCache<String, String> cache = client.getCache("default");
+      RemoteCache<String, String> cache = client.getCache("repl");
       String content = String.format(template, name);
 
       String prev = cache.put(name, content);
