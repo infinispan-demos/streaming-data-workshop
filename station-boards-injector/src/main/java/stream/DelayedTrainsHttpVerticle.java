@@ -61,7 +61,6 @@ public class DelayedTrainsHttpVerticle extends AbstractVerticle {
   }
 
   private void deployStationBoardsInjectorVerticle() {
-    // TODO: Does it need setWorker(true) ?
     DeploymentOptions options = new DeploymentOptions();
     vertx.deployVerticle(StationBoardsInjectorVerticle.class.getName(), options);
   }
