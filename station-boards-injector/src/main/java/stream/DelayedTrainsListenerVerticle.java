@@ -1,17 +1,12 @@
 package stream;
 
-import datamodel.Station;
 import datamodel.Stop;
-import datamodel.Train;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.json.JsonObject;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
-import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.util.Util;
-import org.infinispan.protostream.FileDescriptorSource;
-import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.api.continuous.ContinuousQuery;
 import org.infinispan.query.api.continuous.ContinuousQueryListener;
 import org.infinispan.query.dsl.Query;
@@ -34,12 +29,16 @@ public class DelayedTrainsListenerVerticle extends AbstractVerticle {
 
   @Override
   public void start() throws Exception {
-    client = mkRemoteCacheManager();
-    client.getCache("default").clear();
+    vertx.<RemoteCacheManager>executeBlocking(
+      fut -> fut.complete(mkRemoteCacheManager()),
+      res -> {
+        client = res.result();
+        addProtoDescriptorToServer(client.getCache(PROTOBUF_METADATA_CACHE_NAME));
 
-    addProtoDescriptorToServer(client.getCache(PROTOBUF_METADATA_CACHE_NAME));
-
-    addDelayedTrainsListener();
+        stopsCache = client.getCache("default");
+        stopsCache.clear();
+        addDelayedTrainsListener(stopsCache);
+      });
   }
 
   @Override
@@ -54,9 +53,8 @@ public class DelayedTrainsListenerVerticle extends AbstractVerticle {
       client.stop();
   }
 
-  private void addDelayedTrainsListener() {
-    stopsCache = client.getCache("default");
-    QueryFactory qf = Search.getQueryFactory(stopsCache);
+  private void addDelayedTrainsListener(RemoteCache<String, Stop> cache) {
+    QueryFactory qf = Search.getQueryFactory(cache);
 
     Query query = qf.from(Stop.class)
       .having("delayMin").gt(0L)
@@ -81,7 +79,7 @@ public class DelayedTrainsListenerVerticle extends AbstractVerticle {
         }
       };
 
-    delayedTrainsCQ = Search.getContinuousQuery(stopsCache);
+    delayedTrainsCQ = Search.getContinuousQuery(cache);
     delayedTrainsCQ.addContinuousQueryListener(query, listener);
   }
 
@@ -97,13 +95,21 @@ public class DelayedTrainsListenerVerticle extends AbstractVerticle {
   }
 
 
-  private static void addProtoDescriptorToServer(RemoteCache<String, String> metaCache) throws IOException {
+  private static void addProtoDescriptorToServer(RemoteCache<String, String> metaCache) {
     InputStream is = DelayedTrainsListenerVerticle.class.getResourceAsStream("/datamodel.proto");
-    metaCache.put("datamodel.proto", Util.read(is));
+    metaCache.put("datamodel.proto", readInputStream(is));
 
     String errors = metaCache.get(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX);
     if (errors != null)
       throw new AssertionError("Error in proto file");
+  }
+
+  private static String readInputStream(InputStream is) {
+    try {
+      return Util.read(is);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
 }
