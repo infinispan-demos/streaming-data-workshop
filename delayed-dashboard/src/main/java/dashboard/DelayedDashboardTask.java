@@ -9,10 +9,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
-
 public class DelayedDashboardTask extends Task<Void> {
 
    static final String HTTP_HOST = System.getProperty("http.host", "station-boards-injector-myproject.127.0.0.1.nip.io");
@@ -24,8 +20,6 @@ public class DelayedDashboardTask extends Task<Void> {
    private Vertx vertx = Vertx.vertx();
    private HttpClient client = vertx.createHttpClient();
 
-   private BlockingQueue<DelayedTrainView> queue = new ArrayBlockingQueue<>(128);
-
    public final ObservableList<DelayedTrainView> getPartialResults() {
       return partialResults;
    }
@@ -33,15 +27,6 @@ public class DelayedDashboardTask extends Task<Void> {
    @Override
    protected Void call() throws Exception {
       connectHttp();
-      while (true) {
-         if (isCancelled()) break;
-        DelayedTrainView entry = queue.poll(1, TimeUnit.SECONDS);
-         Thread.sleep(200);
-         if (entry != null) {
-            Platform.runLater(() ->
-                  partialResults.add(entry));
-         }
-      }
       return null;
    }
 
