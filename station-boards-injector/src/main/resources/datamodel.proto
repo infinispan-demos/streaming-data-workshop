@@ -66,6 +66,6 @@ message Train {
     /**
      * @Field(store = Store.YES)
      */
-    required bytes operator = 4;
+    optional bytes operator = 4;
 
 }

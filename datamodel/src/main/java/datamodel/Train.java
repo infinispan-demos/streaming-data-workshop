@@ -32,7 +32,7 @@ public class Train implements Serializable {
   private final byte[] name;
   private final byte[] to;
   private final byte[] cat;
-  private final byte[] operator;
+  private final byte[] operator; // nullable
 
   private Train(byte[] name, byte[] to, byte[] cat, byte[] operator) {
     this.name = name;
