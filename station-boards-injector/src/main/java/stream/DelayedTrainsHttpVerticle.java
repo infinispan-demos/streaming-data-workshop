@@ -29,8 +29,6 @@ public class DelayedTrainsHttpVerticle extends AbstractVerticle {
     // Create a router object.
     Router router = Router.router(vertx);
 
-    router.get("/").handler(StaticHandler.create());
-
     // Create the HTTP server and pass the "accept" method to the request handler.
     vertx
       .createHttpServer()
