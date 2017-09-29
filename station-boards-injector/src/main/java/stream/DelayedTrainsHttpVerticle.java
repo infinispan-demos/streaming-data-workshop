@@ -50,6 +50,7 @@ public class DelayedTrainsHttpVerticle extends AbstractVerticle {
         System.out.println("SockJs: Connected, start data injector");
         if (!injectorStarted) {
           deployStationBoardsInjectorVerticle();
+          deployTrainPositionsInjectorVerticle();
           injectorStarted = true;
         }
       }
@@ -63,6 +64,11 @@ public class DelayedTrainsHttpVerticle extends AbstractVerticle {
   private void deployStationBoardsInjectorVerticle() {
     DeploymentOptions options = new DeploymentOptions();
     vertx.deployVerticle(StationBoardsInjectorVerticle.class.getName(), options);
+  }
+
+  private void deployTrainPositionsInjectorVerticle() {
+    DeploymentOptions options = new DeploymentOptions();
+    vertx.deployVerticle(TrainPositionsInjectorVerticle.class.getName(), options);
   }
 
   private void deployDelayedTrainsListenerVerticle() {
