@@ -11,3 +11,4 @@ make stop-openshift
 make start-openshift-with-catalog install-templates)
 
 (cd ./datagrid; ./deploy.sh)
+(cd ./station-boards-injector; ./deploy.sh)
