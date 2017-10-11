@@ -17,7 +17,9 @@ import rx.functions.Actions;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -26,6 +28,7 @@ import java.util.logging.Logger;
 
 import static java.util.logging.Level.SEVERE;
 import static stream.Util.mkRemoteCacheManager;
+import static stream.Util.orNull;
 
 /**
  * TODO: Should live in separate module
@@ -34,7 +37,12 @@ public class TrainPositionsInjectorVerticle extends AbstractVerticle {
   private static final Logger log = Logger.getLogger(TrainPositionsInjectorVerticle.class.getName());
 
   RemoteCacheManager client;
-  RemoteCache<String, List<TrainPosition>> positionsCache;
+
+  // A train route has potentially multiple trains doing same route at one point in time.
+  // Each train has a train id but that cannot be correlated with the station board data.
+  // So, maintain a map of train ids associated with a particular train route.
+  // When a train route is delayed, find the first train id with delays and track that train's positions.
+  RemoteCache<String, Map<String, TrainPosition>> positionsCache;
   private long loadStart;
 
   public static void main(String[] args) {
@@ -49,7 +57,7 @@ public class TrainPositionsInjectorVerticle extends AbstractVerticle {
         client = remoteCacheManager;
         client.administration().createCache("train-positions", "distributed");
       }).<Void>map(x -> null)
-      .flatMap(v -> vertx.<RemoteCache<String, List<TrainPosition>>>rxExecuteBlocking(fut -> fut.complete(client.getCache("train-positions"))))
+      .flatMap(v -> vertx.<RemoteCache<String, Map<String, TrainPosition>>>rxExecuteBlocking(fut -> fut.complete(client.getCache("train-positions"))))
       .doOnSuccess(remoteCache -> positionsCache = remoteCache).<Void>map(x -> null)
       .subscribe(result -> {
         startFuture.complete(result);
@@ -90,11 +98,11 @@ public class TrainPositionsInjectorVerticle extends AbstractVerticle {
       .repeat()
       .doOnNext(entry -> {
           String routeName = entry.getKey();
-          List<TrainPosition> trainPositions = positionsCache.get(routeName);
+          Map<String, TrainPosition> trainPositions = positionsCache.get(routeName);
           if (trainPositions == null)
-            trainPositions = new ArrayList<>();
+            trainPositions = new HashMap<>();
 
-          trainPositions.add(entry.getValue());
+          trainPositions.put(entry.getValue().getTrainId(), entry.getValue());
           positionsCache.put(routeName, trainPositions);
         }
       )
@@ -105,10 +113,12 @@ public class TrainPositionsInjectorVerticle extends AbstractVerticle {
   private Entry<String, TrainPosition> toEntry(String line) {
     JsonObject json = new JsonObject(line);
 
+    String trainId = json.getString("trainid");
     long ts = json.getLong("timeStamp");
     String name = json.getString("name").trim();
     String cat = json.getString("category").trim();
     String lastStopName = json.getString("lstopname").trim();
+    int delay = Integer.valueOf(orNull(json.getString("delay"), "0"));
 
     double y = Double.parseDouble(json.getString("y")) / 1000000;
     double x = Double.parseDouble(json.getString("x")) / 1000000;
@@ -118,7 +128,8 @@ public class TrainPositionsInjectorVerticle extends AbstractVerticle {
 
     // TODO: Parse future positions to get continuous move (poly field)
 
-    TrainPosition trainPosition = TrainPosition.make(name, cat, lastStopName, current, Collections.emptyList());
+    TrainPosition trainPosition = TrainPosition.make(
+      trainId, name, delay, cat, lastStopName, current, Collections.emptyList());
     return new AbstractMap.SimpleImmutableEntry<>(name, trainPosition);
   }
 

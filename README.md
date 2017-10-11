@@ -12,11 +12,12 @@
 # Running data grid and injectors 
 
     ./start-openshift.sh
-    cd station-boards-injector
-    ./deploy.sh
+
+To get injectors running, start delayed dashboard from IDE, see below.
 
 Once data grid is running, changes to datagrid deployment can be made calling `datagrid/redeploy.sh`.
-Injectors can also be redeployed using `station-boards-injector/redeploy.sh`. 
+Injectors can also be redeployed using `station-boards-injector/redeploy.sh`.
+Delayed train positions snapshot generator can be redeployed using `delayed-train-positions/redeploy.sh` 
 
 You can track what the station board injector is doing by calling:
 
@@ -39,6 +40,27 @@ As a stepping stone for workshop attendees, a Java FX dashboard of delayed train
 The dashboard, which can be run from the IDE, connects to a URL exposed by a verticle and it triggers the injection of station boards.
 Behind the scene, a verticle that runs a continuous query looking out for delayed trains publishes those delays to the event bus.
 The event bus messages are then shipped via websocket to the Java FX dashboard.
+
+
+# Delayed train position snapshot
+
+To obtain a snapshot of the train positions of delayed trains, do:
+
+    curl http://delayed-train-positions-myproject.127.0.0.1.nip.io/position
+    
+You should see something like:
+
+    train_id        train_category  train_name      train_lastStopName      position_lat    position_lng    position_bearing
+    84/26701/18/20/95       R       R 11065 Coppet  6.14454 46.222452       70.0
+    84/27048/18/27/95       S       S 2     Zürich Flughafen        8.560382        47.448814       60.0
+    ...
+
+There's no direct mapping between the station boards data streaming and train positions stream
+(this should be stressed in workshop since often the data streams don't match up).
+
+So, the way the code currently gets around the issue is the following:
+If there's a delayed train amongst the train positions of a particular train route name, it picks that train to track it.
+If none of those trains are delayed, it just picks one of the trains.
 
 
 # Train position display

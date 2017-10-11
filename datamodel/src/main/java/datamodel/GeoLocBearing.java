@@ -4,9 +4,9 @@ import java.io.Serializable;
 
 public class GeoLocBearing implements Serializable {
 
-  final double lat;
-  final double lng;
-  final Double bearing; // nullable
+  public final double lat;
+  public final double lng;
+  public final Double bearing; // nullable
 
   public GeoLocBearing(double lat, double lng, Double bearing) {
     this.lat = lat;

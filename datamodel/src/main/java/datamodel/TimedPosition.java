@@ -4,8 +4,8 @@ import java.io.Serializable;
 
 public class TimedPosition implements Serializable {
 
-  final long timestamp;
-  final GeoLocBearing position;
+  public final long timestamp;
+  public final GeoLocBearing position;
 
   public TimedPosition(long timestamp, GeoLocBearing position) {
     this.timestamp = timestamp;

@@ -6,6 +6,7 @@ import io.vertx.core.json.JsonObject;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.util.Util;
 import org.infinispan.query.api.continuous.ContinuousQuery;
 import org.infinispan.query.api.continuous.ContinuousQueryListener;
@@ -24,8 +25,11 @@ import static stream.Util.mkRemoteCacheManager;
 public class DelayedTrainsListenerVerticle extends AbstractVerticle {
 
   private RemoteCacheManager client;
+  private RemoteCacheManager delayedCacheClient;
+
   private RemoteCache<String, Stop> stopsCache;
   private ContinuousQuery<String, Stop> delayedTrainsCQ;
+  private RemoteCache<String, String> delayedCache;
 
   @Override
   public void start() throws Exception {
@@ -38,8 +42,23 @@ public class DelayedTrainsListenerVerticle extends AbstractVerticle {
         client.administration().createCache("station-board-stops", "distributed");
         stopsCache = client.getCache("station-board-stops");
         stopsCache.clear();
+
+        delayedCacheClient = mkDelayedTrainRemoteCacheManager();
+        delayedCacheClient.administration().createCache("delayed-trains", "replicated");
+        delayedCache = delayedCacheClient.getCache("delayed-trains");
+        delayedCache.clear();
+
         addDelayedTrainsListener(stopsCache);
       });
+  }
+
+  // TODO: Temporary, should be kept in separate module with its own hotrod-client.properties
+  public static RemoteCacheManager mkDelayedTrainRemoteCacheManager() {
+    ConfigurationBuilder cfg = new ConfigurationBuilder();
+    String host = System.getProperty("server.host", "datagrid-hotrod");
+    int port = Integer.getInteger("server.port", 11222);
+    cfg.addServer().host(host).port(port);
+    return new RemoteCacheManager(cfg.build());
   }
 
   @Override
@@ -50,12 +69,18 @@ public class DelayedTrainsListenerVerticle extends AbstractVerticle {
     if (stopsCache != null)
       stopsCache.clear();
 
+    if (delayedCache != null)
+      delayedCache.clear();
+
     if (client != null)
       client.stop();
+
+    if (delayedCacheClient != null)
+      delayedCacheClient.stop();
   }
 
-  private void addDelayedTrainsListener(RemoteCache<String, Stop> cache) {
-    QueryFactory qf = Search.getQueryFactory(cache);
+  private void addDelayedTrainsListener(RemoteCache<String, Stop> stopsCache) {
+    QueryFactory qf = Search.getQueryFactory(stopsCache);
 
     Query query = qf.from(Stop.class)
       .having("delayMin").gt(0L)
@@ -68,6 +93,7 @@ public class DelayedTrainsListenerVerticle extends AbstractVerticle {
           vertx.runOnContext(x -> {
             //System.out.println(stop);
             vertx.eventBus().publish("delayed-trains", toJson(stop));
+            delayedCache.putAsync(stop.train.getName(), stop.train.getName());
           });
         }
 
@@ -80,7 +106,7 @@ public class DelayedTrainsListenerVerticle extends AbstractVerticle {
         }
       };
 
-    delayedTrainsCQ = Search.getContinuousQuery(cache);
+    delayedTrainsCQ = Search.getContinuousQuery(stopsCache);
     delayedTrainsCQ.addContinuousQueryListener(query, listener);
   }
 
