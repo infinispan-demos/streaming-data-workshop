@@ -125,13 +125,13 @@ public class HttpApp extends AbstractVerticle {
 
     String trainName = entry.getKey();
     Map<String, TrainPosition> trainPositions = positionsCache.get(trainName);
-    if (trainPositions != null) {
+    if (trainPositions != null && !trainPositions.isEmpty()) {
       log.info("Position for train `" + trainName + "` is " + trainPositions);
       return trainPositions.values().stream()
         .filter(train -> train.delay > 0)
         .findFirst()
         .map(delayedTrain -> recordTrainId(trainName, delayedTrain))
-        .orElse(!trainPositions.isEmpty() ? recordTrainId(trainName, trainPositions.values().iterator().next()) : null);
+        .orElse(recordTrainId(trainName, trainPositions.values().iterator().next()));
     }
     return null;
   }

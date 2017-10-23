@@ -51,8 +51,8 @@ To obtain a snapshot of the train positions of delayed trains, do:
 You should see something like:
 
     train_id        train_category  train_name      train_lastStopName      position_lat    position_lng    position_bearing
-    84/26701/18/20/95       R       R 11065 Coppet  6.14454 46.222452       70.0
-    84/27048/18/27/95       S       S 2     Zürich Flughafen        8.560382        47.448814       60.0
+    84/26411/18/24/95       R       R 7377  Sonceboz-Sombeval       47.194977       7.166263        200.0
+    84/26701/18/20/95       R       R 11065 Coppet  46.316335       6.187086        50.0
     ...
 
 There's no direct mapping between the station boards data streaming and train positions stream
