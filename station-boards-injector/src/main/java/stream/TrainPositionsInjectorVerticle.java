@@ -124,7 +124,7 @@ public class TrainPositionsInjectorVerticle extends AbstractVerticle {
     double x = Double.parseDouble(json.getString("x")) / 1000000;
     String dirOrEmpty = json.getString("direction");
     Double direction = dirOrEmpty.isEmpty() ? null : Double.parseDouble(dirOrEmpty) * 10;
-    TimedPosition current = new TimedPosition(ts, new GeoLocBearing(x, y, direction));
+    TimedPosition current = new TimedPosition(ts, new GeoLocBearing(y, x, direction));
 
     // TODO: Parse future positions to get continuous move (poly field)
 
