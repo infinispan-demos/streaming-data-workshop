@@ -9,6 +9,7 @@ import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.StaticHandler;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
@@ -16,8 +17,11 @@ import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.ClientCacheEntryCreatedEvent;
 import org.infinispan.client.hotrod.event.ClientCacheEntryModifiedEvent;
 import org.infinispan.client.hotrod.event.ClientCacheEntryRemovedEvent;
+import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryFactory;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -35,6 +39,7 @@ public class HttpApp extends AbstractVerticle {
 //  private int i = 0;
 
   private RemoteCacheManager client;
+  private RemoteCacheManager queryClient;
   private RemoteCache<String, String> delayedCache;
 //  RemoteCache<String, Map<String, TrainPosition>> positionsCache;
 
@@ -55,6 +60,7 @@ public class HttpApp extends AbstractVerticle {
     delayedCache = client.getCache("delayed-trains");
     delayedCache.addClientListener(new DelayedTrainListener());
 
+    queryClient = Util.createRemoteCacheManager();
     // positionsCache = client.getCache("train-positions");
 
     router.get("/position").handler(this::position);
@@ -100,16 +106,12 @@ public class HttpApp extends AbstractVerticle {
   }
 
   private String showTrainPositions(ConcurrentMap<String, String> trainIds) {
-    RemoteCache<String, Map<String, TrainPosition>> positionsCache = client.getCache("train-positions");
-    System.out.println("Position key set: " + positionsCache.keySet());
+    RemoteCache<String, TrainPosition> positionsCache = queryClient.getCache("train-positions");
+    // System.out.println("Position key set: " + positionsCache.keySet());
     return trainIds.entrySet().stream()
-      .filter(e -> findTrainId(e) != null)
-      .map(e -> {
-        String trainRoute = e.getKey();
-        String trainId = e.getValue();
-        return positionsCache.get(trainRoute).get(trainId);
-      })
+      .map(e -> getTrainId(e, positionsCache))
       .filter(Objects::nonNull)
+      .map(positionsCache::get)
       .map(pos -> String.format("%s\t%s\t%s\t%s\t%s\t%s\t%s",
         pos.getTrainId(), pos.getCat(), pos.getName(), pos.getLastStopName(),
         pos.current.position.lat, pos.current.position.lng, pos.current.position.bearing
@@ -117,60 +119,57 @@ public class HttpApp extends AbstractVerticle {
       .collect(Collectors.joining("\n"));
   }
 
-  private String findTrainId(Map.Entry<String, String> entry) {
+  private String getTrainId(Map.Entry<String, String> entry, RemoteCache<String, TrainPosition> positionsCache) {
     if (!entry.getValue().isEmpty())
       return entry.getValue();
 
-    RemoteCache<String, Map<String, TrainPosition>> positionsCache = client.getCache("train-positions");
-
     String trainName = entry.getKey();
-    Map<String, TrainPosition> trainPositions = positionsCache.get(trainName);
-    if (trainPositions != null && !trainPositions.isEmpty()) {
-      log.info("Position for train `" + trainName + "` is " + trainPositions);
-      return trainPositions.values().stream()
-        .filter(train -> train.delay > 0)
-        .findFirst()
-        .map(delayedTrain -> recordTrainId(trainName, delayedTrain))
-        .orElse(recordTrainId(trainName, trainPositions.values().iterator().next()));
+    QueryFactory qf = Search.getQueryFactory(positionsCache);
+    Query q = qf.create("select tp.trainId from datamodel.TrainPosition tp where name = :trainName");
+    q.setParameter("trainName", trainName);
+    List<Object[]> trains = q.list();
+
+    Iterator<Object[]> it = trains.iterator();
+    if (it.hasNext()) {
+      // Not accurate but simplest of methods
+      String trainId = (String) it.next()[0];
+      trainIds.put(trainName, trainId);
+      return trainId;
     }
+
     return null;
+
+//    RemoteCache<String, Map<String, TrainPosition>> positionsCache = client.getCache("train-positions");
+//
+//    String trainName = entry.getKey();
+//    Map<String, TrainPosition> trainPositions = positionsCache.get(trainName);
+//    if (trainPositions != null && !trainPositions.isEmpty()) {
+//      log.info("Position for train `" + trainName + "` is " + trainPositions);
+//      return trainPositions.values().stream()
+//        .filter(train -> train.delay > 0)
+//        .findFirst()
+//        .map(delayedTrain -> recordTrainId(trainName, delayedTrain))
+//        .orElse(recordTrainId(trainName, trainPositions.values().iterator().next()));
+//    }
+//    return null;
   }
 
-  private String recordTrainId(String trainName, TrainPosition delayedTrain) {
-    String trainId = delayedTrain.getTrainId();
-    trainIds.put(trainName, trainId);
+  private String recordTrainId(String trainName, TrainPosition trainPosition) {
+    String trainId = trainPosition.getTrainId();
+
     return trainId;
   }
 
 
-//  private String[] positions() {
-//    return new String[]{
+//  private String positions() {
+//    return
 //      "train_id\ttrain_category\ttrain_name\ttrain_lastStopName\tposition_lat\tposition_lng\tposition_bearing\n" +
 //        "84/80849/18/30/95\tS\tS 3\tSt. Margrethen\t47.474748\t9.481462\t0.0\n" +
 //        "84/414330/18/21/95\tRE\tRE 2575\tMilano Centrale\t46.175546\t10.146762\t190.0\n" +
 //        "84/364141/18/19/95\tTER\tTER96456\tPontarlier (F)\t46.854834\t6.176659\t110.0\n" +
 //        "84/451623/18/19/95\tGEX\tGEX 903\tZermatt\t46.03891\t7.761331\t210.0\n" +
 //        "84/242400/18/19/95\tRE\tRE 1354\tLandquart\t46.907376\t9.810728\t130.0\n" +
-//        "84/25571/18/21/95\tICN\tICN 526\tGenève-Aéroport\t46.886584\t6.767367\t200.0"
-//      ,
-//      "train_id\ttrain_category\ttrain_name\ttrain_lastStopName\tposition_lat\tposition_lng\tposition_bearing\n" +
-//        "84/80849/18/30/95\tS\tS 3\tSt. Margrethen\t47.475152\t9.487655\t0.0\n" +
-//        "84/414330/18/21/95\tRE\tRE 2575\tMilano Centrale\t46.172813\t10.142475\t190.0\n" +
-//        "84/364141/18/19/95\tTER\tTER96456\tPontarlier (F)\t46.865099\t6.163211\t110.0\n" +
-//        "84/451623/18/19/95\tGEX\tGEX 903\tZermatt\t46.037202\t7.759758\t210.0\n" +
-//        "84/242400/18/19/95\tRE\tRE 1354\tLandquart\t46.90823\t9.806602\t140.0\n" +
-//        "84/269912/18/19/95\tIRE\tIRE 4211\tLindau Hbf\t47.737449\t9.620462\t210.0\n" +
-//        "84/25571/18/21/95\tICN\tICN 526\tGenève-Aéroport\t46.879141\t6.759222\t200.0"
-//      ,
-//      "train_id\ttrain_category\ttrain_name\ttrain_lastStopName\tposition_lat\tposition_lng\tposition_bearing\n" +
-//        "84/80849/18/30/95\tS\tS 3\tSt. Margrethen\t47.475925\t9.493354\t10.0\n" +
-//        "84/414330/18/21/95\tRE\tRE 2575\tMilano Centrale\t46.167339\t10.133917\t190.0\n" +
-//        "84/364141/18/19/95\tTER\tTER96456\tPontarlier (F)\t46.87096\t6.155525\t110.0\n" +
-//        "84/451623/18/19/95\tGEX\tGEX 903\tZermatt\t46.035269\t7.75796\t210.0\n" +
-//        "84/242400/18/19/95\tRE\tRE 1354\tLandquart\t46.90965\t9.798466\t140.0\n" +
-//        "84/269912/18/19/95\tIRE\tIRE 4211\tLindau Hbf\t47.729403\t9.609414\t200.0\n" +
-//        "84/25571/18/21/95\tICN\tICN 526\tGenève-Aéroport\t46.865099\t6.741451\t200.0"
-//    };
+//        "84/25571/18/21/95\tICN\tICN 526\tGenève-Aéroport\t46.886584\t6.767367\t200.0";
 //  }
 
   @ClientListener

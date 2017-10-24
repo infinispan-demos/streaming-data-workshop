@@ -1,6 +1,7 @@
 package stream;
 
 import datamodel.Stop;
+import datamodel.TrainPosition;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.json.JsonObject;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -18,11 +19,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 import static stream.Util.mkRemoteCacheManager;
 
 public class DelayedTrainsListenerVerticle extends AbstractVerticle {
+
+  private static final Logger log = Logger.getLogger(DelayedTrainsListenerVerticle.class.getName());
 
   private RemoteCacheManager client;
   private RemoteCacheManager delayedCacheClient;
@@ -129,6 +133,17 @@ public class DelayedTrainsListenerVerticle extends AbstractVerticle {
     String errors = metaCache.get(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX);
     if (errors != null)
       throw new AssertionError("Error in proto file");
+    else
+      log.info("Added datamodel.proto file to server");
+
+    is = TrainPosition.class.getResourceAsStream("/train-position.proto");
+    metaCache.put("train-position.proto", readInputStream(is));
+
+    errors = metaCache.get(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX);
+    if (errors != null)
+      throw new AssertionError("Error in proto file");
+    else
+      log.info("Added train-position.proto file to server");
   }
 
   private static String readInputStream(InputStream is) {

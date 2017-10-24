@@ -38,11 +38,7 @@ public class TrainPositionsInjectorVerticle extends AbstractVerticle {
 
   RemoteCacheManager client;
 
-  // A train route has potentially multiple trains doing same route at one point in time.
-  // Each train has a train id but that cannot be correlated with the station board data.
-  // So, maintain a map of train ids associated with a particular train route.
-  // When a train route is delayed, find the first train id with delays and track that train's positions.
-  RemoteCache<String, Map<String, TrainPosition>> positionsCache;
+  RemoteCache<String, TrainPosition> positionsCache;
   private long loadStart;
 
   public static void main(String[] args) {
@@ -52,12 +48,12 @@ public class TrainPositionsInjectorVerticle extends AbstractVerticle {
 
   @Override
   public void start(Future<Void> startFuture) throws Exception {
-    vertx.<RemoteCacheManager>rxExecuteBlocking(fut -> fut.complete(createRemoteCacheManager()))
+    vertx.<RemoteCacheManager>rxExecuteBlocking(fut -> fut.complete(mkRemoteCacheManager()))
       .doOnSuccess(remoteCacheManager -> {
         client = remoteCacheManager;
         client.administration().createCache("train-positions", "distributed");
       }).<Void>map(x -> null)
-      .flatMap(v -> vertx.<RemoteCache<String, Map<String, TrainPosition>>>rxExecuteBlocking(fut -> fut.complete(client.getCache("train-positions"))))
+      .flatMap(v -> vertx.<RemoteCache<String, TrainPosition>>rxExecuteBlocking(fut -> fut.complete(client.getCache("train-positions"))))
       .doOnSuccess(remoteCache -> positionsCache = remoteCache).<Void>map(x -> null)
       .subscribe(result -> {
         startFuture.complete(result);
@@ -65,14 +61,14 @@ public class TrainPositionsInjectorVerticle extends AbstractVerticle {
       }, startFuture::fail);
   }
 
-  public RemoteCacheManager createRemoteCacheManager() {
-    Properties p = new Properties();
-    p.put("infinispan.client.hotrod.server_list", "${server.host:datagrid-hotrod}:${server.port:11222}");
-    ConfigurationBuilder cfg = new ConfigurationBuilder();
-    cfg.withProperties(p);
-    RemoteCacheManager client = new RemoteCacheManager(cfg.build());
-    return client;
-  }
+//  public RemoteCacheManager createRemoteCacheManager() {
+//    Properties p = new Properties();
+//    p.put("infinispan.client.hotrod.server_list", "${server.host:datagrid-hotrod}:${server.port:11222}");
+//    ConfigurationBuilder cfg = new ConfigurationBuilder();
+//    cfg.withProperties(p);
+//    RemoteCacheManager client = new RemoteCacheManager(cfg.build());
+//    return client;
+//  }
 
   private void startLoading() {
     AtomicLong stopsLoaded = new AtomicLong();
@@ -96,16 +92,7 @@ public class TrainPositionsInjectorVerticle extends AbstractVerticle {
         stopsLoaded.set(0);
       })
       .repeat()
-      .doOnNext(entry -> {
-          String routeName = entry.getKey();
-          Map<String, TrainPosition> trainPositions = positionsCache.get(routeName);
-          if (trainPositions == null)
-            trainPositions = new HashMap<>();
-
-          trainPositions.put(entry.getValue().getTrainId(), entry.getValue());
-          positionsCache.put(routeName, trainPositions);
-        }
-      )
+      .doOnNext(entry -> positionsCache.put(entry.getValue().getTrainId(), entry.getValue()))
       .doOnNext(entry -> stopsLoaded.incrementAndGet())
       .subscribe(Actions.empty(), t -> log.log(SEVERE, "Error while loading station boards", t));
   }
@@ -129,7 +116,7 @@ public class TrainPositionsInjectorVerticle extends AbstractVerticle {
     // TODO: Parse future positions to get continuous move (poly field)
 
     TrainPosition trainPosition = TrainPosition.make(
-      trainId, name, delay, cat, lastStopName, current, Collections.emptyList());
+      trainId, name, delay, cat, lastStopName, current);
     return new AbstractMap.SimpleImmutableEntry<>(name, trainPosition);
   }
 

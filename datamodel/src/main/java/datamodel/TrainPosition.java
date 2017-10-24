@@ -1,5 +1,8 @@
 package datamodel;
 
+import org.infinispan.protostream.MessageMarshaller;
+
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
@@ -11,20 +14,19 @@ public class TrainPosition implements Serializable {
 
   final byte[] trainId;
   final byte[] name;
+  public final int delay;
   final byte[] cat;
   final byte[] lastStopName;
   public final TimedPosition current;
-  public final List<TimedPosition> futurePositions;
-  public final int delay;
+  // public final List<TimedPosition> futurePositions;
 
-  private TrainPosition(byte[] trainId, byte[] name, int delay, byte[] cat, byte[] lastStopName, TimedPosition current, List<TimedPosition> futurePositions) {
+  private TrainPosition(byte[] trainId, byte[] name, int delay, byte[] cat, byte[] lastStopName, TimedPosition current) {
     this.trainId = trainId;
     this.name = name;
+    this.delay = delay;
     this.cat = cat;
     this.lastStopName = lastStopName;
     this.current = current;
-    this.futurePositions = futurePositions;
-    this.delay = delay;
   }
 
   public String getTrainId() {
@@ -52,13 +54,47 @@ public class TrainPosition implements Serializable {
       ", cat=" + getCat() +
       ", lastStopName=" + getLastStopName() +
       ", current=" + current +
-      ", futurePositions=" + futurePositions +
       '}';
   }
 
-  public static TrainPosition make(String trainId, String name, int delay, String cat, String lastStopName, TimedPosition current, List<TimedPosition> futurePositions) {
+  public static TrainPosition make(String trainId, String name, int delay, String cat, String lastStopName, TimedPosition current) {
     return new TrainPosition(
-      bs(trainId), bs(name), delay, bs(cat), bs(lastStopName), current, futurePositions);
+      bs(trainId), bs(name), delay, bs(cat), bs(lastStopName), current);
+  }
+
+  public static final class Marshaller implements MessageMarshaller<TrainPosition> {
+
+    @Override
+    public TrainPosition readFrom(ProtoStreamReader reader) throws IOException {
+      String trainId = reader.readString("trainId");
+      String name = reader.readString("name");
+      Integer delay = reader.readInt("delay");
+      byte[] cat = reader.readBytes("cat");
+      byte[] lastStopName = reader.readBytes("lastStopName");
+      TimedPosition current = reader.readObject("current", TimedPosition.class);
+      return new TrainPosition(bs(trainId), bs(name), delay, cat, lastStopName, current);
+    }
+
+    @Override
+    public void writeTo(ProtoStreamWriter writer, TrainPosition obj) throws IOException {
+      writer.writeString("trainId", obj.getTrainId());
+      writer.writeString("name", obj.getName());
+      writer.writeInt("delay", obj.delay);
+      writer.writeBytes("cat", obj.cat);
+      writer.writeBytes("lastStopName", obj.lastStopName);
+      writer.writeObject("current", obj.current, TimedPosition.class);
+    }
+
+    @Override
+    public Class<? extends TrainPosition> getJavaClass() {
+      return TrainPosition.class;
+    }
+
+    @Override
+    public String getTypeName() {
+      return "datamodel.TrainPosition";
+    }
+
   }
 
 }
