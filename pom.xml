@@ -40,6 +40,7 @@
     <module>workshop-main</module>
     <module>data-model</module>
     <module>stations-injector</module>
+    <module>delayed-listener</module>
     <!--&lt;!&ndash;<module>train-injector</module>&ndash;&gt;-->
     <!--&lt;!&ndash;<module>http-positions</module>&ndash;&gt;-->
     <!--<module>station-boards-injector</module>-->

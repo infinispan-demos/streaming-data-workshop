@@ -11,10 +11,8 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
-import rx.Completable;
 import rx.Notification;
 import rx.Observable;
-import rx.Single;
 import rx.functions.Actions;
 import rx.observables.StringObservable;
 import rx.schedulers.Schedulers;
@@ -41,6 +39,7 @@ import static java.util.logging.Level.SEVERE;
 import static rx.Completable.fromFuture;
 import static workshop.shared.Constants.DATAGRID_HOST;
 import static workshop.shared.Constants.DATAGRID_PORT;
+import static workshop.shared.Constants.STATIONS_INJECTOR_URI;
 import static workshop.shared.Constants.STATION_BOARDS_CACHE_NAME;
 
 public class StationsInjector extends AbstractVerticle {
@@ -50,12 +49,12 @@ public class StationsInjector extends AbstractVerticle {
   private RemoteCacheManager client;
 
   @Override
-  public void start(Future<Void> startFuture) throws Exception {
+  public void start(Future<Void> future) throws Exception {
     Router router = Router.router(vertx.getDelegate());
-    router.get("/inject").handler(this::inject);
+    router.get(STATIONS_INJECTOR_URI).handler(this::inject);
 
     vertx
-      .<RemoteCacheManager>rxExecuteBlocking(fut -> fut.complete(createDatagridClient()))
+      .<RemoteCacheManager>rxExecuteBlocking(fut -> fut.complete(createClient()))
       .doOnSuccess(remoteClient -> client = remoteClient)
       .subscribe(res ->
         vertx.getDelegate()
@@ -64,13 +63,13 @@ public class StationsInjector extends AbstractVerticle {
           .listen(8080, ar -> {
             if (ar.succeeded()) {
               log.info("Station injector HTTP server started");
-              startFuture.complete();
+              future.complete();
             } else {
               log.severe("Station injector HTTP server failed to start");
-              startFuture.fail(ar.cause());
+              future.fail(ar.cause());
             }
           }),
-        startFuture::fail);
+        future::fail);
   }
 
   @Override
@@ -107,7 +106,7 @@ public class StationsInjector extends AbstractVerticle {
       });
   }
 
-  private static RemoteCacheManager createDatagridClient() {
+  private static RemoteCacheManager createClient() {
     try {
       RemoteCacheManager client = new RemoteCacheManager(
         new ConfigurationBuilder().addServer()
