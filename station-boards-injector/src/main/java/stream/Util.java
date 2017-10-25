@@ -16,12 +16,12 @@
 
 package stream;
 
-import datamodel.GeoLocBearing;
-import datamodel.Station;
-import datamodel.Stop;
-import datamodel.TimedPosition;
-import datamodel.Train;
-import datamodel.TrainPosition;
+import workshop.model.GeoLocBearing;
+import workshop.model.Station;
+import workshop.model.Stop;
+import workshop.model.TimedPosition;
+import workshop.model.Train;
+import workshop.model.TrainPosition;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;

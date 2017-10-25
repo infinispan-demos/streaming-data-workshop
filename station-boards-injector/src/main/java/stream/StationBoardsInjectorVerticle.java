@@ -16,9 +16,9 @@
 
 package stream;
 
-import datamodel.Station;
-import datamodel.Stop;
-import datamodel.Train;
+import workshop.model.Station;
+import workshop.model.Stop;
+import workshop.model.Train;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava.core.AbstractVerticle;

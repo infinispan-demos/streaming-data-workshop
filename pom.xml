@@ -37,9 +37,13 @@
   </properties>
 
   <modules>
-    <module>datamodel</module>
-    <module>station-boards-injector</module>
-    <module>delayed-train-positions</module>
+    <module>workshop-main</module>
+    <module>data-model</module>
+    <module>stations-injector</module>
+    <!--&lt;!&ndash;<module>train-injector</module>&ndash;&gt;-->
+    <!--&lt;!&ndash;<module>http-positions</module>&ndash;&gt;-->
+    <!--<module>station-boards-injector</module>-->
+    <!--<module>delayed-train-positions</module>-->
   </modules>
 
   <dependencyManagement>
@@ -57,6 +61,17 @@
         <version>${infinispan.version}</version>
         <scope>import</scope>
         <type>pom</type>
+      </dependency>
+      <dependency>
+        <groupId>io.reactivex</groupId>
+        <artifactId>rxjava-string</artifactId>
+        <version>1.1.1</version>
+        <exclusions>
+          <exclusion>
+            <groupId>io.reactivex</groupId>
+            <artifactId>rxjava</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
     </dependencies>
   </dependencyManagement>
