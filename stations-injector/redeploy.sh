@@ -2,7 +2,9 @@
 
 set -e -x
 
-(cd ../data-model; ./install.sh)
+if [[ $1 = "-am" ]]; then
+  (cd ../data-model; ./install.sh)
+fi
 
 APP=stations-injector
 
