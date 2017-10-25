@@ -14,6 +14,7 @@ import io.vertx.ext.web.handler.sockjs.PermittedOptions;
 import io.vertx.ext.web.handler.sockjs.SockJSHandler;
 import io.vertx.rxjava.core.AbstractVerticle;
 import io.vertx.rxjava.core.Vertx;
+import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 
@@ -130,11 +131,12 @@ public class Main extends AbstractVerticle {
         .host("datagrid-hotrod")
         .port(11222).build());
 
-    client.getCache("repl").put("hello", "world");
-    Object value = client.getCache("repl").get("hello");
+    RemoteCache<String, String> cache = client.getCache("default");
+    cache.put("hello", "world");
+    Object value = cache.get("hello");
 
     Set<SocketAddress> topology =
-      client.getCache("repl").getCacheTopologyInfo().getSegmentsPerServer().keySet();
+      cache.getCacheTopologyInfo().getSegmentsPerServer().keySet();
 
     JsonObject rsp = new JsonObject()
       .put("get(hello)", value)
