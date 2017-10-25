@@ -26,7 +26,7 @@
     <version>1.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>datamodel</artifactId>
+  <artifactId>data-model</artifactId>
   <version>1.0-SNAPSHOT</version>
 
   <dependencies>

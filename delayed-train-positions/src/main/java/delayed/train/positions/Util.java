@@ -1,8 +1,8 @@
 package delayed.train.positions;
 
-import datamodel.GeoLocBearing;
-import datamodel.TimedPosition;
-import datamodel.TrainPosition;
+import workshop.model.GeoLocBearing;
+import workshop.model.TimedPosition;
+import workshop.model.TrainPosition;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;

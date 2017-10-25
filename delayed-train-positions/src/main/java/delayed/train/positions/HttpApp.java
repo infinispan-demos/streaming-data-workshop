@@ -1,7 +1,6 @@
 package delayed.train.positions;
 
-import datamodel.Train;
-import datamodel.TrainPosition;
+import workshop.model.TrainPosition;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.ext.web.Router;
@@ -11,16 +10,11 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
-import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
-import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.ClientCacheEntryCreatedEvent;
-import org.infinispan.client.hotrod.event.ClientCacheEntryModifiedEvent;
-import org.infinispan.client.hotrod.event.ClientCacheEntryRemovedEvent;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -29,8 +23,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-
-import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 
 public class HttpApp extends AbstractVerticle {
 
@@ -125,7 +117,7 @@ public class HttpApp extends AbstractVerticle {
 
     String trainName = entry.getKey();
     QueryFactory qf = Search.getQueryFactory(positionsCache);
-    Query q = qf.create("select tp.trainId from datamodel.TrainPosition tp where name = :trainName");
+    Query q = qf.create("select tp.trainId from workshop.model.TrainPosition tp where name = :trainName");
     q.setParameter("trainName", trainName);
     List<Object[]> trains = q.list();
 

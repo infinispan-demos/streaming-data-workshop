@@ -1,14 +1,12 @@
-package datamodel;
+package workshop.model;
 
 import org.infinispan.protostream.MessageMarshaller;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.Arrays;
-import java.util.List;
 
-import static utils.DomainUtils.bs;
-import static utils.DomainUtils.str;
+import static workshop.model.ModelUtils.bs;
+import static workshop.model.ModelUtils.str;
 
 public class TrainPosition implements Serializable {
 
@@ -92,7 +90,7 @@ public class TrainPosition implements Serializable {
 
     @Override
     public String getTypeName() {
-      return "datamodel.TrainPosition";
+      return "workshop.model.TrainPosition";
     }
 
   }

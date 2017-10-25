@@ -1,4 +1,4 @@
-package datamodel;
+package workshop.model;
 
 import org.infinispan.protostream.MessageMarshaller;
 
@@ -50,7 +50,7 @@ public class GeoLocBearing implements Serializable {
 
     @Override
     public String getTypeName() {
-      return "datamodel.GeoLocBearing";
+      return "workshop.model.GeoLocBearing";
     }
 
   }

@@ -1,7 +1,7 @@
 package stream;
 
-import datamodel.Stop;
-import datamodel.TrainPosition;
+import workshop.model.Stop;
+import workshop.model.TrainPosition;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.json.JsonObject;
 import org.infinispan.client.hotrod.RemoteCache;

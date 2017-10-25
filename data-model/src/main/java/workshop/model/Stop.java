@@ -14,7 +14,7 @@
  * under the License.
  */
 
-package datamodel;
+package workshop.model;
 
 import org.infinispan.protostream.MessageMarshaller;
 
@@ -79,7 +79,7 @@ public class Stop implements Serializable {
 
     @Override
     public String getTypeName() {
-      return "datamodel.Stop";
+      return "workshop.model.Stop";
     }
 
   }

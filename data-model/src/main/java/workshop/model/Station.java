@@ -14,14 +14,14 @@
  * under the License.
  */
 
-package datamodel;
+package workshop.model;
 
 import org.infinispan.protostream.MessageMarshaller;
 
 import java.io.IOException;
 import java.io.Serializable;
 
-import static utils.DomainUtils.*;
+import static workshop.model.ModelUtils.*;
 
 /**
  * @author galderz
@@ -75,7 +75,7 @@ public class Station implements Serializable {
 
     @Override
     public String getTypeName() {
-      return "datamodel.Station";
+      return "workshop.model.Station";
     }
 
   }

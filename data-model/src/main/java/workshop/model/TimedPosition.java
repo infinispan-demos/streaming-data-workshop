@@ -1,4 +1,4 @@
-package datamodel;
+package workshop.model;
 
 import org.infinispan.protostream.MessageMarshaller;
 
@@ -45,7 +45,7 @@ public class TimedPosition implements Serializable {
 
     @Override
     public String getTypeName() {
-      return "datamodel.TimedPosition";
+      return "workshop.model.TimedPosition";
     }
 
   }
