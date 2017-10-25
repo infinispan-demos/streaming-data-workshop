@@ -12,6 +12,11 @@ public final class Constants {
   public static final String DATAGRID_HOST = "datagrid-hotrod";
   public static final int DATAGRID_PORT = 11222;
 
+  public static final String WORKSHOP_MAIN_HOST = "workshop-main";
+  public static final String WORKSHOP_MAIN_URI = "/inject";
   public static final String STATIONS_INJECTOR_HOST = "stations-injector";
+  public static final String STATIONS_INJECTOR_URI = "/inject";
+  public static final String DELAYED_LISTENER_HOST = "delayed-listener";
+  public static final String DELAYED_LISTENER_URI = "/listen";
 
 }

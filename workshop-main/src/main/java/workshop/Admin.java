@@ -24,7 +24,7 @@ class Admin {
   private static final Logger log = Logger.getLogger(Admin.class.getName());
 
   static Void createRemoteCaches() {
-    RemoteCacheManager client = createManagementClient();
+    RemoteCacheManager client = createClient();
     try {
       RemoteCache<String, String> protoCache = client.getCache(PROTOBUF_METADATA_CACHE_NAME);
       addProtoDescriptorToServer(STATION_BOARD_PROTO, protoCache);
@@ -41,7 +41,7 @@ class Admin {
     }
   }
 
-  private static RemoteCacheManager createManagementClient() {
+  private static RemoteCacheManager createClient() {
     return new RemoteCacheManager(new ConfigurationBuilder().addServer()
       .host(DATAGRID_HOST)
       .port(DATAGRID_PORT)
