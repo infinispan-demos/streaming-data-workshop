@@ -17,6 +17,7 @@ import static workshop.shared.Constants.DATAGRID_PORT;
 import static workshop.shared.Constants.DELAYED_TRAINS_CACHE_NAME;
 import static workshop.shared.Constants.STATION_BOARDS_CACHE_NAME;
 import static workshop.shared.Constants.STATION_BOARD_PROTO;
+import static workshop.shared.Constants.TRAIN_POSITIONS_CACHE_NAME;
 import static workshop.shared.Constants.TRAIN_POSITION_PROTO;
 
 class Admin {
@@ -31,10 +32,8 @@ class Admin {
       addProtoDescriptorToServer(TRAIN_POSITION_PROTO, protoCache);
 
       client.administration().createCache(STATION_BOARDS_CACHE_NAME, "distributed");
-      //client.getCache(STATION_BOARDS_CACHE_NAME).clear();
-
+      client.administration().createCache(TRAIN_POSITIONS_CACHE_NAME, "distributed");
       client.administration().createCache(DELAYED_TRAINS_CACHE_NAME, "replicated");
-      //client.getCache(DELAYED_TRAINS_CACHE_NAME).clear();
       return null;
     } finally {
       client.stop();

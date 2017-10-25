@@ -1,14 +1,9 @@
 package workshop;
 
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.handler.sockjs.BridgeEventType;
-import io.vertx.ext.web.handler.sockjs.BridgeOptions;
-import io.vertx.ext.web.handler.sockjs.PermittedOptions;
-import io.vertx.ext.web.handler.sockjs.SockJSHandler;
 import io.vertx.rxjava.core.AbstractVerticle;
 import io.vertx.rxjava.core.Vertx;
 import io.vertx.rxjava.ext.web.client.HttpResponse;
@@ -26,8 +21,8 @@ import java.util.logging.Logger;
 
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static workshop.Admin.createRemoteCaches;
-import static workshop.shared.Constants.DELAYED_LISTENER_HOST;
-import static workshop.shared.Constants.DELAYED_LISTENER_URI;
+import static workshop.shared.Constants.POSITIONS_INJECTOR_HOST;
+import static workshop.shared.Constants.POSITIONS_INJECTOR_URI;
 import static workshop.shared.Constants.STATIONS_INJECTOR_HOST;
 import static workshop.shared.Constants.STATIONS_INJECTOR_URI;
 
@@ -43,6 +38,7 @@ public class Main extends AbstractVerticle {
     router.get("/test").blockingHandler(this::test);
     router.get("/inject").handler(this::inject);
 
+    // TODO: Best practice for chaining rx-style vert.x web server startup and duplicate
     vertx.getDelegate()
       .createHttpServer()
         .requestHandler(router::accept)
@@ -61,7 +57,7 @@ public class Main extends AbstractVerticle {
     vertx
       .<Void>rxExecuteBlocking(fut -> fut.complete(createRemoteCaches()))
       .flatMap(x -> httpGet(STATIONS_INJECTOR_HOST, STATIONS_INJECTOR_URI))
-      //.flatMap(x -> httpGet(DELAYED_LISTENER_HOST, DELAYED_LISTENER_URI))
+      .flatMap(x -> httpGet(POSITIONS_INJECTOR_HOST, POSITIONS_INJECTOR_URI))
       .subscribe(rsp -> {
         log.info("Inject replied: " + rsp.body());
         ctx.response().end("Inject OK");
