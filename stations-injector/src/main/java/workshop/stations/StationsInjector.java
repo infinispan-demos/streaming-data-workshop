@@ -57,6 +57,7 @@ public class StationsInjector extends AbstractVerticle {
       .<RemoteCacheManager>rxExecuteBlocking(fut -> fut.complete(createClient()))
       .doOnSuccess(remoteClient -> client = remoteClient)
       .subscribe(res ->
+        // TODO: Best practice for chaining rx-style vert.x web server startup and duplicate
         vertx.getDelegate()
           .createHttpServer()
           .requestHandler(router::accept)
@@ -78,6 +79,7 @@ public class StationsInjector extends AbstractVerticle {
       client.stop();
   }
 
+  // TODO: Duplicate
   private void inject(RoutingContext ctx) {
     vertx
       .<RemoteCache<String, Stop>>rxExecuteBlocking(fut -> fut.complete(client.getCache(STATION_BOARDS_CACHE_NAME)))
@@ -97,15 +99,16 @@ public class StationsInjector extends AbstractVerticle {
             stations.clear(); // If it reaches the end of the file, start again
             return Notification.createOnNext(null);
           }))
-          .zipWith(Observable.interval(10, TimeUnit.MILLISECONDS), (item, interval) -> item)
+          // TODO: Should be a flatmapObservable call putAsync wrapped with Completable?
           .doOnNext(entry -> stations.put(entry.getKey(), entry.getValue()))
           .subscribe(Actions.empty(),
-            t -> log.log(SEVERE, "Error while loading station boards", t));
+            t -> log.log(SEVERE, "Error while loading", t));
 
         ctx.response().end("Injector started");
       });
   }
 
+  // TODO: Duplicate
   private static RemoteCacheManager createClient() {
     try {
       RemoteCacheManager client = new RemoteCacheManager(
@@ -128,6 +131,7 @@ public class StationsInjector extends AbstractVerticle {
     }
   }
 
+  // TODO: Duplicate
   private static Observable<String> rxReadGunzippedTextResource(String resource) {
     Objects.requireNonNull(resource);
     URL url = StationsInjector.class.getClassLoader().getResource(resource);
@@ -172,6 +176,7 @@ public class StationsInjector extends AbstractVerticle {
     return new AbstractMap.SimpleImmutableEntry<>(stopId, stop);
   }
 
+  // TODO: Duplicate
   @SuppressWarnings("unchecked")
   private static <T> T orNull(Object obj, T defaultValue) {
     return Objects.isNull(obj) ? defaultValue : (T) obj;
