@@ -7,3 +7,4 @@ set -e -x
 (cd ./stations-injector; ./redeploy.sh)
 (cd ./positions-injector; ./redeploy.sh)
 (cd ./delayed-listener; ./redeploy.sh)
+(cd ./delayed-trains; ./redeploy.sh)

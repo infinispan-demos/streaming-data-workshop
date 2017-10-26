@@ -1,7 +1,7 @@
 {
   "frontend": {
     "url": {
-      "train_position_snapshot":"http://delayed-train-positions-myproject.127.0.0.1.nip.io/position",
+      "train_position_snapshot":"http://delayed-trains-myproject.127.0.0.1.nip.io/positions",
       "station_board":"http://-:9000/stationboard"
     },
     "delay":{

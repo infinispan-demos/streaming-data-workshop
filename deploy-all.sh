@@ -8,4 +8,7 @@ mvn clean install -N
 (cd ./stations-injector; ./deploy.sh)
 (cd ./positions-injector; ./deploy.sh)
 (cd ./delayed-listener; ./deploy.sh)
+(cd ./delayed-trains; ./deploy.sh)
 (cd ./datagrid-visualizer; ./deploy.sh)
+
+(cd ./web-viewer; ./start.sh)

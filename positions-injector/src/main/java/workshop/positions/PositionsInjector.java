@@ -71,6 +71,12 @@ public class PositionsInjector extends AbstractVerticle {
         future::fail);
   }
 
+  @Override
+  public void stop() throws Exception {
+    if (Objects.nonNull(client))
+      client.stop();
+  }
+
   // TODO: Duplicate
   private void inject(RoutingContext ctx) {
     vertx
