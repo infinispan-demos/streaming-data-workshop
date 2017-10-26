@@ -1,0 +1,74 @@
+= Packer build for the Streaming Date Workshop Virtual Machine
+
+This build creates a Fedora 26 virtual machine having:
+
+- `root` with password `packer`
+- `developer` user with password `password` (_sudoer_)
+- Oracle JDK8 (RPM Install)
+- Maven in `/home/developer/maven`
+- IntelliJ Community Edition in `/home/developer/idea`
+- The lab code in `/home/developer/streaming-data-workshop`
+
+IMPORTANT: By using this virtual machine you agree to the Oracle licensing agreement.
+
+== Building
+
+Download or fork/checkout this repository.
+
+Make sure Packer is installed and the `packer` command available from your `PATH`.
+
+Start the build with:
+
+[source,shell]
+----
+packer build workshop.json
+----
+
+You may customize the virtual machine with extra params:
+
+[source,shell]
+----
+packer build -var 'cpus=4' -var 'memory=4096' workshop.json
+----
+
+To skip downloading the ISO every time, you may provide an alternative location:
+
+[source,shell]
+----
+packer build -var 'cpus=4' -var 'memory=4096' -var 'fedora_26_url=file://</path/to/fedora26-netinst.iso>' workshop.json
+----
+
+To clean the workspace before rebuilding, run:
+
+[source,shell]
+----
+./clean
+----
+
+== Using
+
+After the build, import the output `OVA` file in VirtualBox.
+
+Before starting the machine, add an optical drive to the configuration.
+
+Start the machine, and login with user `developer`, password `developer`.
+
+Finish the setup (keyboard layout, ...etc).
+
+In the VirtualBox menu bar, click on _Devices_ > _Insert Guest Additions CD-ROM_.
+The system should autostart the Guest Additions installation.
+Otherwise, install them manually:
+
+[source,shell]
+----
+cd /run/media/vertx/VirtualBoxGuestAdditions
+sudo ./VBoxLinuxAdditions.run
+----
+
+Reboot.
+
+To start a Terminal, click on _Activities_ and type _Terminal_.
+Same goes for IntelliJ.
+
+After importing the project in IntelliJ, click on _File_ > _Settings_ > _Keymap_, and choose _Default for GNOME_.
+

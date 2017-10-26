@@ -1,0 +1,68 @@
+{
+  "variables": {
+    "fedora_26_url": "https://download.fedoraproject.org/pub/fedora/linux/releases/26/Workstation/x86_64/iso/Fedora-Workstation-netinst-x86_64-26-1.5.iso",
+    "cpus": "1",
+    "memory": "4096",
+    "vram": "128"
+  },
+  "builders": [
+    {
+      "vm_name": "streaming-data-workshop",
+      "type": "virtualbox-iso",
+      "format": "ova",
+      "guest_os_type": "Fedora_64",
+      "guest_additions_mode": "disable",
+      "iso_url": "{{user `fedora_26_url`}}",
+      "iso_checksum": "f514040516dc512119aad6316746569b231e157724d4f257af76825c483e1598",
+      "iso_checksum_type": "sha256",
+      "http_directory": "http",
+      "boot_wait": "5s",
+      "boot_command": [
+        "<tab> ",
+        "inst.ks=http://{{.HTTPIP}}:{{.HTTPPort}}/anaconda-ks.cfg ",
+        "biosdevname=0 ",
+        "net.ifnames=0 ",
+        "<enter>"
+      ],
+      "ssh_username": "developer",
+      "ssh_password": "developer",
+      "ssh_timeout": "120m",
+      "ssh_pty": "true",
+      "shutdown_command": "echo 'developer' | sudo -S systemctl poweroff",
+      "vboxmanage": [
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--cpus",
+          "{{user `cpus`}}"
+        ],
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--memory",
+          "{{user `memory`}}"
+        ],
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--vram",
+          "{{user `vram`}}"
+        ]
+      ]
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "scripts": [
+        "scripts/oracle_jdk.sh",
+        "scripts/maven.sh",
+        "scripts/intellij_ce.sh",
+        "scripts/docker.sh",
+        "scripts/oc.sh",
+        "scripts/lab_setup.sh"
+      ]
+    }
+  ]
+}
+
