@@ -21,6 +21,10 @@ import java.util.logging.Logger;
 
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static workshop.Admin.createRemoteCaches;
+import static workshop.shared.Constants.DATAGRID_HOST;
+import static workshop.shared.Constants.DATAGRID_PORT;
+import static workshop.shared.Constants.DELAYED_TRAINS_HOST;
+import static workshop.shared.Constants.LISTEN_URI;
 import static workshop.shared.Constants.POSITIONS_INJECTOR_HOST;
 import static workshop.shared.Constants.POSITIONS_INJECTOR_URI;
 import static workshop.shared.Constants.STATIONS_INJECTOR_HOST;
@@ -56,6 +60,7 @@ public class Main extends AbstractVerticle {
     log.info("HTTP GET /inject");
     vertx
       .<Void>rxExecuteBlocking(fut -> fut.complete(createRemoteCaches()))
+      .flatMap(x -> httpGet(DELAYED_TRAINS_HOST, LISTEN_URI))
       .flatMap(x -> httpGet(STATIONS_INJECTOR_HOST, STATIONS_INJECTOR_URI))
       .flatMap(x -> httpGet(POSITIONS_INJECTOR_HOST, POSITIONS_INJECTOR_URI))
       .subscribe(rsp -> {
@@ -79,8 +84,8 @@ public class Main extends AbstractVerticle {
   private void test(RoutingContext ctx) {
     RemoteCacheManager client = new RemoteCacheManager(
       new ConfigurationBuilder().addServer()
-        .host("datagrid-hotrod")
-        .port(11222).build());
+        .host(DATAGRID_HOST)
+        .port(DATAGRID_PORT).build());
 
     RemoteCache<String, String> cache = client.getCache("default");
     cache.put("hello", "world");

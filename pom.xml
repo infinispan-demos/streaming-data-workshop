@@ -42,10 +42,7 @@
     <module>stations-injector</module>
     <module>positions-injector</module>
     <module>delayed-listener</module>
-    <!--&lt;!&ndash;<module>train-injector</module>&ndash;&gt;-->
-    <!--&lt;!&ndash;<module>http-positions</module>&ndash;&gt;-->
-    <!--<module>station-boards-injector</module>-->
-    <!--<module>delayed-train-positions</module>-->
+    <module>delayed-trains</module>
   </modules>
 
   <dependencyManagement>

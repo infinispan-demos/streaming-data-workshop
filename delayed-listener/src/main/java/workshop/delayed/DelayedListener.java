@@ -37,7 +37,6 @@ import java.util.logging.Logger;
 
 import static workshop.shared.Constants.DATAGRID_HOST;
 import static workshop.shared.Constants.DATAGRID_PORT;
-import static workshop.shared.Constants.DELAYED_LISTENER_URI;
 import static workshop.shared.Constants.DELAYED_TRAINS_CACHE_NAME;
 import static workshop.shared.Constants.STATION_BOARDS_CACHE_NAME;
 import static workshop.shared.Constants.WORKSHOP_MAIN_HOST;
@@ -56,7 +55,7 @@ public class DelayedListener extends AbstractVerticle {
 
     Router router = Router.router(vertx.getDelegate());
     router.route("/eventbus/*").handler(this.sockJSHandler());
-    //router.get(DELAYED_LISTENER_URI).handler(this::listen);
+    //router.get(LISTEN_URI).handler(this::listen);
 
     vertx
       .<RemoteCacheManager>rxExecuteBlocking(fut -> fut.complete(createClient()))

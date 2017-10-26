@@ -18,7 +18,9 @@ public final class Constants {
   public static final String STATIONS_INJECTOR_URI = "/inject";
   public static final String POSITIONS_INJECTOR_HOST = "positions-injector";
   public static final String POSITIONS_INJECTOR_URI = "/inject";
-  public static final String DELAYED_LISTENER_HOST = "delayed-listener";
-  public static final String DELAYED_LISTENER_URI = "/listen";
+  public static final String LISTEN_URI = "/listen";
+  public static final String DELAYED_TRAINS_HOST = "delayed-trains";
+  public static final String DELAYED_TRAINS_POSITIONS_URI = "/positions";
+
 
 }
