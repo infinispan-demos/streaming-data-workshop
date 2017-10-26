@@ -43,6 +43,7 @@
     <module>positions-injector</module>
     <module>delayed-listener</module>
     <module>delayed-trains</module>
+    <module>delayed-dashboard</module>
   </modules>
 
   <dependencyManagement>
