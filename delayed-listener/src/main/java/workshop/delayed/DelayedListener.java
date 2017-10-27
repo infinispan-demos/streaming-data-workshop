@@ -3,16 +3,16 @@ package workshop.delayed;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.sockjs.BridgeEventType;
 import io.vertx.ext.web.handler.sockjs.BridgeOptions;
 import io.vertx.ext.web.handler.sockjs.PermittedOptions;
-import io.vertx.ext.web.handler.sockjs.SockJSHandler;
 import io.vertx.rxjava.core.AbstractVerticle;
+import io.vertx.rxjava.ext.web.Router;
+import io.vertx.rxjava.ext.web.RoutingContext;
 import io.vertx.rxjava.ext.web.client.HttpResponse;
 import io.vertx.rxjava.ext.web.client.WebClient;
 import io.vertx.rxjava.ext.web.codec.BodyCodec;
+import io.vertx.rxjava.ext.web.handler.sockjs.SockJSHandler;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
@@ -35,12 +35,7 @@ import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static workshop.shared.Constants.DATAGRID_HOST;
-import static workshop.shared.Constants.DATAGRID_PORT;
-import static workshop.shared.Constants.DELAYED_TRAINS_CACHE_NAME;
-import static workshop.shared.Constants.STATION_BOARDS_CACHE_NAME;
-import static workshop.shared.Constants.WORKSHOP_MAIN_HOST;
-import static workshop.shared.Constants.WORKSHOP_MAIN_URI;
+import static workshop.shared.Constants.*;
 
 public class DelayedListener extends AbstractVerticle {
 
@@ -53,26 +48,22 @@ public class DelayedListener extends AbstractVerticle {
   public void start(Future<Void> future) throws Exception {
     log.info("Starting delay listener verticle");
 
-    Router router = Router.router(vertx.getDelegate());
+    Router router = Router.router(vertx);
     router.route("/eventbus/*").handler(this.sockJSHandler());
     //router.get(LISTEN_URI).handler(this::listen);
 
     vertx
       .<RemoteCacheManager>rxExecuteBlocking(fut -> fut.complete(createClient()))
       .doOnSuccess(remoteClient -> client = remoteClient)
-      .subscribe(res -> {
+      .flatMap(v -> {
         log.info("Starting delay listener HTTP server");
-        vertx.getDelegate()
-          .createHttpServer()
+        return vertx.createHttpServer()
           .requestHandler(router::accept)
-          .listen(8080, ar -> {
-            if (ar.succeeded()) {
-              log.info("Listener HTTP server started");
-              future.complete();
-            } else {
-              future.fail(ar.cause());
-            }
-          });
+          .rxListen(8080);
+
+      }).subscribe(res -> {
+      log.info("Listener HTTP server started");
+      future.complete();
       }, future::fail);
   }
 
@@ -152,7 +143,7 @@ public class DelayedListener extends AbstractVerticle {
   }
 
   private Handler<RoutingContext> sockJSHandler() {
-    SockJSHandler sockJSHandler = SockJSHandler.create(vertx.getDelegate());
+    SockJSHandler sockJSHandler = SockJSHandler.create(vertx);
     PermittedOptions outPermit = new PermittedOptions().setAddress("delayed-trains");
     BridgeOptions options = new BridgeOptions().addOutboundPermitted(outPermit);
     sockJSHandler.bridge(options, be -> {
