@@ -30,17 +30,13 @@ import java.util.AbstractMap;
 import java.util.Date;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 
-import static java.util.logging.Level.SEVERE;
-import static rx.Completable.fromFuture;
-import static workshop.shared.Constants.DATAGRID_HOST;
-import static workshop.shared.Constants.DATAGRID_PORT;
-import static workshop.shared.Constants.STATIONS_INJECTOR_URI;
-import static workshop.shared.Constants.STATION_BOARDS_CACHE_NAME;
+import static java.util.logging.Level.*;
+import static rx.Completable.*;
+import static workshop.shared.Constants.*;
 
 public class StationsInjector extends AbstractVerticle {
 
@@ -66,7 +62,7 @@ public class StationsInjector extends AbstractVerticle {
               log.info("Station injector HTTP server started");
               future.complete();
             } else {
-              log.severe("Station injector HTTP server failed to start");
+              log.log(Level.SEVERE, "Station injector HTTP server failed to start", ar.cause());
               future.fail(ar.cause());
             }
           }),

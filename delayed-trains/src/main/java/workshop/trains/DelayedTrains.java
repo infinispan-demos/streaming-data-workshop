@@ -60,7 +60,7 @@ public class DelayedTrains extends AbstractVerticle {
           .requestHandler(router::accept)
           .rxListen(8080)
           .doOnSuccess(server -> log.info("HTTP server started"))
-          .doOnError(t -> log.severe("HTTP server failed to start"))
+          .doOnError(t -> log.log(Level.SEVERE, "HTTP server failed to start", t))
           .<Void>map(server -> null);
       })
       .subscribe(RxHelper.toSubscriber(future));
