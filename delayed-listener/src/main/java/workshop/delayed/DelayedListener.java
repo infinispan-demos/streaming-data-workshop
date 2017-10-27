@@ -62,10 +62,9 @@ public class DelayedListener extends AbstractVerticle {
           .requestHandler(router::accept)
           .rxListen(8080);
 
-      }).subscribe(res -> {
-      log.info("Listener HTTP server started");
-      future.complete();
-      }, future::fail);
+      })
+      .doOnSuccess(v -> log.info("Listener HTTP server started"))
+      .subscribe(res -> future.complete(), future::fail);
   }
 
 //  private void listen(RoutingContext ctx) {
@@ -84,13 +83,11 @@ public class DelayedListener extends AbstractVerticle {
 
   private void listen() {
     httpGet(WORKSHOP_MAIN_HOST, WORKSHOP_MAIN_URI)
-      .flatMap(rsp -> vertx
-        .<RemoteCache<String, Stop>>rxExecuteBlocking(fut ->
-          fut.complete(client.getCache(STATION_BOARDS_CACHE_NAME))))
-      .subscribe(
-        this::addContinuousQuery,
-        t -> log.log(Level.SEVERE, "Error starting listener", t)
-      );
+      .flatMap(rsp -> {
+        return vertx.<RemoteCache<String, Stop>>rxExecuteBlocking(fut -> {
+          fut.complete(client.getCache(STATION_BOARDS_CACHE_NAME));
+        });
+      }).subscribe(this::addContinuousQuery, t -> log.log(Level.SEVERE, "Error starting listener", t));
   }
 
   private Single<HttpResponse<String>> httpGet(String host, String uri) {
