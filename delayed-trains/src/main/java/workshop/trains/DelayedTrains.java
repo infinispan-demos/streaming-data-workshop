@@ -1,9 +1,10 @@
 package workshop.trains;
 
 import io.vertx.core.Future;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
+import io.vertx.rx.java.RxHelper;
 import io.vertx.rxjava.core.AbstractVerticle;
+import io.vertx.rxjava.ext.web.Router;
+import io.vertx.rxjava.ext.web.RoutingContext;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
@@ -31,12 +32,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import static workshop.shared.Constants.DATAGRID_HOST;
-import static workshop.shared.Constants.DATAGRID_PORT;
-import static workshop.shared.Constants.DELAYED_TRAINS_CACHE_NAME;
-import static workshop.shared.Constants.DELAYED_TRAINS_POSITIONS_URI;
-import static workshop.shared.Constants.LISTEN_URI;
-import static workshop.shared.Constants.TRAIN_POSITIONS_CACHE_NAME;
+import static workshop.shared.Constants.*;
 
 public class DelayedTrains extends AbstractVerticle {
 
@@ -49,32 +45,25 @@ public class DelayedTrains extends AbstractVerticle {
 
   @Override
   public void start(Future<Void> future) throws Exception {
-    Router router = Router.router(vertx.getDelegate());
-    router.get(DELAYED_TRAINS_POSITIONS_URI).handler(this::positions);
+    Router router = Router.router(vertx);
+    router.get(DELAYED_TRAINS_POSITIONS_URI).blockingHandler(this::positions);
     router.get(LISTEN_URI).handler(this::listen);
 
-    vertx
-      .<RemoteCacheManager>rxExecuteBlocking(fut -> fut.complete(createMgmtClient()))
+    vertx.<RemoteCacheManager>rxExecuteBlocking(fut -> fut.complete(createMgmtClient()))
       .doOnSuccess(remoteClient -> mgmtClient = remoteClient)
-      .flatMap(z ->
-          vertx.<RemoteCacheManager>rxExecuteBlocking(fut ->
-              fut.complete(createQueryClient())))
+      .flatMap(z -> {
+        return vertx.<RemoteCacheManager>rxExecuteBlocking(fut -> fut.complete(createQueryClient()));
+      })
       .doOnSuccess(remoteClient -> queryClient = remoteClient)
-      .subscribe(res ->
-          // TODO: Best practice for chaining rx-style vert.x web server startup and duplicate
-          vertx.getDelegate()
-            .createHttpServer()
-            .requestHandler(router::accept)
-            .listen(8080, ar -> {
-              if (ar.succeeded()) {
-                log.info("HTTP server started");
-                future.complete();
-              } else {
-                log.severe("HTTP server failed to start");
-                future.fail(ar.cause());
-              }
-            }),
-        future::fail);
+      .flatMap(v -> {
+        return vertx.createHttpServer()
+          .requestHandler(router::accept)
+          .rxListen(8080)
+          .doOnSuccess(server -> log.info("HTTP server started"))
+          .doOnError(t -> log.severe("HTTP server failed to start"))
+          .<Void>map(server -> null);
+      })
+      .subscribe(RxHelper.toSubscriber(future));
   }
 
   private void listen(RoutingContext ctx) {
@@ -97,12 +86,14 @@ public class DelayedTrains extends AbstractVerticle {
   }
 
   @Override
-  public void stop() throws Exception {
-    if (Objects.nonNull(mgmtClient))
-      mgmtClient.stop();
+  public void stop(Future<Void> stopFuture) throws Exception {
+    vertx.<Void>rxExecuteBlocking(fut -> {
+      if (Objects.nonNull(mgmtClient))
+        mgmtClient.stop();
 
-    if (Objects.nonNull(queryClient))
-      queryClient.stop();
+      if (Objects.nonNull(queryClient))
+        queryClient.stop();
+    }).subscribe(RxHelper.toSubscriber(stopFuture));
   }
 
   private void positions(RoutingContext ctx) {
