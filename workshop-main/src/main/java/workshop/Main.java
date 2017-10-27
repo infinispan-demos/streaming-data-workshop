@@ -2,10 +2,11 @@ package workshop;
 
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
+import io.vertx.rx.java.RxHelper;
 import io.vertx.rxjava.core.AbstractVerticle;
 import io.vertx.rxjava.core.Vertx;
+import io.vertx.rxjava.ext.web.Router;
+import io.vertx.rxjava.ext.web.RoutingContext;
 import io.vertx.rxjava.ext.web.client.HttpResponse;
 import io.vertx.rxjava.ext.web.client.WebClient;
 import io.vertx.rxjava.ext.web.codec.BodyCodec;
@@ -19,16 +20,9 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
-import static workshop.Admin.createRemoteCaches;
-import static workshop.shared.Constants.DATAGRID_HOST;
-import static workshop.shared.Constants.DATAGRID_PORT;
-import static workshop.shared.Constants.DELAYED_TRAINS_HOST;
-import static workshop.shared.Constants.LISTEN_URI;
-import static workshop.shared.Constants.POSITIONS_INJECTOR_HOST;
-import static workshop.shared.Constants.POSITIONS_INJECTOR_URI;
-import static workshop.shared.Constants.STATIONS_INJECTOR_HOST;
-import static workshop.shared.Constants.STATIONS_INJECTOR_URI;
+import static io.vertx.core.http.HttpHeaders.*;
+import static workshop.Admin.*;
+import static workshop.shared.Constants.*;
 
 public class Main extends AbstractVerticle {
 
@@ -38,22 +32,16 @@ public class Main extends AbstractVerticle {
   public void start(Future<Void> future) throws Exception {
     log.info("Starting Main verticle");
 
-    Router router = Router.router(vertx.getDelegate());
+    Router router = Router.router(vertx);
     router.get("/test").blockingHandler(this::test);
     router.get("/inject").handler(this::inject);
 
-    // TODO: Best practice for chaining rx-style vert.x web server startup and duplicate
-    vertx.getDelegate()
-      .createHttpServer()
-        .requestHandler(router::accept)
-        .listen(8080, ar -> {
-          if (ar.succeeded()) {
-            log.info("Main HTTP server started");
-            future.complete();
-          } else {
-            future.fail(ar.cause());
-          }
-        });
+    vertx.createHttpServer()
+      .requestHandler(router::accept)
+      .rxListen(8080)
+      .<Void>map(server -> null) // Ignore result
+      .doOnSuccess(server -> log.info("Main HTTP server started"))
+      .subscribe(RxHelper.toSubscriber(future));
   }
 
   private void inject(RoutingContext ctx) {
@@ -99,7 +87,7 @@ public class Main extends AbstractVerticle {
       .put("topology", topology.toString());
 
     ctx.response()
-      .putHeader(CONTENT_TYPE, "application/json; charset=utf-8")
+      .putHeader(CONTENT_TYPE.toString(), "application/json; charset=utf-8")
       .end(rsp.encodePrettily());
 
     client.stop();
