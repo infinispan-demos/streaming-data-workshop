@@ -93,6 +93,8 @@ public class DelayedTrains extends AbstractVerticle {
 
       if (Objects.nonNull(queryClient))
         queryClient.stop();
+
+      fut.complete();
     }).subscribe(RxHelper.toSubscriber(stopFuture));
   }
 
