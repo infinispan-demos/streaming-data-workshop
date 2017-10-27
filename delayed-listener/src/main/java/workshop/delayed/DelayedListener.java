@@ -6,6 +6,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.handler.sockjs.BridgeEventType;
 import io.vertx.ext.web.handler.sockjs.BridgeOptions;
 import io.vertx.ext.web.handler.sockjs.PermittedOptions;
+import io.vertx.rx.java.RxHelper;
 import io.vertx.rxjava.core.AbstractVerticle;
 import io.vertx.rxjava.ext.web.Router;
 import io.vertx.rxjava.ext.web.RoutingContext;
@@ -126,9 +127,13 @@ public class DelayedListener extends AbstractVerticle {
   }
 
   @Override
-  public void stop() throws Exception {
-    if (Objects.nonNull(client))
-      client.stop();
+  public void stop(Future<Void> stopFuture) throws Exception {
+    vertx.<Void>rxExecuteBlocking(fut -> {
+      if (Objects.nonNull(client)) {
+        client.stop();
+      }
+      fut.complete();
+    }).subscribe(RxHelper.toSubscriber(stopFuture));
   }
 
   private static String toJson(Stop stop) {
