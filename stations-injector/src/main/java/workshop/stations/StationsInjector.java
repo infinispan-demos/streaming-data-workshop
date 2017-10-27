@@ -2,9 +2,10 @@ package workshop.stations;
 
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
+import io.vertx.rx.java.RxHelper;
 import io.vertx.rxjava.core.AbstractVerticle;
+import io.vertx.rxjava.ext.web.Router;
+import io.vertx.rxjava.ext.web.RoutingContext;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
@@ -46,33 +47,29 @@ public class StationsInjector extends AbstractVerticle {
 
   @Override
   public void start(Future<Void> future) throws Exception {
-    Router router = Router.router(vertx.getDelegate());
+    Router router = Router.router(vertx);
     router.get(STATIONS_INJECTOR_URI).handler(this::inject);
 
     vertx
       .<RemoteCacheManager>rxExecuteBlocking(fut -> fut.complete(createClient()))
       .doOnSuccess(remoteClient -> client = remoteClient)
-      .subscribe(res ->
-        // TODO: Best practice for chaining rx-style vert.x web server startup and duplicate
-        vertx.getDelegate()
-          .createHttpServer()
+      .flatMap(v -> {
+        return vertx.createHttpServer()
           .requestHandler(router::accept)
-          .listen(8080, ar -> {
-            if (ar.succeeded()) {
-              log.info("Station injector HTTP server started");
-              future.complete();
-            } else {
-              log.log(Level.SEVERE, "Station injector HTTP server failed to start", ar.cause());
-              future.fail(ar.cause());
-            }
-          }),
-        future::fail);
+          .rxListen(8080)
+          .doOnSuccess(server -> log.info("Station injector HTTP server started"))
+          .doOnError(t -> log.log(Level.SEVERE, "Station injector HTTP server failed to start", t))
+          .<Void>map(server -> null); // Ignore result
+      }).subscribe(RxHelper.toSubscriber(future));
   }
 
   @Override
-  public void stop() throws Exception {
-    if (Objects.nonNull(client))
-      client.stop();
+  public void stop(Future<Void> stopFuture) throws Exception {
+    vertx.<Void>rxExecuteBlocking(fut -> {
+      if (Objects.nonNull(client))
+        client.stop();
+      fut.complete();
+    }).subscribe(RxHelper.toSubscriber(stopFuture));
   }
 
   // TODO: Duplicate
