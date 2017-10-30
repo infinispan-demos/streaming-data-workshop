@@ -70,15 +70,27 @@ public class Main extends AbstractVerticle {
   }
 
   private void test(RoutingContext ctx) {
-    // TODO Create a remote cache manager pointing to DATAGRID_HOST:DATAGRID_PORT
-    // Store a key/value pair "hello"/"world" in cache "default"
-    // Retrieve the stored value and put it in the json object
-    // Reply to web client
-    // ----
+    RemoteCacheManager client = new RemoteCacheManager(
+      new ConfigurationBuilder().addServer()
+        .host(DATAGRID_HOST)
+        .port(DATAGRID_PORT).build());
 
-    ctx.response().end("TODO");
+    RemoteCache<String, String> cache = client.getCache("default");
+    cache.put("hello", "world");
+    Object value = cache.get("hello");
 
-    // ----
+    Set<SocketAddress> topology =
+      cache.getCacheTopologyInfo().getSegmentsPerServer().keySet();
+
+    JsonObject rsp = new JsonObject()
+      .put("get(hello)", value)
+      .put("topology", topology.toString());
+
+    ctx.response()
+      .putHeader(CONTENT_TYPE.toString(), "application/json; charset=utf-8")
+      .end(rsp.encodePrettily());
+
+    client.stop();
   }
 
   public static void main(String[] args) {
