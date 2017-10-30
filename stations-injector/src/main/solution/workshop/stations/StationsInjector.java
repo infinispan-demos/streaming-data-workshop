@@ -85,11 +85,17 @@ public class StationsInjector extends AbstractVerticle {
             fut.complete();
           }, false, ar -> {}));
 
-        // TODO Get an observable for "cff-stop-2016-02-29__.jsonl.gz" file
-        // Convert each entry to a tuple of String/Stop
-        // Store each entry into the data grid
-        // ----
-        // ----
+        rxReadGunzippedTextResource("cff-stop-2016-02-29__.jsonl.gz")
+          .map(StationsInjector::toEntry)
+          .repeatWhen(notification -> notification.map(terminal -> {
+            log.info("Reached end of file, clear and restart");
+            stations.clear(); // If it reaches the end of the file, start again
+            return Notification.createOnNext(null);
+          }))
+          // TODO: Should be a flatmapObservable call putAsync wrapped with Completable?
+          .doOnNext(entry -> stations.put(entry.getKey(), entry.getValue()))
+          .subscribe(Actions.empty(),
+            t -> log.log(SEVERE, "Error while loading", t));
 
         ctx.response().end("Injector started");
       });
