@@ -43,7 +43,6 @@ public class DelayedListener extends AbstractVerticle {
   private static final Logger log = Logger.getLogger(DelayedListener.class.getName());
 
   private RemoteCacheManager client;
-  private boolean listenerStarted = false;
 
   @Override
   public void start(Future<Void> future) throws Exception {
@@ -51,7 +50,6 @@ public class DelayedListener extends AbstractVerticle {
 
     Router router = Router.router(vertx);
     router.route("/eventbus/*").handler(this.sockJSHandler());
-    //router.get(LISTEN_URI).handler(this::listen);
 
     vertx
       .<RemoteCacheManager>rxExecuteBlocking(fut -> fut.complete(createClient()))
@@ -66,20 +64,6 @@ public class DelayedListener extends AbstractVerticle {
       .doOnSuccess(v -> log.info("Listener HTTP server started"))
       .subscribe(res -> future.complete(), future::fail);
   }
-
-//  private void listen(RoutingContext ctx) {
-//    httpGet(WORKSHOP_MAIN_HOST, WORKSHOP_MAIN_URI)
-//      .flatMap(rsp -> vertx
-//          .<RemoteCache<String, Stop>>rxExecuteBlocking(fut ->
-//              fut.complete(client.getCache(STATION_BOARDS_CACHE_NAME))))
-//      .subscribe(stations -> {
-//        addContinuousQuery(stations);
-//        ctx.response().end("Delayed listener started");
-//      }, t -> {
-//        log.log(Level.SEVERE, "Error starting listener", t);
-//        ctx.response().end("Failed to start listener");
-//      });
-//  }
 
   private void listen() {
     httpGet(WORKSHOP_MAIN_HOST, WORKSHOP_MAIN_URI)
@@ -151,10 +135,7 @@ public class DelayedListener extends AbstractVerticle {
     sockJSHandler.bridge(options, be -> {
       if (be.type() == BridgeEventType.REGISTER) {
         log.info("SockJs: client connected");
-        if (!listenerStarted) {
-          listen();
-          listenerStarted = true;
-        }
+        listen();
       }
 
       be.complete(true);
