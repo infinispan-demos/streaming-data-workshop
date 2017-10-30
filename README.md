@@ -10,11 +10,11 @@
   * Makes it wasy to work with multiple Node.js versions 
 
 
-# Running Workshop
+# Running Workshop Solution
 
 Start by calling:
 
-    ./start-all.sh
+    ./start-solution.sh
 
 This script starts OpenShift with the service catalog and installs templates.
 Then, it creates a data grid using those templates and deploys all components.
@@ -112,3 +112,15 @@ Finally, you might at times make wide ranging changes to multiple modules.
 To deploy all these changes, you can simply call the following from the root of this repo:
 
     ./redeploy-all.sh 
+
+
+# Deploying Solutions
+
+Some modules require the user to code some parts of the application to get the solution to work.
+
+Instead of coding things manually, it is possible to deploy/redeploy the code in a particular module to run the solution.
+
+To do that, execute deploy/redeploy with `--solution` parameter, e.g.
+
+    cd <module-name>
+    ./redeploy.sh --solution
