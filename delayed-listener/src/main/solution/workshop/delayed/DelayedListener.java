@@ -84,16 +84,27 @@ public class DelayedListener extends AbstractVerticle {
   }
 
   private void addContinuousQuery(RemoteCache<String, Stop> stations) {
-    // TODO 1 - Create QueryFactory for cache
+    QueryFactory qf = Search.getQueryFactory(stations);
 
-    // TODO 2 - Create query for Stop where delayMin is bigger than 0
+    Query query = qf.from(Stop.class)
+      .having("delayMin").gt(0L)
+      .build();
 
-    // TODO 3 - Create continuous query listener and override result joining
+    ContinuousQueryListener<String, Stop> listener =
+      new ContinuousQueryListener<String, Stop>() {
+        @Override
+        public void resultJoining(String id, Stop stop) {
+          vertx.runOnContext(x -> {
+            vertx.eventBus().publish("delayed-trains", toJson(stop));
+            RemoteCache<String, String> delayed = client.getCache(DELAYED_TRAINS_CACHE_NAME);
+            delayed.putAsync(stop.train.getName(), stop.train.getName());
+          });
+        }
+      };
 
-    // TODO 4 - Publish each new Stop to the "delayed-trains" address via Vertx eventbus
-    // Store asynchronously Stop's train name into DELAYED_TRAINS_CACHE_NAME cache
-
-    // TODO 5 - Get continuous query, remove any previous listeners, and join query with listener
+    ContinuousQuery<String, Stop> continuousQuery = Search.getContinuousQuery(stations);
+    continuousQuery.removeAllListeners();
+    continuousQuery.addContinuousQueryListener(query, listener);
   }
 
   @Override
