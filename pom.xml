@@ -30,6 +30,7 @@
     <maven.compiler.target>1.8</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <source.dir>src/main/java</source.dir>
 
     <vertx.version>3.4.1</vertx.version>
     <infinispan.version>9.1.1.Final</infinispan.version>
@@ -77,6 +78,8 @@
   </dependencyManagement>
 
   <build>
+    <sourceDirectory>${source.dir}</sourceDirectory>
+
     <pluginManagement>
       <plugins>
         <plugin>
@@ -109,5 +112,15 @@
     <!--<plugins>-->
     <!--</plugins>-->
   </build>
+
+  <profiles>
+    <profile>
+      <id>solution</id>
+      <properties>
+        <source.dir>src/main/solution</source.dir>
+        <workshop.solution>true</workshop.solution>
+      </properties>
+    </profile>
+  </profiles>
 
 </project>
