@@ -6,7 +6,12 @@ if [[ $1 = "-am" ]]; then
   (cd ../data-model; ./install.sh)
 fi
 
+if [[ $1 = "--solution" ]]; then
+  MVN_PROFILE="-P solution"
+fi
+
+
 APP=stations-injector
 
-mvn clean package -DskipTests=true
+mvn clean package -DskipTests=true ${MVN_PROFILE}
 oc start-build ${APP} --from-dir=. --follow
