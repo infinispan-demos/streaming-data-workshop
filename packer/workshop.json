@@ -58,8 +58,10 @@
         "scripts/oracle_jdk.sh",
         "scripts/maven.sh",
         "scripts/intellij_ce.sh",
+        "scripts/nvm.sh",
         "scripts/docker.sh",
         "scripts/oc.sh",
+        "scripts/kubetail.sh",
         "scripts/lab_setup.sh"
       ]
     }
