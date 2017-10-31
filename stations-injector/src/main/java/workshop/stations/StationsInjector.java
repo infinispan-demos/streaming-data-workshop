@@ -85,11 +85,11 @@ public class StationsInjector extends AbstractVerticle {
             fut.complete();
           }, false, ar -> {}));
 
-        // TODO Get an observable for "cff-stop-2016-02-29__.jsonl.gz" file
-        // Convert each entry to a tuple of String/Stop
-        // Store each entry into the data grid
-        // ----
-        // ----
+        // TODO 1: Get an observable for "cff-stop-2016-02-29__.jsonl.gz" file calling the method rxReadGunzippedTextResource
+        // TODO 2: map each entry into a tuple of String/Stop with StationsInjector::toEntry
+        // TODO 3. flatMap each entry to stored it in the stations cache calling putAsync and using Observable.from
+        // TODO 4. subscribe Actions.empty() and log an error happened
+
 
         ctx.response().end("Injector started");
       });

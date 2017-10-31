@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<!-- saved from url=(0060)http://getbootstrap.com/2.3.2/examples/starter-template.html -->
+<html lang="fr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <title>Streaming Data Workshop</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!-- Le styles -->
+  <link href="styles/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="styles/idea.css">
+  <style type="text/css">
+    body {
+      padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
+    }
+    section {
+      padding-bottom: 20px;
+    }
+    li {
+      margin: 10px;
+    }
+    pre {
+      background-color: white;
+    }
+  </style>
+  <script src="js/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+</head>
+
+<body cz-shortcut-listen="true">
+
+<div class="navbar navbar-inverse navbar-fixed-top">
+  <div class="navbar-inner">
+    <div class="container">
+      <a class="navbar-brand" href="#">
+        Streaming Data Workshop
+      </a>
+      <div class="nav-collapse collapse">
+        <ul class="nav">
+        </ul>
+      </div><!--/.nav-collapse -->
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <h1>Playground</h1>
+
+  <p>We will start with a warmup for those that are not familiar with <strong>Vert.x</strong>, <strong>Infinispan</strong> and <strong>Openshift</strong>.</p>
+  <p>If you ave already played or worked with these frameworks before, you can skip this part.</p>
+
+  <h2>Ex1 :: Start Openshift and Create an Infinispan Cluster</h2>
+  <section id="openshift">
+    <img src="img/openshift.png" alt="Openshift" class="img-rounded" height="30%" width="30%">
+    <ul style="list-style: decimal;">
+      <li>Start a cluster with the service catalog</li>
+      <pre><code>> cd streaming-data-workshop
+> ./start-openshift.sh</code></pre>
+      <li>Log in into <a href="https://127.0.0.1:8443" target="_blank">Openshift console</a> with <code>developer/developer</code></li>
+      <li>Click in "browse catalog"</li>
+    </ul>
+    <img src="img/openshift-catalog.png" alt="simple web app" class="img-rounded"/>
+  </section>
+
+  <section id="infinispan">
+    <img src="img/infinispan9_pixelsizes_600.gif" alt="Infinispan" class="img-rounded" height="20%" width="20%">
+    <ul style="list-style: decimal;">
+      <li>In openshift catalog, choose <kbd>Infinispan Ephemeral</kbd></li>
+      <li>Add the following configuration :
+          <pre><code>APPLICATION_NAME=datagrid
+NUMBER_OF_INSTANCES=3
+MANAGEMENT_USER/MANAGEMENT_PASSWORD=developer/developer</code></pre>
+      </li>
+      <li>Click <kbd>Next</kbd></li>
+      <li>Click <kbd>Create</kbd></li>
+      <li>Go to <kbd>My project</kbd></li>
+      <li>You should see <kbd>datagrid</kbd> deployment with <kbd>3 pods</kbd> and <kbd>3 services</kbd> : datagrid-hotrod, datagrid-http and datagrid-management</li>
+      <img src="img/datagrid-pods.png" alt="pods" class="img-rounded"/>
+    </ul>
+    <div class="alert alert-warning">You can deploy de cluster easily from command line :</div>
+      <pre><code>cd streaming-data-workshop
+./start-datagrid.sh</code></pre>
+  </section>
+
+  <h2>Ex2 :: Vert.x and Infinispan Intro</h2>
+  <p>In this section you will learn how to create REST endpoints using vert.x and how to comunicate remotely with a cache.</p>
+  <section id="vert.x">
+    <img src="img/Vert.x_Logo.svg.png" alt="Vert.x" class="img-rounded" height="15%" width="15%">
+    <ul style="list-style: decimal;">
+      <li>In the project, open <kbd>simple-web-application module</kbd></li>
+      <li>Create your first Verticle.
+        <ul>
+          <li>Extend the class from <code>AbstractVerticle</code></li>
+          <li>Override <code>start</code> method</li>
+          <li>Create a Router with <code>Router router = Router.router(vertx);</code></li>
+          <li>Create an empty <kbd>GET</kbd> endpoint that will respond <code>Welcome</code> from the Router</li>
+          <li>Create a <kbd>GET</kbd> endpoint in <code>/api</code> that responds
+            <pre><code class="json">{"name":"duchess","version":1}</code></pre>
+            using <pre><code class="java">new JsonObject().put("name", "duchess").put("version", 1).encode()</code></pre>
+          </li>
+          <li>Create a <code>HttpServer</code> with vertx object with requestHandler <code>router::accept</code> and listening to port <code>8080</code></li>
+        </ul>
+        <br/>
+        <a class="btn btn-info" role="button" onclick="$('#array-sol-1').toggle();">Show/Hide Solution</a>
+        <div id="array-sol-1" style="display:none;">
+        <pre>
+          <code class="java">package workshop.playgroud;
+
+import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Future;
+import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
+
+public class PlayWithTheCache extends AbstractVerticle {
+
+  @Override
+  public void start() throws Exception {
+    Router router = Router.router(vertx);
+
+    router.get("/").handler(rc -> {
+      rc.response().end("Welcome");
+    });
+
+    router.get("/api").handler(rc -> {
+      rc.response().end(new JsonObject().put("name", "duchess").put("version", 1).encode());
+    });
+
+    vertx.createHttpServer()
+      .requestHandler(router::accept)
+      .listen(8080);
+  }
+}</code>
+        </pre>
+      </div>
+      </li>
+      <li>Deploy with <code>./deploy.sh</code></li>
+      <img src="img/simple-web-app.png" alt="simple web app" class="img-rounded"/>
+      <li>Go to <a target="_target" href="http://simple-web-app-myproject.127.0.0.1.nip.io">Welcome endpoint</a></li>
+      <li>Go to <a target="_target" href="http://simple-web-app-myproject.127.0.0.1.nip.io/api">Api endpoint</a></li>
+      <li> Connect with Infinispan
+        <ul>
+          <li>Init the <code>RemoteCacheManager</code> with <pre><code class="java">new ConfigurationBuilder().addServer()
+          .host(DATAGRID_HOST) // contains the value datagrid-hotrod that is a service in Openshfitt
+          .port(DATAGRID_PORT) // contains the hotrod point 11222
+          .build())</code></pre></li>
+          <li>Init the <code>defaultCache</code> calling <code>remoteCacheManager.getCache()</code></li>
+          <li>Add a body handler to the route <code>router.route().handler(BodyHandler.create());</code></li>
+          <li>Add the <kbd>POST</kbd> <code>router.post("/api/duchess").handler(this::handleAddDuchess);</code></li>
+          <li>Implement <code>handleAddDuchess</code> so that it takes the <code>id</code> and the <code>value</code> in the body
+            using <code>rc.getBodyAsJson()</code> and <code>defaultCache.putAsync(k,v)</code></li>
+          <li>Add the <kbd>GET</kbd> <code>router.get("/api/duchess/:id").handler(this::handleGetDuchess);</code></li>
+          <li>Implement <code>handleGetDuchess</code> so that it takes the <code>id</code> using <code>rc.request().getParam</code> and <code>defaultCache.getAsync(k)</code></li>
+        </ul>
+      <br/>
+        <a class="btn btn-info" role="button" onclick="$('#array-sol-2').toggle();">Show/Hide Solution</a>
+        <div id="array-sol-2" style="display:none;">
+        <pre>
+          <code class="java">// Add the BodyHandler
+  router.route().handler(BodyHandler.create());
+  router.post("/api/duchess").handler(this::handleAddDuchess);
+  router.get("/api/duchess/:id").handler(this::handleGetDuchess);
+
+  protected void initCache(Vertx vertx) {
+    vertx.executeBlocking(fut -> {
+      client = new RemoteCacheManager(
+        new ConfigurationBuilder().addServer()
+          .host(DATAGRID_HOST)
+          .port(DATAGRID_PORT)
+          .build());
+
+      defaultCache = client.getCache();
+      fut.complete();
+    }, res -> {
+      if (res.succeeded()) {
+        System.out.println("Cache started");
+      } else {
+        res.cause().printStackTrace();
+      }
+    });
+  }
+
+  private void handleGetDuchess(RoutingContext rc) {
+    defaultCache.getAsync(Integer.parseInt(rc.request().getParam("id")))
+      .thenAccept(value -> {
+        String response = "Not found";
+        if (value != null) {
+          response = new JsonObject().put("Duchess", value).encode();
+        }
+        rc.response().end(response);
+      });
+  }
+
+  private void handleAddDuchess(RoutingContext rc) {
+    HttpServerResponse response = rc.response();
+    JsonObject bodyAsJson = rc.getBodyAsJson();
+    if (bodyAsJson != null && bodyAsJson.containsKey("id") && bodyAsJson.containsKey("name")) {
+      defaultCache.putAsync(bodyAsJson.getInteger("id"), bodyAsJson.getString("name"))
+        .thenAccept(s -> {
+          response.end("Duchess Added");
+        });
+    } else {
+      response.end("Body is " + bodyAsJson + ". id and name should be provided");
+    }
+  }</code></pre>
+        </div>
+      </li>
+      <li>Redeploy with <code>./redeploy.sh</code></li>
+      <li>Test <kbd>POST</kbd> with <code>curl -H "Content-Type: application/json" -X POST -d '{"id":1,"name":"Oihana"}' http://simple-web-app-myproject.127.0.0.1.nip.io/api/duchess</code></li>
+      <li>Test <kbd>GET</kbd> with <code>curl -X GET -i -H "Accept: application/json" http://simple-web-app-myproject.127.0.0.1.nip.io/api/duchess/1</code></li>
+    </ul>
+  </section>
+
+  <h1>Streaming Data</h1>
+
+  <h2>Ex3 :: Start</h2>
+  <ul>
+    <li>Run <code>./start-openshift.sh</code>. Reboot docker engine if you see an error related to service catalog.</li>
+    <li>Log in into <a href="https://127.0.0.1:8443" target="_blank">Openshift console</a> with <code>developer/developer</code></li>       <p> Run <code>./start-datagrid.sh</code></p></li>
+    <li>Run <code>./start-datagrid.sh</code>. Check your 3 pods are active</li>
+    <li>Run <code>./deploy-all.sh</code></li>
+    <li>Go to the board : <a href="http://localhost:3000/" target="_target">front-end app</a></li>
+  </ul>
+
+  <h2>Ex4 :: Collect data</h2>
+
+  <p>In this section we are going to import in a reactive and real-time way a file that contains data.
+  This code would work connecting to a remote web-service or any other data source. The data collected in the files are real data coming from
+  an real API on Swiss Transport.</p>
+
+  <h3>Deploy Infinispan Visualizer</h3>
+  <section id="visualizer">
+    <ul>
+      <li><code>cd datagrid-visualizer</code>/li>
+      <li><code>./deploy.sh</code></li>
+      <li>Go to <a href="http://datagrid-visualizer-myproject.127.0.0.1.nip.io/infinispan-visualizer/" target="_target">See the visualizer runnnig</a></li>
+    </ul>
+  </section>
+
+  <h3>Make data injection work</h3>
+
+  <section id="inject">
+    <img src="img/collectionLayer.png" alt="Collection Layer" class="img-rounded">
+    <ul style="list-style: decimal;">
+      <li>Open <kbd>StationsInjector</kbd></li>
+      <li>Implement <code>inject</code> method with JavaRX
+        <pre><code class="java">router.get(STATIONS_INJECTOR_URI).handler(this::inject);
+
+private void inject(RoutingContext ctx) {
+    vertx. < RemoteCache < String, Stop>>rxExecuteBlocking(fut -> fut.complete(client.getCache(STATION_BOARDS_CACHE_NAME)))
+      // Remove data on start, to start clean
+      .map(stations -> fromFuture(stations.clearAsync()).to(x -> stations))
+      .subscribe(stations -> {
+        vertx.setPeriodic(5000L, l ->
+          vertx.executeBlocking(fut -> {
+            log.info(String.format("Progress: stored=%d%n", stations.size()));
+            fut.complete();
+          }, false, ar -> {}));
+
+        // TODO 1: Get an observable for "cff-stop-2016-02-29__.jsonl.gz" file calling the method rxReadGunzippedTextResource
+        // TODO 2: map each entry into a tuple of String/Stop with StationsInjector::toEntry
+        // TODO 3. flatMap each entry to stored it in the stations cache calling putAsync and using Observable.from
+        // TODO 4. subscribe Actions.empty() and log an error happened
+
+        ctx.response().end("Injector started");
+      });
+  }
+        </code></pre>
+
+        <a class="btn btn-info" role="button" onclick="$('#array-sol-3').toggle();">Show/Hide Solution</a>
+        <div id="array-sol-3" style="display:none;">
+        <pre>
+          <code class="java">private void inject(RoutingContext ctx) {
+    vertx.< RemoteCache < String , Stop > >rxExecuteBlocking(fut -> fut.complete(client.getCache(STATION_BOARDS_CACHE_NAME)))
+      // Remove data on start, to start clean
+      .map(stations -> fromFuture(stations.clearAsync()).to(x -> stations))
+      .subscribe(stations -> {
+        vertx.setPeriodic(5000L, l ->
+          vertx.executeBlocking(fut -> {
+            log.info(String.format("Progress: stored=%d%n", stations.size()));
+            fut.complete();
+          }, false, ar -> {}));
+
+        rxReadGunzippedTextResource("cff-stop-2016-02-29__.jsonl.gz")
+          .map(StationsInjector::toEntry)
+          .flatMap(e -> Observable.from(stations.putAsync(e.getKey(), e.getValue())))
+          .subscribe(Actions.empty(),
+            t -> log.log(SEVERE, "Error while loading", t));
+
+        ctx.response().end("Injector started");
+      });
+}</code></pre>
+        </div>
+      </li>
+      <li><code>./redeploy.sh</code></li>
+      <li>HOW TO LAUNCH THE INJECTORS???</li>
+      <li>Go to <a href="http://datagrid-visualizer-myproject.127.0.0.1.nip.io/infinispan-visualizer/" target="_target"> and see data being loaded</a></li>
+    </ul>
+  </section>
+
+
+  <h2>Ex5 :: Transport data</h2>
+
+  <section id="transport">
+    <img src="img/transportLayer.png" alt="Transport Layer" class="img-rounded">
+    <ul style="list-style: decimal;">
+      <li>Open <kbd>DelayedListener</kbd> class in the <kbd>delayed-listener</kbd> module</li>
+      <li>Implement <code>inject</code> method with <strong>continuous query</strong>
+        <pre><code class="java">private void addContinuousQuery(RemoteCache< String, Stop> stations) {
+    // TODO 1 - Create QueryFactory with Search class for the stations cache
+
+    // TODO 2 - Create query for Stop where 'delayMin' is bigger than 0 using the QueryFactory
+
+    // TODO 3 - Create continuous query listener and override result joining
+
+    // TODO 4 - Publish each new Stop to the "delayed-trains" address via Vertx eventbus
+    // Store asynchronously Stop's train name into DELAYED_TRAINS_CACHE_NAME cache
+
+    // TODO 5 - Get continuous query, remove any previous listeners, and join query with listener
+  }</code></pre>
+
+        <a class="btn btn-info" role="button" onclick="$('#array-sol-4').toggle();">Show/Hide Solution</a>
+        <div id="array-sol-4" style="display:none;">
+        <pre>
+          <code class="java">private void addContinuousQuery(RemoteCache< String, Stop> stations) {
+    QueryFactory qf = Search.getQueryFactory(stations);
+
+    Query query = qf.from(Stop.class)
+      .having("delayMin").gt(0L)
+      .build();
+
+    ContinuousQueryListener< String, Stop> listener =
+      new ContinuousQueryListener< String, Stop>() {
+        @Override
+        public void resultJoining(String id, Stop stop) {
+          vertx.runOnContext(x -> {
+            vertx.eventBus().publish("delayed-trains", toJson(stop));
+            RemoteCache<String, String> delayed = client.getCache(DELAYED_TRAINS_CACHE_NAME);
+            delayed.putAsync(stop.train.getName(), stop.train.getName());
+          });
+        }
+      };
+
+    ContinuousQuery< String, Stop> continuousQuery = Search.getContinuousQuery(stations);
+    continuousQuery.removeAllListeners();
+    continuousQuery.addContinuousQueryListener(query, listener);
+  }</code></pre>
+        </div>
+      </li>
+      <li><code>./redeploy.sh</code></li>
+      <li>HOW TO CHECK ???</li>
+    </ul>
+  </section>
+
+
+  <h2>Ex6 :: Delayed trains positions</h2>
+
+  <section id="inmemory">
+    <img src="img/InMemoryLayer.png" alt="Inmemory Layer" class="img-rounded">
+    <ul style="list-style: decimal;">
+      <li>Open <kbd>DelayedTrains</kbd> class in the <kbd>delayed-trains</kbd> module</li>
+      <li>Implement <code>getTrainId</code> method
+        <pre><code class="java"> private String getTrainId(Map.Entry< String, String> entry, RemoteCache< String, TrainPosition> positionsCache) {
+    if (!entry.getValue().isEmpty())
+      return entry.getValue();
+
+    // TODO 1 - Create Infinispan Ickle to get train ids for all train positions with a given train name
+
+    // TODO 2 - If multiple train positions returned, just pick one and cache it in trainIds collection
+
+    return null;
+  }</code></pre>
+
+        <a class="btn btn-info" role="button" onclick="$('#array-sol-5').toggle();">Show/Hide Solution</a>
+        <div id="array-sol-5" style="display:none;">
+        <pre>
+          <code class="java">private String getTrainId(Map.Entry< String, String> entry, RemoteCache< String, TrainPosition> positionsCache) {
+    if (!entry.getValue().isEmpty())
+      return entry.getValue();
+
+    String trainName = entry.getKey();
+    QueryFactory qf = Search.getQueryFactory(positionsCache);
+    Query q = qf.create("select tp.trainId from workshop.model.TrainPosition tp where name = :trainName");
+    q.setParameter("trainName", trainName);
+    List< Object[]> trains = q.list();
+
+    Iterator< Object[]> it = trains.iterator();
+    if (it.hasNext()) {
+      // Not accurate but simplest of methods
+      String trainId = (String) it.next()[0];
+      trainIds.put(trainName, trainId);
+      return trainId;
+    }
+
+    return null;
+  }</code></pre>
+        </div>
+      </li>
+      <li><code>./redeploy.sh</code></li>
+      <li>HOW TO CHECK ???</li>
+    </ul>
+  </section>
+
+</div> <!-- /container -->
+<br/><br/>
+
+<script type="text/javascript" src="js/jquery-3.2.1.min.js"></script>
+
+</body></html>

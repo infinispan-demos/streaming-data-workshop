@@ -38,6 +38,7 @@
   </properties>
 
   <modules>
+    <module>simple-web-application</module>
     <module>workshop-main</module>
     <module>data-model</module>
     <module>stations-injector</module>
