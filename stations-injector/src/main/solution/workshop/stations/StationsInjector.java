@@ -92,8 +92,7 @@ public class StationsInjector extends AbstractVerticle {
             stations.clear(); // If it reaches the end of the file, start again
             return Notification.createOnNext(null);
           }))
-          // TODO: Should be a flatmapObservable call putAsync wrapped with Completable?
-          .doOnNext(entry -> stations.put(entry.getKey(), entry.getValue()))
+          .flatMap(e -> Observable.from(stations.putAsync(e.getKey(), e.getValue())))
           .subscribe(Actions.empty(),
             t -> log.log(SEVERE, "Error while loading", t));
 
