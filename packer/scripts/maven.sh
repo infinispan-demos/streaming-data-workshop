@@ -3,7 +3,7 @@
 set -e
 set -x
 
-MVN_VERSION=3.5.0
+MVN_VERSION=3.5.2
 
 cd ${HOME}
 MIRROR=$(curl 'https://www.apache.org/dyn/closer.cgi' |   grep -o '<strong>[^<]*</strong>' |   sed 's/<[^>]*>//g' |   head -1)
