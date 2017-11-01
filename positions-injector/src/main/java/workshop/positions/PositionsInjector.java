@@ -86,11 +86,6 @@ public class PositionsInjector extends AbstractVerticle {
 
         rxReadGunzippedTextResource("cff_train_position-2016-02-29__.jsonl.gz")
           .map(PositionsInjector::toEntry)
-          .repeatWhen(notification -> notification.map(terminal -> {
-            log.info("Reached end of file, clear and restart");
-            positions.clear(); // If it reaches the end of the file, start again
-            return Notification.createOnNext(null);
-          }))
           // TODO: Should be a flatmapObservable call putAsync wrapped with Completable?
           .doOnNext(entry -> positions.put(entry.getKey(), entry.getValue()))
           .subscribe(Actions.empty(),
