@@ -39,6 +39,6 @@ OC_URL=https://github.com/openshift/origin/releases/download/v${OC_VERSION}/${OC
 
 wget ${OC_URL}
 tar zxf ${OC_TARBALL}
-mkdir ${HOME}/bin
+mkdir --parents ${HOME}/bin
 mv ${OC_DIR}/oc ${HOME}/bin
 rm -rf ${OC_DIR} ${OC_TARBALL}
