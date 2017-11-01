@@ -118,7 +118,6 @@
       <id>solution</id>
       <properties>
         <source.dir>src/main/solution</source.dir>
-        <workshop.solution>true</workshop.solution>
       </properties>
     </profile>
   </profiles>
