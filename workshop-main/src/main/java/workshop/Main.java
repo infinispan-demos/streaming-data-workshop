@@ -1,7 +1,6 @@
 package workshop;
 
 import io.vertx.core.Future;
-import io.vertx.core.json.JsonObject;
 import io.vertx.rx.java.RxHelper;
 import io.vertx.rxjava.core.AbstractVerticle;
 import io.vertx.rxjava.core.Vertx;
@@ -10,17 +9,11 @@ import io.vertx.rxjava.ext.web.RoutingContext;
 import io.vertx.rxjava.ext.web.client.HttpResponse;
 import io.vertx.rxjava.ext.web.client.WebClient;
 import io.vertx.rxjava.ext.web.codec.BodyCodec;
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import rx.Single;
 
-import java.net.SocketAddress;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static io.vertx.core.http.HttpHeaders.*;
 import static workshop.Admin.*;
 import static workshop.shared.Constants.*;
 
@@ -33,7 +26,6 @@ public class Main extends AbstractVerticle {
     log.info("Starting Main verticle");
 
     Router router = Router.router(vertx);
-    router.get("/test").blockingHandler(this::test);
     router.get("/inject").handler(this::inject);
 
     vertx.createHttpServer()
@@ -67,18 +59,6 @@ public class Main extends AbstractVerticle {
       .get(8080, host, uri)
       .as(BodyCodec.string())
       .rxSend();
-  }
-
-  private void test(RoutingContext ctx) {
-    // TODO Create a remote cache manager pointing to DATAGRID_HOST:DATAGRID_PORT
-    // Store a key/value pair "hello"/"world" in cache "default"
-    // Retrieve the stored value and put it in the json object
-    // Reply to web client
-    // ----
-
-    ctx.response().end("TODO");
-
-    // ----
   }
 
   public static void main(String[] args) {
