@@ -86,8 +86,7 @@ public class PositionsInjector extends AbstractVerticle {
 
         rxReadGunzippedTextResource("cff_train_position-2016-02-29__.jsonl.gz")
           .map(PositionsInjector::toEntry)
-          // TODO: Should be a flatmapObservable call putAsync wrapped with Completable?
-          .doOnNext(entry -> positions.put(entry.getKey(), entry.getValue()))
+          .flatMap(e -> Observable.from(positions.putAsync(e.getKey(), e.getValue())))
           .subscribe(Actions.empty(),
             t -> log.log(SEVERE, "Error while loading", t));
 
