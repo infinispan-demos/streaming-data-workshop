@@ -87,11 +87,6 @@ public class StationsInjector extends AbstractVerticle {
 
         rxReadGunzippedTextResource("cff-stop-2016-02-29__.jsonl.gz")
           .map(StationsInjector::toEntry)
-          .repeatWhen(notification -> notification.map(terminal -> {
-            log.info("Reached end of file, clear and restart");
-            stations.clear(); // If it reaches the end of the file, start again
-            return Notification.createOnNext(null);
-          }))
           .flatMap(e -> Observable.from(stations.putAsync(e.getKey(), e.getValue())))
           .subscribe(Actions.empty(),
             t -> log.log(SEVERE, "Error while loading", t));
