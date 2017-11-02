@@ -54,12 +54,26 @@
   "provisioners": [
     {
       "type": "shell",
+      "execute_command": "bash --login {{ .Path }}",
       "scripts": [
         "scripts/oracle_jdk.sh",
         "scripts/maven.sh",
         "scripts/intellij_ce.sh",
-        "scripts/nvm.sh",
-        "scripts/docker.sh",
+        "scripts/nvm.sh"
+      ]
+    },
+    {
+      "type": "shell",
+      "execute_command": "bash --login {{ .Path }}",
+      "expect_disconnect": true,
+      "scripts": [
+        "scripts/docker.sh"
+      ]
+    },
+    {
+      "type": "shell",
+      "execute_command": "bash --login {{ .Path }}",
+      "scripts": [
         "scripts/oc.sh",
         "scripts/kubetail.sh",
         "scripts/lab_setup.sh"

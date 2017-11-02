@@ -20,6 +20,7 @@ cd ${WORKSHOP_DIR}
 ./start-openshift.sh
 ./start-datagrid.sh
 
+(cd ./simple-web-application; ./deploy.sh)
 (cd ./data-model; ./install.sh)
 (cd ./workshop-main; ./deploy.sh)
 (cd ./stations-injector; ./deploy.sh)
@@ -28,8 +29,8 @@ cd ${WORKSHOP_DIR}
 (cd ./delayed-trains; ./deploy.sh)
 (cd ./datagrid-visualizer; ./deploy.sh)
 
-# Expecting 6 app pods plus 3 ISPN pods
-EXPECTED_PODS=9
+# Expecting 7 app pods plus 3 ISPN pods
+EXPECTED_PODS=10
 START=$(date -u +%s)
 until [ "$(oc get pods -a=false -o=name | wc -l)" -eq "${EXPECTED_PODS}" ]; do
     printf '.'
