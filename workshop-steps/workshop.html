@@ -23,6 +23,10 @@
     pre {
       background-color: white;
     }
+    .btn {
+      margin-top: 5px;
+      margin-bottom: 5px;
+    }
   </style>
   <script src="js/highlight.pack.js"></script>
   <script>hljs.initHighlightingOnLoad();</script>
@@ -75,12 +79,19 @@ MANAGEMENT_USER/MANAGEMENT_PASSWORD=developer/developer</code></pre>
       <li>Click <kbd>Next</kbd></li>
       <li>Click <kbd>Create</kbd></li>
       <li>Go to <kbd>My project</kbd></li>
-      <li>You should see <kbd>datagrid</kbd> deployment with <kbd>3 pods</kbd> and <kbd>3 services</kbd> : datagrid-hotrod, datagrid-http and datagrid-management</li>
+      <li>You should see <kbd>datagrid</kbd> deployment with <kbd>3 pods</kbd> and <kbd>3 services</kbd> : datagrid-hotrod, datagrid-http and datagrid-management
       <img src="img/datagrid-pods.png" alt="pods" class="img-rounded"/>
-    </ul>
-    <div class="alert alert-warning">You can deploy de cluster easily from command line :</div>
+      <div class="alert alert-warning">You can deploy de cluster easily from command line :</div>
       <pre><code>cd streaming-data-workshop
-./start-datagrid.sh</code></pre>
+        ./start-datagrid.sh</code></pre></li>
+      <li>Deploy <strong>Infinispan Visualizer</strong>
+          <ul>
+            <li><code>cd datagrid-visualizer</code>/li>
+            <li><code>./deploy.sh</code></li>
+            <li>Go to <a href="http://datagrid-visualizer-myproject.127.0.0.1.nip.io/infinispan-visualizer/" target="_target">See the visualizer running</a></li>
+          </ul>
+      </li>
+    </ul>
   </section>
 
   <h2>Ex2 :: Vert.x and Infinispan Intro</h2>
@@ -141,44 +152,98 @@ public class PlayWithTheCache extends AbstractVerticle {
       <li>Go to <a target="_target" href="http://simple-web-app-myproject.127.0.0.1.nip.io/api">Api endpoint</a></li>
       <li> Connect with Infinispan
         <ul>
-          <li>Init the <code>RemoteCacheManager</code> with <pre><code class="java">new ConfigurationBuilder().addServer()
+          <li>Init the <code>RemoteCacheManager</code> using <pre><code class="java">new ConfigurationBuilder().addServer()
           .host(DATAGRID_HOST) // contains the value datagrid-hotrod that is a service in Openshfitt
           .port(DATAGRID_PORT) // contains the hotrod point 11222
-          .build())</code></pre></li>
-          <li>Init the <code>defaultCache</code> calling <code>remoteCacheManager.getCache()</code></li>
-          <li>Add a body handler to the route <code>router.route().handler(BodyHandler.create());</code></li>
-          <li>Add the <kbd>POST</kbd> <code>router.post("/api/duchess").handler(this::handleAddDuchess);</code></li>
-          <li>Implement <code>handleAddDuchess</code> so that it takes the <code>id</code> and the <code>value</code> in the body
-            using <code>rc.getBodyAsJson()</code> and <code>defaultCache.putAsync(k,v)</code></li>
-          <li>Add the <kbd>GET</kbd> <code>router.get("/api/duchess/:id").handler(this::handleGetDuchess);</code></li>
-          <li>Implement <code>handleGetDuchess</code> so that it takes the <code>id</code> using <code>rc.request().getParam</code> and <code>defaultCache.getAsync(k)</code></li>
-        </ul>
-      <br/>
-        <a class="btn btn-info" role="button" onclick="$('#array-sol-2').toggle();">Show/Hide Solution</a>
-        <div id="array-sol-2" style="display:none;">
-        <pre>
-          <code class="java">// Add the BodyHandler
-  router.route().handler(BodyHandler.create());
-  router.post("/api/duchess").handler(this::handleAddDuchess);
-  router.get("/api/duchess/:id").handler(this::handleGetDuchess);
+          .build())</code></pre>
 
-  protected void initCache(Vertx vertx) {
-    vertx.executeBlocking(fut -> {
-      client = new RemoteCacheManager(
+            <a class="btn btn-info" role="button" onclick="$('#array-sol-6').toggle();">Show/Hide Solution</a>
+            <div id="array-sol-6" style="display:none;">
+            <pre><code class="java">client = new RemoteCacheManager(
         new ConfigurationBuilder().addServer()
           .host(DATAGRID_HOST)
           .port(DATAGRID_PORT)
-          .build());
+              .build());</code></pre></div>
 
-      defaultCache = client.getCache();
-      fut.complete();
-    }, res -> {
-      if (res.succeeded()) {
-        System.out.println("Cache started");
-      } else {
-        res.cause().printStackTrace();
-      }
+          </li>
+          <li>Init the <code>defaultCache</code> calling <code>remoteCacheManager.getCache()</code>
+            <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-7').toggle();">Show/Hide Solution</a>
+            <div id="array-sol-7" style="display:none;">
+            <pre><code class="java">defaultCache = client.getCache();</code></pre></div>
+          </li>
+          <li>Add a body handler in the <code>start</code> method to the route <code>router.route().handler(BodyHandler.create());</code>
+          </li>
+          <li>Add the <kbd>POST</kbd> route handled by <code>handleAddDuchess</code> in url <code>/api/duchess</code>
+            <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-8').toggle();">Show/Hide Solution</a>
+            <div id="array-sol-8" style="display:none;">
+              <pre><code class="java">router.post("/api/duchess").handler(this::handleAddDuchess);</code></pre></div>
+          </li>
+          <li>Implement <code>handleAddDuchess</code> so that it takes the <code>id</code> and the <code>value</code> in the body
+            using <code>rc.getBodyAsJson()</code> and <code>defaultCache.putAsync(k,v)</code>
+            <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-9').toggle();">Show/Hide Solution</a>
+            <div id="array-sol-9" style="display:none;">
+              <pre><code class="java">
+    HttpServerResponse response = rc.response();
+    JsonObject bodyAsJson = rc.getBodyAsJson();
+    if (bodyAsJson != null && bodyAsJson.containsKey("id") && bodyAsJson.containsKey("name")) {
+      defaultCache.putAsync(bodyAsJson.getInteger("id"), bodyAsJson.getString("name"))
+        .thenAccept(s -> {
+          response.end("Duchess Added");
+        });
+    } else {
+      response.end("Body is " + bodyAsJson + ". id and name should be provided");
+    }</code></pre></div>
+          </li>
+          <li>Add the <kbd>GET</kbd> route handled by <code>handleGetDuchess</code> in url <code>/api/duchess/:id</code>
+            <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-10').toggle();">Show/Hide Solution</a>
+            <div id="array-sol-10" style="display:none;">
+              <pre><code class="java">router.get("/api/duchess/:id").handler(this::handleGetDuchess);</code></pre></div>
+          </li>
+          <li>Implement <code>handleGetDuchess</code> so that it takes the <code>id</code> using <code>rc.request().getParam</code> and <code>defaultCache.getAsync(k)</code>
+            <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-11').toggle();">Show/Hide Solution</a>
+            <div id="array-sol-11" style="display:none;">
+              <pre><code class="java">
+    defaultCache.getAsync(Integer.parseInt(rc.request().getParam("id")))
+      .thenAccept(value -> {
+        String response = "Not found";
+        if (value != null) {
+          response = new JsonObject().put("Duchess", value).encode();
+        }
+        rc.response().end(response);
+      });
+    }</code></pre></div>
+          </li>
+        </ul>
+      <br/>
+        <a class="btn btn-danger" role="button" onclick="$('#array-sol-2').toggle();">Show/Hide Final Solution</a>
+        <div id="array-sol-2" style="display:none;">
+        <pre>
+          <code class="java">public class PlayWithTheCache extends AbstractVerticle {
+
+  protected RemoteCacheManager client;
+  protected RemoteCache<Integer, String> defaultCache;
+
+  @Override
+  public void start() throws Exception {
+    initCache(vertx);
+    Router router = Router.router(vertx);
+
+    router.get("/").handler(rc -> {
+      rc.response().end("Welcome");
     });
+
+    router.get("/api").handler(rc -> {
+      rc.response().end(new JsonObject().put("name", "duchess").put("version", 1).encode());
+    });
+
+    router.route().handler(BodyHandler.create());
+    router.post("/api/duchess").handler(this::handleAddDuchess);
+    router.get("/api/duchess/:id").handler(this::handleGetDuchess);
+
+
+    vertx.createHttpServer()
+      .requestHandler(router::accept)
+      .listen(8080);
   }
 
   private void handleGetDuchess(RoutingContext rc) {
@@ -203,7 +268,28 @@ public class PlayWithTheCache extends AbstractVerticle {
     } else {
       response.end("Body is " + bodyAsJson + ". id and name should be provided");
     }
-  }</code></pre>
+  }
+
+  protected void initCache(Vertx vertx) {
+    vertx.executeBlocking(fut -> {
+      client = new RemoteCacheManager(
+        new ConfigurationBuilder().addServer()
+          .host(DATAGRID_HOST)
+          .port(DATAGRID_PORT)
+          .build());
+
+      defaultCache = client.getCache();
+      fut.complete();
+    }, res -> {
+      if (res.succeeded()) {
+        System.out.println("Cache started");
+      } else {
+        res.cause().printStackTrace();
+      }
+    });
+  }
+}
+</code></pre>
         </div>
       </li>
       <li>Redeploy with <code>./redeploy.sh</code></li>
@@ -217,7 +303,7 @@ public class PlayWithTheCache extends AbstractVerticle {
   <h2>Ex3 :: Start</h2>
   <ul>
     <li>Run <code>./start-openshift.sh</code>. Reboot docker engine if you see an error related to service catalog.</li>
-    <li>Log in into <a href="https://127.0.0.1:8443" target="_blank">Openshift console</a> with <code>developer/developer</code></li>       <p> Run <code>./start-datagrid.sh</code></p></li>
+    <li>Log in into <a href="https://127.0.0.1:8443" target="_blank">Openshift console</a> with <code>developer/developer</code></li>
     <li>Run <code>./start-datagrid.sh</code>. Check your 3 pods are active</li>
     <li>Run <code>./deploy-all.sh</code></li>
     <li>Go to the board : <a href="http://localhost:3000/" target="_target">front-end app</a></li>
@@ -229,14 +315,6 @@ public class PlayWithTheCache extends AbstractVerticle {
   This code would work connecting to a remote web-service or any other data source. The data collected in the files are real data coming from
   an real API on Swiss Transport.</p>
 
-  <h3>Deploy Infinispan Visualizer</h3>
-  <section id="visualizer">
-    <ul>
-      <li><code>cd datagrid-visualizer</code>/li>
-      <li><code>./deploy.sh</code></li>
-      <li>Go to <a href="http://datagrid-visualizer-myproject.127.0.0.1.nip.io/infinispan-visualizer/" target="_target">See the visualizer runnnig</a></li>
-    </ul>
-  </section>
 
   <h3>Make data injection work</h3>
 
@@ -268,7 +346,30 @@ private void inject(RoutingContext ctx) {
   }
         </code></pre>
 
-        <a class="btn btn-info" role="button" onclick="$('#array-sol-3').toggle();">Show/Hide Solution</a>
+        <ul>
+          <li><kbd>TODO 1</kbd> Get an observable for "cff-stop-2016-02-29__.jsonl.gz" file calling the method <code>rxReadGunzippedTextResource</code>
+            <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-12').toggle();">Show/Hide Solution</a>
+            <div id="array-sol-12" style="display:none;">
+              <pre><code class="java">rxReadGunzippedTextResource("cff-stop-2016-02-29__.jsonl.gz")</code></pre></div>
+          </li>
+          <li><kbd>TODO 2</kbd> map each entry into a tuple of String/Stop with <code>StationsInjector::toEntry</code>
+            <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-13').toggle();">Show/Hide Solution</a>
+            <div id="array-sol-13" style="display:none;">
+              <pre><code class="java">.map(StationsInjector::toEntry)</code></pre></div>
+          </li>
+          <li><kbd>TODO 3</kbd> map each entry into a tuple of String/Stop with <code>StationsInjector::toEntry</code>
+            <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-14').toggle();">Show/Hide Solution</a>
+            <div id="array-sol-14" style="display:none;">
+              <pre><code class="java">.flatMap(e -> Observable.from(stations.putAsync(e.getKey(), e.getValue())))</code></pre></div>
+          </li>
+          <li><kbd>TODO 4</kbd> subscribe Actions.empty() and log an error happened</code>
+            <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-15').toggle();">Show/Hide Solution</a>
+            <div id="array-sol-15" style="display:none;">
+              <pre><code class="java">.subscribe(Actions.empty(), t -> log.log(SEVERE, "Error while loading", t));</code></pre></div>
+          </li>
+        </ul>
+
+        <a class="btn btn-danger" role="button" onclick="$('#array-sol-3').toggle();">Show/Hide Final Solution</a>
         <div id="array-sol-3" style="display:none;">
         <pre>
           <code class="java">private void inject(RoutingContext ctx) {
@@ -285,8 +386,7 @@ private void inject(RoutingContext ctx) {
         rxReadGunzippedTextResource("cff-stop-2016-02-29__.jsonl.gz")
           .map(StationsInjector::toEntry)
           .flatMap(e -> Observable.from(stations.putAsync(e.getKey(), e.getValue())))
-          .subscribe(Actions.empty(),
-            t -> log.log(SEVERE, "Error while loading", t));
+          .subscribe(Actions.empty(), t -> log.log(SEVERE, "Error while loading", t));
 
         ctx.response().end("Injector started");
       });
@@ -309,18 +409,58 @@ private void inject(RoutingContext ctx) {
       <li>Implement <code>inject</code> method with <strong>continuous query</strong>
         <pre><code class="java">private void addContinuousQuery(RemoteCache< String, Stop> stations) {
     // TODO 1 - Create QueryFactory with Search class for the stations cache
-
     // TODO 2 - Create query for Stop where 'delayMin' is bigger than 0 using the QueryFactory
-
     // TODO 3 - Create continuous query listener and override result joining
-
     // TODO 4 - Publish each new Stop to the "delayed-trains" address via Vertx eventbus
-    // Store asynchronously Stop's train name into DELAYED_TRAINS_CACHE_NAME cache
-
-    // TODO 5 - Get continuous query, remove any previous listeners, and join query with listener
+    // TODO 5 - Store asynchronously Stop's train name into DELAYED_TRAINS_CACHE_NAME cache
+    // TODO 6 - Get continuous query, remove any previous listeners, and join query with listener
   }</code></pre>
 
-        <a class="btn btn-info" role="button" onclick="$('#array-sol-4').toggle();">Show/Hide Solution</a>
+        <ul>
+          <li><kbd>TODO 1</kbd> Create <code>QueryFactory</code> with <code>Search</code> class for the stations cache
+            <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-16').toggle();">Show/Hide Solution</a>
+            <div id="array-sol-16" style="display:none;">
+              <pre><code class="java">QueryFactory qf = Search.getQueryFactory(stations);</code></pre></div>
+          </li>
+          <li><kbd>TODO 2</kbd> Create query for <code>Stop</code> where <strong>delayMin</strong> is bigger than 0 using the <code>QueryFactory</code>
+            <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-17').toggle();">Show/Hide Solution</a>
+            <div id="array-sol-17" style="display:none;">
+              <pre><code class="java"> Query query = qf.from(Stop.class).having("delayMin").gt(0L).build();</code></pre></div>
+          </li>
+          <li><kbd>TODO 3</kbd> Create continuous query listener <code>new ContinuousQueryListener< String, Stop></code> and override <code>resultJoining</code> method
+            <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-18').toggle();">Show/Hide Solution</a>
+            <div id="array-sol-18" style="display:none;">
+              <pre><code class="java">ContinuousQueryListener< String, Stop> listener =
+      new ContinuousQueryListener< String, Stop>() {
+        @Override
+        public void resultJoining(String id, Stop stop) {
+
+          });
+        }
+      };</code></pre></div>
+          </li>
+          <li><kbd>TODO 4</kbd> Implement the <code>resultJoining</code> method so that it publish each new Stop to the <strong>"delayed-trains"</strong> address via Vertx eventbus
+          <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-19').toggle();">Show/Hide Solution</a>
+          <div id="array-sol-19" style="display:none;">
+              <pre><code class="java">vertx.eventBus().publish("delayed-trains", toJson(stop));</code></pre></div>
+          </li>
+          <li><kbd>TODO 5</kbd> Finish the  <code>resultJoining</code> method implementation storing asynchronously Stop's train name into <strong>DELAYED_TRAINS_CACHE_NAME</strong> cache
+          <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-20').toggle();">Show/Hide Solution</a>
+          <div id="array-sol-20" style="display:none;">
+              <pre><code class="java">RemoteCache< String, String> delayed = client.getCache(DELAYED_TRAINS_CACHE_NAME);
+            delayed.putAsync(stop.train.getName(), stop.train.getName());</code></pre></div>
+          </li>
+          <li><kbd>TODO 6</kbd> Finish the <code>addContinuousQuery</code> method getting continuous query from the <code>stations</code> cache with <code>Search</code> class,
+            removing any previous listeners, and adding the query with the listener
+            <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-21').toggle();">Show/Hide Solution</a>
+            <div id="array-sol-21" style="display:none;">
+              <pre><code class="java">ContinuousQuery< String, Stop> continuousQuery = Search.getContinuousQuery(stations);
+    continuousQuery.removeAllListeners();
+    continuousQuery.addContinuousQueryListener(query, listener);</code></pre></div>
+          </li>
+        </ul>
+
+        <a class="btn btn-danger" role="button" onclick="$('#array-sol-4').toggle();">Show/Hide Final Solution</a>
         <div id="array-sol-4" style="display:none;">
         <pre>
           <code class="java">private void addContinuousQuery(RemoteCache< String, Stop> stations) {
@@ -336,7 +476,7 @@ private void inject(RoutingContext ctx) {
         public void resultJoining(String id, Stop stop) {
           vertx.runOnContext(x -> {
             vertx.eventBus().publish("delayed-trains", toJson(stop));
-            RemoteCache<String, String> delayed = client.getCache(DELAYED_TRAINS_CACHE_NAME);
+            RemoteCache< String, String> delayed = client.getCache(DELAYED_TRAINS_CACHE_NAME);
             delayed.putAsync(stop.train.getName(), stop.train.getName());
           });
         }
@@ -365,14 +505,48 @@ private void inject(RoutingContext ctx) {
     if (!entry.getValue().isEmpty())
       return entry.getValue();
 
-    // TODO 1 - Create Infinispan Ickle to get train ids for all train positions with a given train name
-
-    // TODO 2 - If multiple train positions returned, just pick one and cache it in trainIds collection
+          // TODO 1 - Create a query factory from the positions cache using Search
+          // TODO 2 - Create a Ickle query with the query factory. Ickle query are JPA like syntax queries. You should get trains ids for
+            all trains positions with a given train name
+          // TODO 3 - Call the query and get the result
+          // TODO 4 - If multiple train positions are returned, just pick the first one and cache it in trainIds collection
 
     return null;
   }</code></pre>
 
-        <a class="btn btn-info" role="button" onclick="$('#array-sol-5').toggle();">Show/Hide Solution</a>
+        <ul>
+          <li><kbd>TODO 1</kbd> Create a <code>QueryFactory</code> from the <code>positionCache</code> using <code>Search</code>
+            <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-22').toggle();">Show/Hide Solution</a>
+            <div id="array-sol-22" style="display:none;">
+              <pre><code class="java">QueryFactory qf = Search.getQueryFactory(positionsCache);</code></pre></div>
+          </li>
+          <li><kbd>TODO 2</kbd> <p>Create a Ickle query with the query factory. Ickle query are JPA like syntax queries.<br/>
+            You should get trains ids for all trains positions with a given train name.<br/>
+            Un example of query : <code>select transactionId, amount, description from com.acme.Transaction
+              where amount > 10 and description = :desc"</code>.<br/>The parameter <code>desc</code> must be passed using <code>setParameter</code> method.</p>
+            <a class="btn btn-info" role="button" onclick="$('#array-sol-23').toggle();">Show/Hide Solution</a>
+            <div id="array-sol-23" style="display:none;">
+              <pre><code class="java">Query q = qf.create("select tp.trainId from workshop.model.TrainPosition tp where name = :trainName");
+    q.setParameter("trainName", trainName);</code></pre></div>
+          </li>
+          <li><kbd>TODO 3</kbd> Call the query and get the result
+            <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-24').toggle();">Show/Hide Solution</a>
+            <div id="array-sol-24" style="display:none;">
+              <pre><code class="java">List< Object[]> trains = q.list();</code></pre></div>
+          </li>
+          <li><kbd>TODO 4</kbd> If multiple train positions are returned, just pick the first one and cache it in trainIds collection
+            <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-25').toggle();">Show/Hide Solution</a>
+            <div id="array-sol-25" style="display:none;">
+              <pre><code class="java">Iterator< Object[]> it = trains.iterator();
+    if (it.hasNext()) {
+      // Not accurate but simplest of methods
+      String trainId = (String) it.next()[0];
+      trainIds.put(trainName, trainId);
+      return trainId;
+     }</code></pre></div>
+          </li>
+        </ul>
+        <a class="btn btn-danger" role="button" onclick="$('#array-sol-5').toggle();">Show/Hide Solution</a>
         <div id="array-sol-5" style="display:none;">
         <pre>
           <code class="java">private String getTrainId(Map.Entry< String, String> entry, RemoteCache< String, TrainPosition> positionsCache) {
@@ -398,7 +572,7 @@ private void inject(RoutingContext ctx) {
         </div>
       </li>
       <li><code>./redeploy.sh</code></li>
-      <li>HOW TO CHECK ???</li>
+      <li>Run the <code>DelayedDashboard</code> to see what happens</li>
     </ul>
   </section>
 
