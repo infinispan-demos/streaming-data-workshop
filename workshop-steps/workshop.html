@@ -81,16 +81,11 @@ MANAGEMENT_USER/MANAGEMENT_PASSWORD=developer/developer</code></pre>
       <li>Go to <kbd>My project</kbd></li>
       <li>You should see <kbd>datagrid</kbd> deployment with <kbd>3 pods</kbd> and <kbd>3 services</kbd> : datagrid-hotrod, datagrid-http and datagrid-management
       <img src="img/datagrid-pods.png" alt="pods" class="img-rounded"/>
-      <div class="alert alert-warning">You can deploy de cluster easily from command line :</div>
+      <div class="alert alert-warning">Alternatively, you can deploy de cluster easily from command line :</div>
       <pre><code>cd streaming-data-workshop
-        ./start-datagrid.sh</code></pre></li>
-      <li>Deploy <strong>Infinispan Visualizer</strong>
-          <ul>
-            <li><code>cd datagrid-visualizer</code>/li>
-            <li><code>./deploy.sh</code></li>
-            <li>Go to <a href="http://datagrid-visualizer-myproject.127.0.0.1.nip.io/infinispan-visualizer/" target="_target">See the visualizer running</a></li>
-          </ul>
-      </li>
+./start-datagrid.sh</code></pre></li>
+      <li>Deploy all the components for the workshop with <code>./deploy-all.sh</code></strong></li>
+      <li>Check the <strong>Infinispan Visualizer</strong> <a href="http://datagrid-visualizer-myproject.127.0.0.1.nip.io/infinispan-visualizer/" target="_target">here</a></li>
     </ul>
   </section>
 
@@ -302,11 +297,8 @@ public class PlayWithTheCache extends AbstractVerticle {
 
   <h2>Ex3 :: Start</h2>
   <ul>
-    <li>Run <code>./start-openshift.sh</code>. Reboot docker engine if you see an error related to service catalog.</li>
-    <li>Log in into <a href="https://127.0.0.1:8443" target="_blank">Openshift console</a> with <code>developer/developer</code></li>
-    <li>Run <code>./start-datagrid.sh</code>. Check your 3 pods are active</li>
-    <li>Run <code>./deploy-all.sh</code></li>
     <li>Go to the board : <a href="http://localhost:3000/" target="_target">front-end app</a></li>
+    <li>An empty map should be displayed</li>
   </ul>
 
   <h2>Ex4 :: Collect data</h2>
@@ -394,8 +386,8 @@ private void inject(RoutingContext ctx) {
         </div>
       </li>
       <li><code>./redeploy.sh</code></li>
-      <li>HOW TO LAUNCH THE INJECTORS???</li>
-      <li>Go to <a href="http://datagrid-visualizer-myproject.127.0.0.1.nip.io/infinispan-visualizer/" target="_target"> and see data being loaded</a></li>
+      <li>Force the injection start the injection with <code>curl http://workshop-main-myproject.127.0.0.1.nip.io/inject</code></li>
+      <li>Go to the <a href="http://datagrid-visualizer-myproject.127.0.0.1.nip.io/infinispan-visualizer/" target="_target"> visualizer</a> and see data being loaded</li>
     </ul>
   </section>
 
@@ -489,7 +481,8 @@ private void inject(RoutingContext ctx) {
         </div>
       </li>
       <li><code>./redeploy.sh</code></li>
-      <li>HOW TO CHECK ???</li>
+      <li>Go to <kbd>delated-dashboard</kbd> module and launch <code>DelayedDashboard</code> main</li>
+      <li>Monitor the delayed trains !</li>
     </ul>
   </section>
 
@@ -506,8 +499,7 @@ private void inject(RoutingContext ctx) {
       return entry.getValue();
 
           // TODO 1 - Create a query factory from the positions cache using Search
-          // TODO 2 - Create a Ickle query with the query factory. Ickle query are JPA like syntax queries. You should get trains ids for
-            all trains positions with a given train name
+          // TODO 2 - Create a Ickle query with the query factory. Ickle query are JPA like syntax queries. You should get trains ids for all trains positions with a given train name
           // TODO 3 - Call the query and get the result
           // TODO 4 - If multiple train positions are returned, just pick the first one and cache it in trainIds collection
 
@@ -521,20 +513,22 @@ private void inject(RoutingContext ctx) {
               <pre><code class="java">QueryFactory qf = Search.getQueryFactory(positionsCache);</code></pre></div>
           </li>
           <li><kbd>TODO 2</kbd> <p>Create a Ickle query with the query factory. Ickle query are JPA like syntax queries.<br/>
-            You should get trains ids for all trains positions with a given train name.<br/>
-            Un example of query : <code>select transactionId, amount, description from com.acme.Transaction
-              where amount > 10 and description = :desc"</code>.<br/>The parameter <code>desc</code> must be passed using <code>setParameter</code> method.</p>
+            Un example of query : <br/>
+            <code>select tx.transactionId, tx.amount, tx.description from com.acme.Transaction tx
+              where amount > 10 and description = :desc</code>.
+            <br/>The parameter <code>desc</code> is replaced using <code>setParameter</code> method.</p>
+            <br/>Create a query to get trains ids for all trains positions with a given train name.<br/>
             <a class="btn btn-info" role="button" onclick="$('#array-sol-23').toggle();">Show/Hide Solution</a>
             <div id="array-sol-23" style="display:none;">
               <pre><code class="java">Query q = qf.create("select tp.trainId from workshop.model.TrainPosition tp where name = :trainName");
-    q.setParameter("trainName", trainName);</code></pre></div>
+q.setParameter("trainName", trainName);</code></pre></div>
           </li>
           <li><kbd>TODO 3</kbd> Call the query and get the result
             <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-24').toggle();">Show/Hide Solution</a>
             <div id="array-sol-24" style="display:none;">
               <pre><code class="java">List< Object[]> trains = q.list();</code></pre></div>
           </li>
-          <li><kbd>TODO 4</kbd> If multiple train positions are returned, just pick the first one and cache it in trainIds collection
+          <li><kbd>TODO 4</kbd> If multiple train positions are returned, just pick the first one and cache it in <code>trainIds</code> collection
             <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-25').toggle();">Show/Hide Solution</a>
             <div id="array-sol-25" style="display:none;">
               <pre><code class="java">Iterator< Object[]> it = trains.iterator();
@@ -572,7 +566,8 @@ private void inject(RoutingContext ctx) {
         </div>
       </li>
       <li><code>./redeploy.sh</code></li>
-      <li>Run the <code>DelayedDashboard</code> to see what happens</li>
+      <li>Go to the board <a href="http://localhost:3000/" target="_target">front-end app</a></li>
+      <li>Monitor delayed trains !</li>
     </ul>
   </section>
 
