@@ -94,113 +94,58 @@ MANAGEMENT_USER/MANAGEMENT_PASSWORD=developer/developer</code></pre>
   </section>
 
   <h2>Ex2 :: Vert.x and Infinispan Intro</h2>
-  <p>In this section you will learn how to create REST endpoints using vert.x and how to comunicate remotely with a cache.</p>
-  <section id="vert.x">
-    <img src="img/Vert.x_Logo.svg.png" alt="Vert.x" class="img-rounded" height="15%" width="15%">
-    <br/>
-    <img src="img/simple-webapp-diagram.png" alt="webapp diagram" class="img-rounded"/>
-    <ul style="list-style: decimal;">
-      <li>In the project, open <kbd>simple-web-application module</kbd></li>
-      <li>Create your first Verticle.
-        <ul>
-          <li>Extend the class from <code>AbstractVerticle</code></li>
-          <li>Override <code>start</code> method</li>
-          <li>Create a Router with <code>Router router = Router.router(vertx);</code></li>
-          <li>Create an empty <kbd>GET</kbd> endpoint that will respond <code>Welcome</code> from the Router</li>
-          <li>Create a <kbd>GET</kbd> endpoint in <code>/api</code> that responds
-            <pre><code class="json">{"name":"duchess","version":1}</code></pre>
-            using <pre><code class="java">new JsonObject().put("name", "duchess").put("version", 1).encode()</code></pre>
-          </li>
-          <li>Create a <code>HttpServer</code> with vertx object with requestHandler <code>router::accept</code> and listening to port <code>8080</code></li>
-        </ul>
-        <br/>
-        <a class="btn btn-info" role="button" onclick="$('#array-sol-1').toggle();">Show/Hide Solution</a>
-        <div id="array-sol-1" style="display:none;">
-        <pre>
-          <code class="java">package workshop.playgroud;
 
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Future;
-import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
+  <p>In this section you will learn how to create REST endpoints using vert.x and how to comunicate remotely with a cache.
+  The service should be able to respond now from these URLs:
+  <ul>
+    <li><a target="_target" href="http://simple-web-app-myproject.127.0.0.1.nip.io">Welcome endpoint</a></li>
+    <li><a target="_target" href="http://simple-web-app-myproject.127.0.0.1.nip.io/api">Api endpoint</a></li>
+  </ul>
+  </p>
+  <img src="img/simple-webapp-diagram.png" alt="webapp diagram" class="img-rounded"/>
 
-public class PlayWithTheCache extends AbstractVerticle {
-
-  @Override
-  public void start() throws Exception {
-    Router router = Router.router(vertx);
-
-    router.get("/").handler(rc -> {
-      rc.response().end("Welcome");
-    });
-
-    router.get("/api").handler(rc -> {
-      rc.response().end(new JsonObject().put("name", "duchess").put("version", 1).encode());
-    });
-
-    vertx.createHttpServer()
-      .requestHandler(router::accept)
-      .listen(8080);
-  }
-}</code>
-        </pre>
-      </div>
-      </li>
-      <li>Deploy with <code>./deploy.sh</code></li>
-      <img src="img/simple-web-app.png" alt="simple web app" class="img-rounded"/>
-      <li>Go to <a target="_target" href="http://simple-web-app-myproject.127.0.0.1.nip.io">Welcome endpoint</a></li>
-      <li>Go to <a target="_target" href="http://simple-web-app-myproject.127.0.0.1.nip.io/api">Api endpoint</a></li>
-      <li> Connect with Infinispan
-        <ul>
-          <li>Init the <code>RemoteCacheManager</code> using <pre><code class="java">new ConfigurationBuilder().addServer()
-          .host(DATAGRID_HOST) // contains the value datagrid-hotrod that is a service in Openshfitt
-          .port(DATAGRID_PORT) // contains the hotrod point 11222
-          .build())</code></pre>
+        <ul style="list-style: decimal;">
+          <li><kbd>TODO 1</kbd> Init the client <code>RemoteCacheManager</code> using <code>config</code><br/>
 
             <a class="btn btn-info" role="button" onclick="$('#array-sol-6').toggle();">Show/Hide Solution</a>
             <div id="array-sol-6" style="display:none;">
-            <pre><code class="java">client = new RemoteCacheManager(
-        new ConfigurationBuilder().addServer()
-          .host(DATAGRID_HOST)
-          .port(DATAGRID_PORT)
-              .build());</code></pre></div>
+            <pre><code class="java">client = new RemoteCacheManager(config);</code></pre></div>
 
           </li>
-          <li>Init the <code>defaultCache</code> calling <code>remoteCacheManager.getCache()</code>
+          <li><kbd>TODO 2</kbd> Init the <code>defaultCache</code> calling <code>remoteCacheManager.getCache()</code>
             <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-7').toggle();">Show/Hide Solution</a>
             <div id="array-sol-7" style="display:none;">
             <pre><code class="java">defaultCache = client.getCache();</code></pre></div>
           </li>
-          <li>Add a body handler in the <code>start</code> method to the route <code>router.route().handler(BodyHandler.create());</code>
-          </li>
-          <li>Add the <kbd>POST</kbd> route handled by <code>handleAddDuchess</code> in url <code>/api/duchess</code>
+          <li><kbd>TODO 3</kbd> Add the <kbd>POST</kbd> route handled by <code>handleAddDuchess</code> in url <code>/api/duchess</code>
             <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-8').toggle();">Show/Hide Solution</a>
             <div id="array-sol-8" style="display:none;">
               <pre><code class="java">router.post("/api/duchess").handler(this::handleAddDuchess);</code></pre></div>
           </li>
-          <li>Implement <code>handleAddDuchess</code> so that it takes the <code>id</code> and the <code>value</code> in the body
-            using <code>rc.getBodyAsJson()</code> and <code>defaultCache.putAsync(k,v)</code>
+          <li><kbd>TODO 4</kbd> Implement <code>handleAddDuchess</code> so that it takes the <code>id</code> and the <code>value</code> in the body
+            using <code>rc.getBodyAsJson()</code> and calls <code>defaultCache.putAsync(k,v)</code>
             <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-9').toggle();">Show/Hide Solution</a>
             <div id="array-sol-9" style="display:none;">
               <pre><code class="java">
     HttpServerResponse response = rc.response();
     JsonObject bodyAsJson = rc.getBodyAsJson();
     if (bodyAsJson != null && bodyAsJson.containsKey("id") && bodyAsJson.containsKey("name")) {
-      defaultCache.putAsync(bodyAsJson.getInteger("id"), bodyAsJson.getString("name"))
+
+        defaultCache.putAsync(bodyAsJson.getInteger("id"), bodyAsJson.getString("name"))
         .thenAccept(s -> {
           response.end("Duchess Added");
         });
+
     } else {
       response.end("Body is " + bodyAsJson + ". id and name should be provided");
     }</code></pre></div>
           </li>
-          <li>Add the <kbd>GET</kbd> route handled by <code>handleGetDuchess</code> in url <code>/api/duchess/:id</code>
+          <li><kbd>TODO 5</kbd> Add the <kbd>GET</kbd> route handled by <code>handleGetDuchess</code> in url <code>/api/duchess/:id</code>
             <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-10').toggle();">Show/Hide Solution</a>
             <div id="array-sol-10" style="display:none;">
               <pre><code class="java">router.get("/api/duchess/:id").handler(this::handleGetDuchess);</code></pre></div>
           </li>
-          <li>Implement <code>handleGetDuchess</code> so that it takes the <code>id</code> using <code>rc.request().getParam</code> and <code>defaultCache.getAsync(k)</code>
+          <li><kbd>TODO 6</kbd> Implement <code>handleGetDuchess</code> so that it takes the <code>id</code> using <code>rc.request().getParam</code> and <code>defaultCache.getAsync(k)</code>
             <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-11').toggle();">Show/Hide Solution</a>
             <div id="array-sol-11" style="display:none;">
               <pre><code class="java">
@@ -214,6 +159,9 @@ public class PlayWithTheCache extends AbstractVerticle {
       });
     }</code></pre></div>
           </li>
+          <li>Redeploy with <code>./redeploy.sh</code></li>
+          <li>Test <kbd>POST</kbd> with <code>curl -H "Content-Type: application/json" -X POST -d '{"id":1,"name":"Oihana"}' http://simple-web-app-myproject.127.0.0.1.nip.io/api/duchess</code></li>
+          <li>Test <kbd>GET</kbd> with <code>curl -X GET -i -H "Accept: application/json" http://simple-web-app-myproject.127.0.0.1.nip.io/api/duchess/1</code></li>
         </ul>
       <br/>
         <a class="btn btn-danger" role="button" onclick="$('#array-sol-2').toggle();">Show/Hide Final Solution</a>
@@ -292,11 +240,6 @@ public class PlayWithTheCache extends AbstractVerticle {
 }
 </code></pre>
         </div>
-      </li>
-      <li>Redeploy with <code>./redeploy.sh</code></li>
-      <li>Test <kbd>POST</kbd> with <code>curl -H "Content-Type: application/json" -X POST -d '{"id":1,"name":"Oihana"}' http://simple-web-app-myproject.127.0.0.1.nip.io/api/duchess</code></li>
-      <li>Test <kbd>GET</kbd> with <code>curl -X GET -i -H "Accept: application/json" http://simple-web-app-myproject.127.0.0.1.nip.io/api/duchess/1</code></li>
-    </ul>
   </section>
 
   <h1>Streaming Data</h1>
@@ -320,7 +263,7 @@ public class PlayWithTheCache extends AbstractVerticle {
     <img src="img/collectionLayer.png" alt="Collection Layer" class="img-rounded">
     <ul style="list-style: decimal;">
       <li>Open <kbd>StationsInjector</kbd></li>
-      <li>Implement <code>inject</code> method with JavaRX
+      <li>Implement <code>inject</code> method with RxJava
         <pre><code class="java">router.get(STATIONS_INJECTOR_URI).handler(this::inject);
 
 private void inject(RoutingContext ctx) {

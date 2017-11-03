@@ -9,50 +9,29 @@ import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Future;
-import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 
-// TODO 1: Extends AbstractVerticle
-public class PlayWithTheCache {
+public class PlayWithTheCache extends AbstractVerticle {
 
   protected RemoteCacheManager client;
   protected RemoteCache<Integer, String> defaultCache;
 
-  // TODO 2: Override 'start' method
-  // TODO 3: create 'Router router = Router.router(vertx);' in the start method
-  // TODO 4: Create an empty GET endpoint that will respond Welcome from the Router
-  // TODO 5: Create a GET endpoint in /api that responds {"name":"duchess","version":1}
-  // TODO 6: Create a HttpServer with vertx object with requestHandler router::accept and listening to port 8080
-
-  // TODO 8: Add a body handler to the route router.route().handler(BodyHandler.create());
-  // TODO 9: Add the POST router.post("/api/duchess").handler(this::handleAddDuchess);
-
-  // TODO 11: Add the GET router.get("/api/duchess/:id").handler(this::handleGetDuchess);
-
-  private void handleAddDuchess(RoutingContext rc) {
-    // TODO 10: Implement handleAddDuchess so that it takes the id and the value in the body using rc.getBodyAsJson() and defaultCache.putAsync(k,v)
-  }
-
-  private void handleGetDuchess(RoutingContext rc) {
-    // TODO 12: Implement handleGetDuchess so that it takes the id using rc.request().getParam and defaultCache.getAsync(k)
-  }
-
-  protected void initCache(Vertx vertx) {
+  @Override
+  public void start() throws Exception {
     vertx.executeBlocking(fut -> {
 
       Configuration config = new ConfigurationBuilder().addServer()
-        .host(DATAGRID_HOST) // contains the value datagrid-hotrod that is a service in Openshfitt
+        .host(DATAGRID_HOST) // contains the value datagrid-hotrod that is a service in Openshift
         .port(DATAGRID_PORT) // contains the hotrod point 11222
         .build();
 
-      client = null; // TODO 7: Init the RemoteCacheManager with the config
+      client = null; // TODO 1: Init the RemoteCacheManager with the config
 
-      defaultCache = null;// TODO 8: Init the defaultCache calling remoteCacheManager.getCache();
+      defaultCache = null;// TODO 2: Init the defaultCache calling remoteCacheManager.getCache();
 
       fut.complete();
     }, res -> {
@@ -62,5 +41,47 @@ public class PlayWithTheCache {
         res.cause().printStackTrace();
       }
     });
+    
+    Router router = Router.router(vertx);
+
+    // Creates / route
+    router.get("/").handler(rc -> {
+      rc.response().end("Welcome");
+    });
+
+    // Creates /api route
+    router.get("/api").handler(rc -> {
+      rc.response().end(new JsonObject().put("name", "duchess").put("version", 1).encode());
+    });
+
+    // Adds body handler to be able to read from the body in the requests. This is needed for POST
+    router.route().handler(BodyHandler.create());
+
+    // TODO 3: Add the POST route handled by handleAddDuchess in url /api/duchess
+
+    // TODO 5: Add the GET route handled by handleGetDuchess in url /api/duchess/:id
+
+    vertx.createHttpServer()
+      .requestHandler(router::accept)
+      .listen(8080);
   }
+
+
+  private void handleAddDuchess(RoutingContext rc) {
+    HttpServerResponse response = rc.response();
+    JsonObject bodyAsJson = rc.getBodyAsJson();
+    if (bodyAsJson != null && bodyAsJson.containsKey("id") && bodyAsJson.containsKey("name")) {
+      // TODO 4: Add a duchess using putAsync(k,v)
+
+    } else {
+      response.end("Body is " + bodyAsJson + ". id and name should be provided");
+    }
+  }
+
+  private void handleGetDuchess(RoutingContext rc) {
+    Integer id = Integer.valueOf(rc.request().getParam("id"));
+    // TODO 6: Get the duchess using getAsync(id)
+
+  }
+
 }
