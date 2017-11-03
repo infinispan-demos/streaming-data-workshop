@@ -85,11 +85,14 @@ public class StationsInjector extends AbstractVerticle {
             fut.complete();
           }, false, ar -> {}));
 
-        // TODO 1: Get an observable for "cff-stop-2016-02-29__.jsonl.gz" file calling the method rxReadGunzippedTextResource
-        // TODO 2: map each entry into a tuple of String/Stop with StationsInjector::toEntry
-        // TODO 3. flatMap each entry to stored it in the stations cache calling putAsync and using Observable.from
-        // TODO 4. subscribe Actions.empty() and log an error happened
+        Observable<String> observable = rxReadGunzippedTextResource("cff-stop-2016-02-29__.jsonl.gz");
 
+        // TODO 1: map each entry of the observable into a tuple of String/Stop with StationsInjector::toEntry
+
+        // TODO 2. flatMap the observable so that each entry is stored in the stations cache calling putAsync (wrapped with Observable.from)
+
+        observable.subscribe(Actions.empty(),
+          t -> log.log(SEVERE, "Error while loading", t));
 
         ctx.response().end("Injector started");
       });
