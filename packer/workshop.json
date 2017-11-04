@@ -1,8 +1,8 @@
 {
   "variables": {
     "fedora_26_url": "https://download.fedoraproject.org/pub/fedora/linux/releases/26/Workstation/x86_64/iso/Fedora-Workstation-netinst-x86_64-26-1.5.iso",
-    "cpus": "1",
-    "memory": "4096",
+    "cpus": "4",
+    "memory": "8192",
     "vram": "128"
   },
   "builders": [
