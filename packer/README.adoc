@@ -6,7 +6,8 @@ This build creates a Fedora 26 virtual machine having:
 - `developer` user with password `password` (_sudoer_)
 - Oracle JDK8 (RPM Install)
 - Maven in `/home/developer/maven`
-- IntelliJ Community Edition in `/home/developer/idea`
+- IntelliJ Community Edition in `/home/developer/idea` (and desktop shortcut)
+- Eclipse Java IDE in `/home/developer/eclipse` (and desktop shortcut)
 - The lab code in `/home/developer/streaming-data-workshop`
 
 IMPORTANT: By using this virtual machine you agree to the Oracle licensing agreement.
@@ -68,7 +69,6 @@ sudo ./VBoxLinuxAdditions.run
 Reboot.
 
 To start a Terminal, click on _Activities_ and type _Terminal_.
-Same goes for IntelliJ.
+Same goes for IntelliJ and Eclipse.
 
-After importing the project in IntelliJ, click on _File_ > _Settings_ > _Keymap_, and choose _Default for GNOME_.
-
+If you import the project in IntelliJ, click on _File_ > _Settings_ > _Keymap_, and choose _Default for GNOME_.
