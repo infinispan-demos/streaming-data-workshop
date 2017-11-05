@@ -46,7 +46,7 @@ public class DelayedDashboardTask extends Task<Void> {
 
       ws.handler(buff -> {
         System.out.println(buff);
-        JsonObject json = new JsonObject(new JsonObject(buff.toString()).getString("body"));
+        JsonObject json = new JsonObject(buff.toString()).getJsonObject("body");
 
         Platform.runLater(() ->
           partialResults.add(new DelayedTrainView(json.getString("type"),

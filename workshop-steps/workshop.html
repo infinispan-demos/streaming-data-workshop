@@ -412,7 +412,7 @@ private void inject(RoutingContext ctx) {
       new ContinuousQueryListener<String, Stop>() {
         @Override
         public void resultJoining(String id, Stop stop) {
-          String stopAsJson = toJson(stop);
+          JsonObject stopAsJson = toJson(stop);
           vertx.eventBus().publish("delayed-trains", stopAsJson);
           RemoteCache<String, String> delayed = client.getCache(DELAYED_TRAINS_CACHE_NAME);
           delayed.putAsync(stop.train.getName(), stop.train.getName());
@@ -426,7 +426,7 @@ private void inject(RoutingContext ctx) {
         </div>
       </li>
       <li><code>./redeploy.sh</code></li>
-      <li>Go to <kbd>delated-dashboard</kbd> module and launch <code>DelayedDashboard</code> main</li>
+      <li>Go to <kbd>delayed-dashboard</kbd> module and launch <code>DelayedDashboard</code> main</li>
       <li>Monitor the delayed trains !</li>
     </ul>
   </section>

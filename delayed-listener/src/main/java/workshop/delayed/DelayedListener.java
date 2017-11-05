@@ -8,7 +8,6 @@ import io.vertx.ext.web.handler.sockjs.BridgeOptions;
 import io.vertx.ext.web.handler.sockjs.PermittedOptions;
 import io.vertx.rx.java.RxHelper;
 import io.vertx.rxjava.core.AbstractVerticle;
-import io.vertx.rxjava.core.eventbus.EventBus;
 import io.vertx.rxjava.ext.web.Router;
 import io.vertx.rxjava.ext.web.RoutingContext;
 import io.vertx.rxjava.ext.web.client.HttpResponse;
@@ -31,8 +30,6 @@ import workshop.model.Station;
 import workshop.model.Stop;
 import workshop.model.Train;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -94,7 +91,7 @@ public class DelayedListener extends AbstractVerticle {
       new ContinuousQueryListener<String, Stop>() {
         @Override
         public void resultJoining(String id, Stop stop) {
-          String stopAsJson = toJson(stop);
+          JsonObject stopAsJson = toJson(stop);
           // TODO 2 - Publish stopAsJson to "delayed-trains" event-bus address
           // ...
 
@@ -120,15 +117,14 @@ public class DelayedListener extends AbstractVerticle {
     }).subscribe(RxHelper.toSubscriber(stopFuture));
   }
 
-  private static String toJson(Stop stop) {
-    Map<String, Object> map = new HashMap<>();
-    map.put("type", stop.train.getCategory());
-    map.put("departure", String.format("%tR", stop.departureTs));
-    map.put("station", stop.station.getName());
-    map.put("destination", stop.train.getTo());
-    map.put("delay", stop.delayMin);
-    map.put("trainName", stop.train.getName());
-    return new JsonObject(map).encode();
+  private static JsonObject toJson(Stop stop) {
+    return new JsonObject()
+      .put("type", stop.train.getCategory())
+      .put("departure", String.format("%tR", stop.departureTs))
+      .put("station", stop.station.getName())
+      .put("destination", stop.train.getTo())
+      .put("delay", stop.delayMin)
+      .put("trainName", stop.train.getName());
   }
 
   private Handler<RoutingContext> sockJSHandler() {

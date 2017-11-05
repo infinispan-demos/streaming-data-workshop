@@ -30,8 +30,6 @@ import workshop.model.Station;
 import workshop.model.Stop;
 import workshop.model.Train;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -94,7 +92,7 @@ public class DelayedListener extends AbstractVerticle {
       new ContinuousQueryListener<String, Stop>() {
         @Override
         public void resultJoining(String id, Stop stop) {
-          String stopAsJson = toJson(stop);
+          JsonObject stopAsJson = toJson(stop);
           vertx.eventBus().publish("delayed-trains", stopAsJson);
           RemoteCache<String, String> delayed = client.getCache(DELAYED_TRAINS_CACHE_NAME);
           delayed.putAsync(stop.train.getName(), stop.train.getName());
@@ -116,15 +114,14 @@ public class DelayedListener extends AbstractVerticle {
     }).subscribe(RxHelper.toSubscriber(stopFuture));
   }
 
-  private static String toJson(Stop stop) {
-    Map<String, Object> map = new HashMap<>();
-    map.put("type", stop.train.getCategory());
-    map.put("departure", String.format("%tR", stop.departureTs));
-    map.put("station", stop.station.getName());
-    map.put("destination", stop.train.getTo());
-    map.put("delay", stop.delayMin);
-    map.put("trainName", stop.train.getName());
-    return new JsonObject(map).encode();
+  private static JsonObject toJson(Stop stop) {
+    return new JsonObject()
+      .put("type", stop.train.getCategory())
+      .put("departure", String.format("%tR", stop.departureTs))
+      .put("station", stop.station.getName())
+      .put("destination", stop.train.getTo())
+      .put("delay", stop.delayMin)
+      .put("trainName", stop.train.getName());
   }
 
   private Handler<RoutingContext> sockJSHandler() {
