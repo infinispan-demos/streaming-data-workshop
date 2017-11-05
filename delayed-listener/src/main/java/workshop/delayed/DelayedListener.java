@@ -95,7 +95,7 @@ public class DelayedListener extends AbstractVerticle {
         @Override
         public void resultJoining(String id, Stop stop) {
           String stopAsJson = toJson(stop);
-          // TODO 2 - Publish stop as JSON to "delayed-trains" to address
+          // TODO 2 - Publish stopAsJson to "delayed-trains" event-bus address
           // ...
 
           RemoteCache<String, String> delayed = client.getCache(DELAYED_TRAINS_CACHE_NAME);
