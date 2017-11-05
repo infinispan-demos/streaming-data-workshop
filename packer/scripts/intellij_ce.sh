@@ -24,3 +24,7 @@ Categories=Development;IDE;
 Terminal=false
 StartupWMClass=jetbrains-idea-ce
 EOF
+
+mkdir --parents ${HOME}/.IdeaIC2017.2/config
+cp ${HOME}/idea/bin/idea64.vmoptions ${HOME}/.IdeaIC2017.2/config/idea64.vmoptions
+echo "-Dsun.java2d.uiScale.enabled=false" >> ${HOME}/.IdeaIC2017.2/config/idea64.vmoptions
