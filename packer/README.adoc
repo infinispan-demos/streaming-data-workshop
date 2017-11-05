@@ -62,7 +62,7 @@ Otherwise, install them manually:
 
 [source,shell]
 ----
-cd /run/media/vertx/VirtualBoxGuestAdditions
+cd /run/media/developer/VirtualBoxGuestAdditions
 sudo ./VBoxLinuxAdditions.run
 ----
 
