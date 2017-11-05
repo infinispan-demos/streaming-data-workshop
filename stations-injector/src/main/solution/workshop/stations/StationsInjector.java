@@ -85,11 +85,16 @@ public class StationsInjector extends AbstractVerticle {
             fut.complete();
           }, false, ar -> {}));
 
-        rxReadGunzippedTextResource("cff-stop-2016-02-29__.jsonl.gz")
-          .map(StationsInjector::toEntry)
-          .flatMap(e -> Observable.from(stations.putAsync(e.getKey(), e.getValue())))
-          .subscribe(Actions.empty(),
-            t -> log.log(SEVERE, "Error while loading", t));
+        Observable<String> fileObservable = rxReadGunzippedTextResource("cff-stop-2016-02-29__.jsonl.gz");
+
+        Observable<Map.Entry<String, Stop>> pairObservable =
+            fileObservable.map(StationsInjector::toEntry);
+
+        Observable<?> putObservable =
+            pairObservable.doOnNext(e -> stations.putAsync(e.getKey(), e.getValue()));
+
+        putObservable.subscribe(Actions.empty(),
+          t -> log.log(SEVERE, "Error while loading", t));
 
         ctx.response().end("Injector started");
       });
