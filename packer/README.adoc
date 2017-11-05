@@ -72,3 +72,12 @@ To start a Terminal, click on _Activities_ and type _Terminal_.
 Same goes for IntelliJ and Eclipse.
 
 If you import the project in IntelliJ, click on _File_ > _Settings_ > _Keymap_, and choose _Default for GNOME_.
+
+To mount a shared directory:
+
+[source,shell]
+----
+sudo mount -t vboxsf WORKSHOP mount_point/
+----
+
+Where `WORKSHOP` is the name of the shared directory in VirtualBox config, and `mount_point/` the guest directory.
