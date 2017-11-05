@@ -59,6 +59,7 @@
         "scripts/oracle_jdk.sh",
         "scripts/maven.sh",
         "scripts/intellij_ce.sh",
+        "scripts/eclipse.sh",
         "scripts/nvm.sh"
       ]
     },
