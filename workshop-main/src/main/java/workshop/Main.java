@@ -31,8 +31,8 @@ public class Main extends AbstractVerticle {
     vertx.createHttpServer()
       .requestHandler(router::accept)
       .rxListen(8080)
-      .<Void>map(server -> null) // Ignore result
       .doOnSuccess(server -> log.info("Main HTTP server started"))
+      .<Void>map(server -> null) // Ignore result
       .subscribe(RxHelper.toSubscriber(future));
   }
 
