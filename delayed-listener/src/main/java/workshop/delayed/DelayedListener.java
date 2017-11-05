@@ -8,6 +8,7 @@ import io.vertx.ext.web.handler.sockjs.BridgeOptions;
 import io.vertx.ext.web.handler.sockjs.PermittedOptions;
 import io.vertx.rx.java.RxHelper;
 import io.vertx.rxjava.core.AbstractVerticle;
+import io.vertx.rxjava.core.eventbus.EventBus;
 import io.vertx.rxjava.ext.web.Router;
 import io.vertx.rxjava.ext.web.RoutingContext;
 import io.vertx.rxjava.ext.web.client.HttpResponse;
@@ -93,7 +94,10 @@ public class DelayedListener extends AbstractVerticle {
       new ContinuousQueryListener<String, Stop>() {
         @Override
         public void resultJoining(String id, Stop stop) {
-          vertx.eventBus().publish("delayed-trains", toJson(stop));
+          String stopAsJson = toJson(stop);
+          // TODO 2 - Publish stop as JSON to "delayed-trains" to address
+          // ...
+
           RemoteCache<String, String> delayed = client.getCache(DELAYED_TRAINS_CACHE_NAME);
           delayed.putAsync(stop.train.getName(), stop.train.getName());
         }
@@ -102,7 +106,8 @@ public class DelayedListener extends AbstractVerticle {
     ContinuousQuery<String, Stop> continuousQuery = Search.getContinuousQuery(stations);
     continuousQuery.removeAllListeners();
 
-    // TODO 2 - Join query with listener
+    // TODO 3 - Join query with listener
+    // ...
   }
 
   @Override
