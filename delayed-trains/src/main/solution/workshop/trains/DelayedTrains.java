@@ -126,9 +126,11 @@ public class DelayedTrains extends AbstractVerticle {
       return entry.getValue();
 
     String trainName = entry.getKey();
-    QueryFactory qf = Search.getQueryFactory(positionsCache);
-    Query q = qf.create("select tp.trainId from workshop.model.TrainPosition tp where name = :trainName");
-    q.setParameter("trainName", trainName);
+    QueryFactory queryFactory = Search.getQueryFactory(positionsCache);
+
+    Query query = queryFactory.create("select tp.trainId from workshop.model.TrainPosition tp where name = :trainName");
+    query.setParameter("trainName", trainName);
+
     List<Object[]> trains = q.list();
 
     Iterator<Object[]> it = trains.iterator();

@@ -439,21 +439,28 @@ private void inject(RoutingContext ctx) {
     if (!entry.getValue().isEmpty())
       return entry.getValue();
 
-          // TODO 1 - Create a query factory from the positions cache using Search
-          // TODO 2 - Create a Ickle query with the query factory. Ickle query are JPA like syntax queries. You should get trains ids for all trains positions with a given train name
-          // TODO 3 - Call the query and get the result
-          // TODO 4 - If multiple train positions are returned, just pick the first one and cache it in trainIds collection
+    String trainName = entry.getKey();
+    QueryFactory queryFactory = Search.getQueryFactory(positionsCache);
+
+    // TODO 1 - Create Infinispan Ickle to get train ids for all train positions with a given train name
+    Query query = null;
+
+    // TODO 2 - List the results of the query
+    List<Object[]> trains = null;
+
+    Iterator<Object[]> it = trains.iterator();
+    if (it.hasNext()) {
+      // Not accurate but simplest of methods
+      String trainId = (String) it.next()[0];
+      trainIds.put(trainName, trainId);
+      return trainId;
+    }
 
     return null;
   }</code></pre>
 
         <ul>
-          <li><kbd>TODO 1</kbd> Create a <code>QueryFactory</code> from the <code>positionCache</code> using <code>Search</code>
-            <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-22').toggle();">Show/Hide Solution</a>
-            <div id="array-sol-22" style="display:none;">
-              <pre><code class="java">QueryFactory qf = Search.getQueryFactory(positionsCache);</code></pre></div>
-          </li>
-          <li><kbd>TODO 2</kbd> <p>Create a Ickle query with the query factory. Ickle query are JPA like syntax queries.<br/>
+          <li><kbd>TODO 1</kbd> <p>Create a Ickle query with the query factory. Ickle query are JPA like syntax queries.<br/>
             Un example of query : <br/>
             <code>select tx.transactionId, tx.amount, tx.description from com.acme.Transaction tx
               where amount > 10 and description = :desc</code>.
@@ -461,24 +468,13 @@ private void inject(RoutingContext ctx) {
             <br/>Create a query to get trains ids for all trains positions with a given train name.<br/>
             <a class="btn btn-info" role="button" onclick="$('#array-sol-23').toggle();">Show/Hide Solution</a>
             <div id="array-sol-23" style="display:none;">
-              <pre><code class="java">Query q = qf.create("select tp.trainId from workshop.model.TrainPosition tp where name = :trainName");
-q.setParameter("trainName", trainName);</code></pre></div>
+              <pre><code class="java">Query query = queryFactory.create("select tp.trainId from workshop.model.TrainPosition tp where name = :trainName");
+query.setParameter("trainName", trainName);</code></pre></div>
           </li>
-          <li><kbd>TODO 3</kbd> Call the query and get the result
+          <li><kbd>TODO 2</kbd> Call the query and get the result
             <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-24').toggle();">Show/Hide Solution</a>
             <div id="array-sol-24" style="display:none;">
               <pre><code class="java">List< Object[]> trains = q.list();</code></pre></div>
-          </li>
-          <li><kbd>TODO 4</kbd> If multiple train positions are returned, just pick the first one and cache it in <code>trainIds</code> collection
-            <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-25').toggle();">Show/Hide Solution</a>
-            <div id="array-sol-25" style="display:none;">
-              <pre><code class="java">Iterator< Object[]> it = trains.iterator();
-    if (it.hasNext()) {
-      // Not accurate but simplest of methods
-      String trainId = (String) it.next()[0];
-      trainIds.put(trainName, trainId);
-      return trainId;
-     }</code></pre></div>
           </li>
         </ul>
         <a class="btn btn-danger" role="button" onclick="$('#array-sol-5').toggle();">Show/Hide Solution</a>
@@ -489,12 +485,14 @@ q.setParameter("trainName", trainName);</code></pre></div>
       return entry.getValue();
 
     String trainName = entry.getKey();
-    QueryFactory qf = Search.getQueryFactory(positionsCache);
-    Query q = qf.create("select tp.trainId from workshop.model.TrainPosition tp where name = :trainName");
-    q.setParameter("trainName", trainName);
-    List< Object[]> trains = q.list();
+    QueryFactory queryFactory = Search.getQueryFactory(positionsCache);
 
-    Iterator< Object[]> it = trains.iterator();
+    Query query = queryFactory.create("select tp.trainId from workshop.model.TrainPosition tp where name = :trainName");
+    query.setParameter("trainName", trainName);
+
+    List<Object[]> trains = q.list();
+
+    Iterator<Object[]> it = trains.iterator();
     if (it.hasNext()) {
       // Not accurate but simplest of methods
       String trainId = (String) it.next()[0];
