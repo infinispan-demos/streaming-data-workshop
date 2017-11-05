@@ -8,3 +8,4 @@ set -e -x
 (cd ./positions-injector; ./redeploy.sh)
 (cd ./delayed-listener; ./redeploy.sh)
 (cd ./delayed-trains; ./redeploy.sh)
+(cd ./simple-web-application; ./redeploy.sh)
