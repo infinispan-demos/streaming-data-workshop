@@ -10,5 +10,6 @@ mvn clean install -N
 (cd ./delayed-listener; ./deploy.sh  --solution)
 (cd ./delayed-trains; ./deploy.sh  --solution)
 (cd ./datagrid-visualizer; ./deploy.sh)
+(cd ./simple-web-application; ./deploy.sh --solution)
 
 (cd ./web-viewer; ./start.sh)
