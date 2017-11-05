@@ -277,10 +277,16 @@ private void inject(RoutingContext ctx) {
             fut.complete();
           }, false, ar -> {}));
 
-        // TODO 1: Get an observable for "cff-stop-2016-02-29__.jsonl.gz" file calling the method rxReadGunzippedTextResource
-        // TODO 2: map each entry into a tuple of String/Stop with StationsInjector::toEntry
-        // TODO 3. flatMap each entry to stored it in the stations cache calling putAsync and using Observable.from
-        // TODO 4. subscribe Actions.empty() and log an error happened
+        Observable<String> fileObservable = rxReadGunzippedTextResource("cff-stop-2016-02-29__.jsonl.gz");
+
+        // TODO 1: map each entry of the observable into a tuple of String/Stop with StationsInjector::toEntry
+        Observable<Map.Entry<String, Stop>> pairObservable = null;
+
+        // TODO 2. for each entry, store it in the stations cache calling putAsync
+        Observable<?> putObservable = null;
+
+        putObservable.subscribe(Actions.empty(),
+            t -> log.log(SEVERE, "Error while loading", t));
 
         ctx.response().end("Injector started");
       });
@@ -288,25 +294,15 @@ private void inject(RoutingContext ctx) {
         </code></pre>
 
         <ul>
-          <li><kbd>TODO 1</kbd> Get an observable for "cff-stop-2016-02-29__.jsonl.gz" file calling the method <code>rxReadGunzippedTextResource</code>
-            <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-12').toggle();">Show/Hide Solution</a>
-            <div id="array-sol-12" style="display:none;">
-              <pre><code class="java">rxReadGunzippedTextResource("cff-stop-2016-02-29__.jsonl.gz")</code></pre></div>
-          </li>
-          <li><kbd>TODO 2</kbd> map each entry into a tuple of String/Stop with <code>StationsInjector::toEntry</code>
+          <li><kbd>TODO 1</kbd> map each entry into a tuple of String/Stop with <code>StationsInjector::toEntry</code>
             <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-13').toggle();">Show/Hide Solution</a>
             <div id="array-sol-13" style="display:none;">
-              <pre><code class="java">.map(StationsInjector::toEntry)</code></pre></div>
+              <pre><code class="java">Observable<Map.Entry<String, Stop>> pairObservable = fileObservable.map(StationsInjector::toEntry);</code></pre></div>
           </li>
-          <li><kbd>TODO 3</kbd> map each entry into a tuple of String/Stop with <code>StationsInjector::toEntry</code>
+          <li><kbd>TODO 2</kbd> for each entry, store it in the stations cache calling <code>putAsync</code>
             <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-14').toggle();">Show/Hide Solution</a>
             <div id="array-sol-14" style="display:none;">
-              <pre><code class="java">.flatMap(e -> Observable.from(stations.putAsync(e.getKey(), e.getValue())))</code></pre></div>
-          </li>
-          <li><kbd>TODO 4</kbd> subscribe Actions.empty() and log an error happened</code>
-            <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-15').toggle();">Show/Hide Solution</a>
-            <div id="array-sol-15" style="display:none;">
-              <pre><code class="java">.subscribe(Actions.empty(), t -> log.log(SEVERE, "Error while loading", t));</code></pre></div>
+              <pre><code class="java">Observable<?> putObservable = pairObservable.doOnNext(e -> stations.putAsync(e.getKey(), e.getValue()));</code></pre></div>
           </li>
         </ul>
 
@@ -324,10 +320,16 @@ private void inject(RoutingContext ctx) {
             fut.complete();
           }, false, ar -> {}));
 
-        rxReadGunzippedTextResource("cff-stop-2016-02-29__.jsonl.gz")
-          .map(StationsInjector::toEntry)
-          .flatMap(e -> Observable.from(stations.putAsync(e.getKey(), e.getValue())))
-          .subscribe(Actions.empty(), t -> log.log(SEVERE, "Error while loading", t));
+        Observable<String> fileObservable = rxReadGunzippedTextResource("cff-stop-2016-02-29__.jsonl.gz");
+
+        Observable<Map.Entry<String, Stop>> pairObservable =
+            fileObservable.map(StationsInjector::toEntry);
+
+        Observable<?> putObservable =
+            pairObservable.doOnNext(e -> stations.putAsync(e.getKey(), e.getValue()));
+
+        putObservable.subscribe(Actions.empty(),
+          t -> log.log(SEVERE, "Error while loading", t));
 
         ctx.response().end("Injector started");
       });
