@@ -338,7 +338,12 @@ private void inject(RoutingContext ctx) {
       </li>
       <li><code>./redeploy.sh</code></li>
       <li>Force the injection start the injection with <code>curl http://workshop-main-myproject.127.0.0.1.nip.io/inject</code></li>
-      <li>Go to the <a href="http://datagrid-visualizer-myproject.127.0.0.1.nip.io/infinispan-visualizer/" target="_target"> visualizer</a> and see data being loaded</li>
+      <li>Go to the <a href="http://datagrid-visualizer-myproject.127.0.0.1.nip.io/infinispan-visualizer/" target="_target"> visualizer</a> and see data being loaded.
+        <div class="alert alert-info">
+          If you don't see data being loaded, make sure <code>stations</code> cache selected in the drop down of the visualizer.
+          It might take a few seconds for data to appear in the visualizer, so be patient :)
+        </div>
+      </li>
     </ul>
     <br/>
     <p>The image here corresponds to the state of 3 instances having data.</p>
@@ -478,7 +483,7 @@ query.setParameter("trainName", trainName);</code></pre></div>
           <li><kbd>TODO 2</kbd> Call the query and get the result
             <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-24').toggle();">Show/Hide Solution</a>
             <div id="array-sol-24" style="display:none;">
-              <pre><code class="java">List< Object[]> trains = q.list();</code></pre></div>
+              <pre><code class="java">List< Object[]> trains = query.list();</code></pre></div>
           </li>
         </ul>
         <a class="btn btn-danger" role="button" onclick="$('#array-sol-5').toggle();">Show/Hide Solution</a>
@@ -494,7 +499,7 @@ query.setParameter("trainName", trainName);</code></pre></div>
     Query query = queryFactory.create("select tp.trainId from workshop.model.TrainPosition tp where name = :trainName");
     query.setParameter("trainName", trainName);
 
-    List<Object[]> trains = q.list();
+    List<Object[]> trains = query.list();
 
     Iterator<Object[]> it = trains.iterator();
     if (it.hasNext()) {
