@@ -16,5 +16,3 @@ wget --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" ht
 sha256sum -c <<< "${SHA_256} ${RPM_FILE}"
 sudo rpm -ivh ${RPM_FILE}
 rm ${RPM_FILE}
-
-(dnf list installed | grep openjdk | cut -d' ' -f1 | xargs sudo dnf remove -y) || echo "OpenJDK not installed"
