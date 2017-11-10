@@ -1,10 +1,13 @@
 package workshop.trains;
 
 import io.vertx.core.Future;
+import io.vertx.ext.web.handler.sockjs.BridgeOptions;
+import io.vertx.ext.web.handler.sockjs.PermittedOptions;
 import io.vertx.rx.java.RxHelper;
 import io.vertx.rxjava.core.AbstractVerticle;
 import io.vertx.rxjava.ext.web.Router;
 import io.vertx.rxjava.ext.web.RoutingContext;
+import io.vertx.rxjava.ext.web.handler.sockjs.SockJSHandler;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
@@ -46,7 +49,13 @@ public class DelayedTrains extends AbstractVerticle {
   @Override
   public void start(Future<Void> future) throws Exception {
     Router router = Router.router(vertx);
-    router.get(DELAYED_TRAINS_POSITIONS_URI).blockingHandler(this::positions);
+
+    SockJSHandler sockJSHandler = SockJSHandler.create(vertx);
+    BridgeOptions options = new BridgeOptions()
+      .addOutboundPermitted(new PermittedOptions().setAddress(DELAYED_TRAINS_POSITIONS_ADDRESS));
+    sockJSHandler.bridge(options);
+    router.route("/eventbus/*").handler(sockJSHandler);
+
     router.get(LISTEN_URI).handler(this::listen);
 
     vertx.<RemoteCacheManager>rxExecuteBlocking(fut -> fut.complete(createMgmtClient()))
@@ -68,13 +77,22 @@ public class DelayedTrains extends AbstractVerticle {
 
   private void listen(RoutingContext ctx) {
     vertx
-      .<Void>rxExecuteBlocking(fut -> fut.complete(addDelayedTrainsListener()))
+      .rxExecuteBlocking(fut -> fut.complete(addDelayedTrainsListener()))
+      .doOnSuccess(v -> vertx.setPeriodic(3000, l -> publishPositions()))
       .subscribe(res ->
-        ctx.response().end("Listener started")
-      , t -> {
-        log.log(Level.SEVERE, "Failed to start listener", t);
-        ctx.response().end("Failed to start listener");
-      });
+          ctx.response().end("Listener started")
+        , t -> {
+          log.log(Level.SEVERE, "Failed to start listener", t);
+          ctx.response().end("Failed to start listener");
+        });
+  }
+
+  private void publishPositions() {
+    vertx.<String>executeBlocking(fut -> fut.complete(positions()), ar -> {
+      if (ar.succeeded()) {
+        vertx.eventBus().publish(DELAYED_TRAINS_POSITIONS_ADDRESS, ar.result());
+      }
+    });
   }
 
   private Void addDelayedTrainsListener() {
@@ -98,14 +116,10 @@ public class DelayedTrains extends AbstractVerticle {
     }).subscribe(RxHelper.toSubscriber(stopFuture));
   }
 
-  private void positions(RoutingContext ctx) {
-    System.out.println("HTTP GET /position");
-    ctx.response()
-      .putHeader("Access-Control-Allow-Origin", "*")
-      .end(
-        "train_id\ttrain_category\ttrain_name\ttrain_lastStopName\tposition_lat\tposition_lng\tposition_bearing\n" +
-          showTrains(trainIds)
-      );
+  private String positions() {
+    return
+      "train_id\ttrain_category\ttrain_name\ttrain_lastStopName\tposition_lat\tposition_lng\tposition_bearing\n" +
+        showTrains(trainIds);
   }
 
   private String showTrains(ConcurrentMap<String, String> trainIds) {
@@ -128,11 +142,10 @@ public class DelayedTrains extends AbstractVerticle {
     String trainName = entry.getKey();
     QueryFactory queryFactory = Search.getQueryFactory(positionsCache);
 
-    // TODO 1 - Create Infinispan Ickle to get train ids for all train positions with a given train name
-    Query query = null;
+    Query query = queryFactory.create("select tp.trainId from workshop.model.TrainPosition tp where name = :trainName");
+    query.setParameter("trainName", trainName);
 
-    // TODO 2 - List the results of the query
-    List<Object[]> trains = null;
+    List<Object[]> trains = query.list();
 
     Iterator<Object[]> it = trains.iterator();
     if (it.hasNext()) {
