@@ -44,7 +44,8 @@
     "superagent": "1.4.0",
     "url-loader": "^0.5.7",
     "whatwg-fetch": "^0.10.1",
-    "ws": "^1.0.1"
+    "ws": "^1.0.1",
+    "vertx3-eventbus-client": "3.4.2"
   },
   "devDependencies": {
     "autoprefixer": "^6.3.6",
