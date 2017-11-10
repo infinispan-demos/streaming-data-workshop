@@ -81,3 +81,9 @@ sudo mount -t vboxsf WORKSHOP mount_point/
 ----
 
 Where `WORKSHOP` is the name of the shared directory in VirtualBox config, and `mount_point/` the guest directory.
+
+== Known issues
+
+Enable copy/paste integration but keep drag and drop disabled
+If you use a trackpad (eg. Mac), select MultiTouch USB tablet as pointer device
+
