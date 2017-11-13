@@ -3,13 +3,13 @@
 set -e -x
 
 mvn clean install -N
-(cd ./data-model; ./install.sh)
-(cd ./workshop-main; ./deploy.sh)
-(cd ./stations-injector; ./deploy.sh)
-(cd ./positions-injector; ./deploy.sh)
-(cd ./delayed-listener; ./deploy.sh)
-(cd ./delayed-trains; ./deploy.sh)
+(cd ./data-model; mvn install)
+(cd ./workshop-main; mvn fabric8:deploy)
+(cd ./stations-injector; mvn fabric8:deploy)
+(cd ./positions-injector; mvn fabric8:deploy)
+(cd ./delayed-listener; mvn fabric8:deploy)
+(cd ./delayed-trains; mvn fabric8:deploy)
 (cd ./datagrid-visualizer; ./deploy.sh)
-(cd ./simple-web-application; ./deploy.sh)
+(cd ./simple-web-application; mvn fabric8:deploy)
 
 (cd ./web-viewer; ./start.sh)

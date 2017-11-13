@@ -2,10 +2,10 @@
 
 set -e -x
 
-(cd ./data-model; ./install.sh)
-(cd ./workshop-main; ./redeploy.sh)
-(cd ./stations-injector; ./redeploy.sh)
-(cd ./positions-injector; ./redeploy.sh)
-(cd ./delayed-listener; ./redeploy.sh)
-(cd ./delayed-trains; ./redeploy.sh)
-(cd ./simple-web-application; ./redeploy.sh)
+(cd ./data-model; mvn install)
+(cd ./workshop-main; mvn fabric8:deploy)
+(cd ./stations-injector; mvn fabric8:deploy)
+(cd ./positions-injector; mvn fabric8:deploy)
+(cd ./delayed-listener; mvn fabric8:deploy)
+(cd ./delayed-trains; mvn fabric8:deploy)
+(cd ./simple-web-application; mvn fabric8:deploy)

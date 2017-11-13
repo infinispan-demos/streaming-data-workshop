@@ -159,7 +159,7 @@ MANAGEMENT_USER/MANAGEMENT_PASSWORD=developer/developer</code></pre>
       });
     }</code></pre></div>
           </li>
-          <li>Redeploy with <code>mvn fabric8:deploy</code></li>
+          <li>From command line, change directory to <code>simple-web-application</code> and redeploy with <code>mvn fabric8:deploy</code></li>
           <li>Test <kbd>POST</kbd> with <code>curl -H "Content-Type: application/json" -X POST -d '{"id":1,"name":"Oihana"}' http://simple-web-application-myproject.127.0.0.1.nip.io/api/duchess</code></li>
           <li>Test <kbd>GET</kbd> with <code>curl -X GET -i -H "Accept: application/json" http://simple-web-application-myproject.127.0.0.1.nip.io/api/duchess/1</code></li>
         </ul>
@@ -316,6 +316,13 @@ private void inject(RoutingContext ctx) {
 
         <a class="btn btn-danger" role="button" onclick="$('#array-sol-3').toggle();">Show/Hide Final Solution</a>
         <div id="array-sol-3" style="display:none;">
+          <div class="alert alert-info" role="alert">
+            You can deploy the solution by either of these two methods:
+            <ul>
+              <li>Copy/pasting the code and call: <code>mvn fabric8:deploy</code></li>
+              <li>Or simply call <code>mvn fabric8:deploy -Psolution</code></li>
+            </ul>
+          </div>
         <pre>
           <code class="java">private void inject(RoutingContext ctx) {
     vertx.< RemoteCache < String , Stop > >rxExecuteBlocking(fut -> fut.complete(client.getCache(STATION_BOARDS_CACHE_NAME)))
@@ -344,7 +351,7 @@ private void inject(RoutingContext ctx) {
 }</code></pre>
         </div>
       </li>
-      <li><code>./redeploy.sh</code></li>
+      <li>From command line, change directory to <code>stations-injector</code> and redeploy with <code>mvn fabric8:deploy</code></li>
       <li>Force the injection start the injection with <code>curl http://workshop-main-myproject.127.0.0.1.nip.io/inject</code></li>
       <li>Go to the <a href="http://datagrid-visualizer-myproject.127.0.0.1.nip.io/infinispan-visualizer/" target="_target"> visualizer</a> and see data being loaded.
         <div class="alert alert-info">
@@ -413,6 +420,13 @@ private void inject(RoutingContext ctx) {
 
         <a class="btn btn-danger" role="button" onclick="$('#array-sol-4').toggle();">Show/Hide Final Solution</a>
         <div id="array-sol-4" style="display:none;">
+          <div class="alert alert-info" role="alert">
+            You can deploy the solution by either of these two methods:
+            <ul>
+              <li>Copy/pasting the code and call: <code>mvn fabric8:deploy</code></li>
+              <li>Or simply call <code>mvn fabric8:deploy -Psolution</code></li>
+            </ul>
+          </div>
         <pre>
           <code class="java">private void addContinuousQuery(RemoteCache< String, Stop> stations) {
     QueryFactory qf = Search.getQueryFactory(stations);
@@ -438,7 +452,7 @@ private void inject(RoutingContext ctx) {
   }</code></pre>
         </div>
       </li>
-      <li><code>./redeploy.sh</code></li>
+      <li>From command line, change directory to <code>delayed-listener</code> and redeploy with <code>mvn fabric8:deploy</code></li>
       <li>Go to <kbd>delayed-dashboard</kbd> module and launch <code>DelayedDashboard</code> main</li>
       <li>Monitor the delayed trains !</li>
     </ul>
@@ -496,6 +510,13 @@ query.setParameter("trainName", trainName);</code></pre></div>
         </ul>
         <a class="btn btn-danger" role="button" onclick="$('#array-sol-5').toggle();">Show/Hide Solution</a>
         <div id="array-sol-5" style="display:none;">
+          <div class="alert alert-info" role="alert">
+            You can deploy the solution by either of these two methods:
+            <ul>
+              <li>Copy/pasting the code and call: <code>mvn fabric8:deploy</code></li>
+              <li>Or simply call <code>mvn fabric8:deploy -Psolution</code></li>
+            </ul>
+          </div>
         <pre>
           <code class="java">private String getTrainId(Map.Entry< String, String> entry, RemoteCache< String, TrainPosition> positionsCache) {
     if (!entry.getValue().isEmpty())
@@ -521,7 +542,8 @@ query.setParameter("trainName", trainName);</code></pre></div>
   }</code></pre>
         </div>
       </li>
-      <li><code>./redeploy.sh</code></li>
+      <li>From command line, change directory to <code>delayed-trains</code> and redeploy with <code>mvn fabric8:deploy</code></li>
+      <li>Relaunch <code>DelayedDashboard</code> from the previous exercise so that data injection is started.</li>
       <li>Go to the board <a href="http://localhost:3000/" target="_target">front-end app</a></li>
       <li>Monitor delayed trains !</li>
     </ul>
