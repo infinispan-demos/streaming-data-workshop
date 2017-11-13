@@ -34,7 +34,10 @@
 
     <vertx.version>3.4.1</vertx.version>
     <infinispan.version>9.1.1.Final</infinispan.version>
-    <vertx-maven-plugin.version>1.0.6</vertx-maven-plugin.version>
+    <vertx-maven-plugin.version>1.0.13</vertx-maven-plugin.version>
+    <fabric8-maven-plugin.version>3.5.32</fabric8-maven-plugin.version>
+
+    <workshop.solution>false</workshop.solution>
   </properties>
 
   <modules>
@@ -107,11 +110,35 @@
             <redeploy>true</redeploy>
           </configuration>
         </plugin>
+        <plugin>
+          <groupId>io.fabric8</groupId>
+          <artifactId>fabric8-maven-plugin</artifactId>
+          <version>${fabric8-maven-plugin.version}</version>
+          <executions>
+            <execution>
+              <id>fmp</id>
+              <goals>
+                <goal>resource</goal>
+                <goal>build</goal>
+              </goals>
+            </execution>
+          </executions>
+          <configuration>
+            <resources>
+              <labels>
+                <all>
+                  <property>
+                    <name>solution</name>
+                    <value>${workshop.solution}</value>
+                  </property>
+                </all>
+              </labels>
+            </resources>
+          </configuration>
+        </plugin>
       </plugins>
     </pluginManagement>
 
-    <!--<plugins>-->
-    <!--</plugins>-->
   </build>
 
   <profiles>
@@ -119,6 +146,7 @@
       <id>solution</id>
       <properties>
         <source.dir>src/main/solution</source.dir>
+        <workshop.solution>true</workshop.solution>
       </properties>
     </profile>
   </profiles>

@@ -98,8 +98,8 @@ MANAGEMENT_USER/MANAGEMENT_PASSWORD=developer/developer</code></pre>
   <p>In this section you will learn how to create REST endpoints using Vert.x and how to comunicate remotely with a cache.
   The service should be able to respond now from these URLs:
   <ul>
-    <li><a target="_target" href="http://simple-web-app-myproject.127.0.0.1.nip.io">Welcome endpoint</a></li>
-    <li><a target="_target" href="http://simple-web-app-myproject.127.0.0.1.nip.io/api">Api endpoint</a></li>
+    <li><a target="_target" href="http://simple-web-application-myproject.127.0.0.1.nip.io">Welcome endpoint</a></li>
+    <li><a target="_target" href="http://simple-web-application-myproject.127.0.0.1.nip.io/api">Api endpoint</a></li>
   </ul>
   </p>
   <img src="img/simple-webapp-diagram.png" alt="webapp diagram" class="img-rounded"/>
@@ -159,13 +159,21 @@ MANAGEMENT_USER/MANAGEMENT_PASSWORD=developer/developer</code></pre>
       });
     }</code></pre></div>
           </li>
-          <li>Redeploy with <code>./redeploy.sh</code></li>
-          <li>Test <kbd>POST</kbd> with <code>curl -H "Content-Type: application/json" -X POST -d '{"id":1,"name":"Oihana"}' http://simple-web-app-myproject.127.0.0.1.nip.io/api/duchess</code></li>
-          <li>Test <kbd>GET</kbd> with <code>curl -X GET -i -H "Accept: application/json" http://simple-web-app-myproject.127.0.0.1.nip.io/api/duchess/1</code></li>
+          <li>Redeploy with <code>mvn fabric8:deploy</code></li>
+          <li>Test <kbd>POST</kbd> with <code>curl -H "Content-Type: application/json" -X POST -d '{"id":1,"name":"Oihana"}' http://simple-web-application-myproject.127.0.0.1.nip.io/api/duchess</code></li>
+          <li>Test <kbd>GET</kbd> with <code>curl -X GET -i -H "Accept: application/json" http://simple-web-application-myproject.127.0.0.1.nip.io/api/duchess/1</code></li>
         </ul>
       <br/>
         <a class="btn btn-danger" role="button" onclick="$('#array-sol-2').toggle();">Show/Hide Final Solution</a>
         <div id="array-sol-2" style="display:none;">
+          <div class="alert alert-info" role="alert">
+            You can deploy the solution by either of these two methods:
+            <ul>
+              <li>Copy/pasting the code and call: <code>mvn fabric8:deploy</code></li>
+              <li>Or simply call <code>mvn fabric8:deploy -Psolution</code></li>
+            </ul>
+          </div>
+        <br/>
         <pre>
           <code class="java">public class PlayWithTheCache extends AbstractVerticle {
 
