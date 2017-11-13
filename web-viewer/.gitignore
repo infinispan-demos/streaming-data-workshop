@@ -9,3 +9,4 @@ node_modules/
 /binarydb
 /_users
 static
+*.log
