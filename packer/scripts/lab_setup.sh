@@ -9,25 +9,17 @@ WORKSHOP_DIR=${HOME}/${WORKSHOP}
 git clone https://github.com/infinispan-demos/${WORKSHOP} ${WORKSHOP_DIR}
 
 cd ${WORKSHOP_DIR}
-mvn install dependency:go-offline
+./start-openshift.sh
+./start-datagrid.sh
+mvn install fabric8:deploy dependency:go-offline
+
+cd ${WORKSHOP_DIR}/datagrid-visualizer
+./deploy.sh
 
 cd ${WORKSHOP_DIR}/web-viewer
 nvm use 4.2
 npm install
 npm run build
-
-cd ${WORKSHOP_DIR}
-./start-openshift.sh
-./start-datagrid.sh
-
-(cd ./simple-web-application; ./deploy.sh)
-(cd ./data-model; ./install.sh)
-(cd ./workshop-main; ./deploy.sh)
-(cd ./stations-injector; ./deploy.sh)
-(cd ./positions-injector; ./deploy.sh)
-(cd ./delayed-listener; ./deploy.sh)
-(cd ./delayed-trains; ./deploy.sh)
-(cd ./datagrid-visualizer; ./deploy.sh)
 
 # Expecting 7 app pods plus 3 ISPN pods
 EXPECTED_PODS=10
