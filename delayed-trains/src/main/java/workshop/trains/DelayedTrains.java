@@ -2,7 +2,6 @@ package workshop.trains;
 
 import io.vertx.core.Future;
 import io.vertx.ext.web.handler.sockjs.BridgeOptions;
-import io.vertx.ext.web.handler.sockjs.PermittedOptions;
 import io.vertx.rx.java.RxHelper;
 import io.vertx.rxjava.core.AbstractVerticle;
 import io.vertx.rxjava.ext.web.Router;
@@ -51,8 +50,8 @@ public class DelayedTrains extends AbstractVerticle {
     Router router = Router.router(vertx);
 
     SockJSHandler sockJSHandler = SockJSHandler.create(vertx);
-    BridgeOptions options = new BridgeOptions()
-      .addOutboundPermitted(new PermittedOptions().setAddress(DELAYED_TRAINS_POSITIONS_ADDRESS));
+    BridgeOptions options = new BridgeOptions();
+    // TODO 1 - Modify options to allow sending messages to DELAYED_TRAINS_POSITIONS_ADDRESS to the browser
     sockJSHandler.bridge(options);
     router.route("/eventbus/*").handler(sockJSHandler);
 
@@ -90,7 +89,7 @@ public class DelayedTrains extends AbstractVerticle {
   private void publishPositions() {
     vertx.<String>executeBlocking(fut -> fut.complete(positions()), ar -> {
       if (ar.succeeded()) {
-        vertx.eventBus().publish(DELAYED_TRAINS_POSITIONS_ADDRESS, ar.result());
+        // TODO 2 - Publish the current positions on the EventBus to the DELAYED_TRAINS_POSITIONS_ADDRESS
       }
     });
   }
@@ -142,10 +141,11 @@ public class DelayedTrains extends AbstractVerticle {
     String trainName = entry.getKey();
     QueryFactory queryFactory = Search.getQueryFactory(positionsCache);
 
-    Query query = queryFactory.create("select tp.trainId from workshop.model.TrainPosition tp where name = :trainName");
-    query.setParameter("trainName", trainName);
+    // TODO 3 - Create Infinispan Ickle to get train ids for all train positions with a given train name
+    Query query = null;
 
-    List<Object[]> trains = query.list();
+    // TODO 4 - List the results of the query
+    List<Object[]> trains = null;
 
     Iterator<Object[]> it = trains.iterator();
     if (it.hasNext()) {
