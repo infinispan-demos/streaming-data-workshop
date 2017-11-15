@@ -51,8 +51,8 @@ public class DelayedTrains extends AbstractVerticle {
     Router router = Router.router(vertx);
 
     SockJSHandler sockJSHandler = SockJSHandler.create(vertx);
-    BridgeOptions options = new BridgeOptions()
-      .addOutboundPermitted(new PermittedOptions().setAddress(DELAYED_TRAINS_POSITIONS_ADDRESS));
+    BridgeOptions options = new BridgeOptions();
+    options.addOutboundPermitted(new PermittedOptions().setAddress(DELAYED_TRAINS_POSITIONS_ADDRESS));
     sockJSHandler.bridge(options);
     router.route("/eventbus/*").handler(sockJSHandler);
 
