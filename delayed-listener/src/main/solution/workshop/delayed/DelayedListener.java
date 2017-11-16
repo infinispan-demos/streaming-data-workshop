@@ -1,19 +1,20 @@
 package workshop.delayed;
 
+import io.reactivex.Single;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.handler.sockjs.BridgeEventType;
+import io.vertx.ext.bridge.BridgeEventType;
+import io.vertx.ext.bridge.PermittedOptions;
 import io.vertx.ext.web.handler.sockjs.BridgeOptions;
-import io.vertx.ext.web.handler.sockjs.PermittedOptions;
-import io.vertx.rx.java.RxHelper;
-import io.vertx.rxjava.core.AbstractVerticle;
-import io.vertx.rxjava.ext.web.Router;
-import io.vertx.rxjava.ext.web.RoutingContext;
-import io.vertx.rxjava.ext.web.client.HttpResponse;
-import io.vertx.rxjava.ext.web.client.WebClient;
-import io.vertx.rxjava.ext.web.codec.BodyCodec;
-import io.vertx.rxjava.ext.web.handler.sockjs.SockJSHandler;
+import io.vertx.reactivex.SingleHelper;
+import io.vertx.reactivex.core.AbstractVerticle;
+import io.vertx.reactivex.ext.web.Router;
+import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.reactivex.ext.web.client.HttpResponse;
+import io.vertx.reactivex.ext.web.client.WebClient;
+import io.vertx.reactivex.ext.web.codec.BodyCodec;
+import io.vertx.reactivex.ext.web.handler.sockjs.SockJSHandler;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
@@ -25,7 +26,6 @@ import org.infinispan.query.api.continuous.ContinuousQuery;
 import org.infinispan.query.api.continuous.ContinuousQueryListener;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
-import rx.Single;
 import workshop.model.Station;
 import workshop.model.Stop;
 import workshop.model.Train;
@@ -111,7 +111,7 @@ public class DelayedListener extends AbstractVerticle {
         client.stop();
       }
       fut.complete();
-    }).subscribe(RxHelper.toSubscriber(stopFuture));
+    }).subscribe(SingleHelper.toObserver(stopFuture));
   }
 
   private static JsonObject toJson(Stop stop) {

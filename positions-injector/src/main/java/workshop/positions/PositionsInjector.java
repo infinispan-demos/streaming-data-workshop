@@ -1,22 +1,22 @@
 package workshop.positions;
 
+import hu.akarnokd.rxjava2.interop.CompletableInterop;
+import io.reactivex.Flowable;
+import io.reactivex.Single;
+import io.reactivex.schedulers.Schedulers;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
-import io.vertx.rx.java.RxHelper;
-import io.vertx.rxjava.core.AbstractVerticle;
-import io.vertx.rxjava.ext.web.Router;
-import io.vertx.rxjava.ext.web.RoutingContext;
+import io.vertx.reactivex.SingleHelper;
+import io.vertx.reactivex.core.AbstractVerticle;
+import io.vertx.reactivex.core.RxHelper;
+import io.vertx.reactivex.ext.web.Router;
+import io.vertx.reactivex.ext.web.RoutingContext;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
-import rx.Notification;
-import rx.Observable;
-import rx.functions.Actions;
-import rx.observables.StringObservable;
-import rx.schedulers.Schedulers;
 import workshop.model.GeoLocBearing;
 import workshop.model.TimedPosition;
 import workshop.model.TrainPosition;
@@ -35,7 +35,6 @@ import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 
 import static java.util.logging.Level.*;
-import static rx.Completable.*;
 import static workshop.shared.Constants.*;
 
 public class PositionsInjector extends AbstractVerticle {
@@ -59,7 +58,7 @@ public class PositionsInjector extends AbstractVerticle {
           .doOnSuccess(server -> log.info("Positions injector HTTP server started"))
           .doOnError(t -> log.log(Level.SEVERE, "Positions injector HTTP server failed to start", t))
           .<Void>map(server -> null); // Ignore result
-      }).subscribe(RxHelper.toSubscriber(future));
+      }).subscribe(SingleHelper.toObserver(future));
   }
 
   @Override
@@ -68,7 +67,7 @@ public class PositionsInjector extends AbstractVerticle {
       if (Objects.nonNull(client))
         client.stop();
       fut.complete();
-    }).subscribe(RxHelper.toSubscriber(stopFuture));
+    }).subscribe(SingleHelper.toObserver(stopFuture));
   }
 
   // TODO: Duplicate
@@ -76,7 +75,8 @@ public class PositionsInjector extends AbstractVerticle {
     vertx
       .<RemoteCache<String, TrainPosition>>rxExecuteBlocking(fut -> fut.complete(client.getCache(TRAIN_POSITIONS_CACHE_NAME)))
       // Remove data on start, to start clean
-      .map(positions -> fromFuture(positions.clearAsync()).to(x -> positions))
+      .flatMap(positions -> CompletableInterop.fromFuture(positions.clearAsync()).andThen(Single.just(positions)))
+      .subscribeOn(RxHelper.scheduler(vertx))
       .subscribe(positions -> {
         vertx.setPeriodic(5000L, l ->
           vertx.executeBlocking(fut -> {
@@ -86,9 +86,9 @@ public class PositionsInjector extends AbstractVerticle {
 
         rxReadGunzippedTextResource("cff_train_position-2016-02-29__.jsonl.gz")
           .map(PositionsInjector::toEntry)
-          .flatMap(e -> Observable.from(positions.putAsync(e.getKey(), e.getValue())))
-          .subscribe(Actions.empty(),
-            t -> log.log(SEVERE, "Error while loading", t));
+          .flatMapCompletable(e -> CompletableInterop.fromFuture(positions.putAsync(e.getKey(), e.getValue())))
+          .subscribeOn(Schedulers.io())
+          .subscribe(() -> {}, t -> log.log(SEVERE, "Error while loading", t));
 
         ctx.response().end("Injector started");
       });
@@ -142,19 +142,24 @@ public class PositionsInjector extends AbstractVerticle {
   }
 
   // TODO: Duplicate
-  private static Observable<String> rxReadGunzippedTextResource(String resource) {
+  private static Flowable<String> rxReadGunzippedTextResource(String resource) {
     Objects.requireNonNull(resource);
     URL url = PositionsInjector.class.getClassLoader().getResource(resource);
     Objects.requireNonNull(url);
 
-    return StringObservable
-      .using(() -> {
-        InputStream inputStream = url.openStream();
-        InputStream gzipStream = new GZIPInputStream(inputStream);
-        Reader decoder = new InputStreamReader(gzipStream, StandardCharsets.UTF_8);
-        return new BufferedReader(decoder);
-      }, StringObservable::from)
-      .compose(StringObservable::byLine)
+    return Flowable.<String, BufferedReader>generate(() -> {
+      InputStream inputStream = url.openStream();
+      InputStream gzipStream = new GZIPInputStream(inputStream);
+      Reader decoder = new InputStreamReader(gzipStream, StandardCharsets.UTF_8);
+      return new BufferedReader(decoder);
+    }, (bufferedReader, emitter) -> {
+      String line = bufferedReader.readLine();
+      if (line != null) {
+        emitter.onNext(line);
+      } else {
+        emitter.onComplete();
+      }
+    }, BufferedReader::close)
       .subscribeOn(Schedulers.io());
   }
 

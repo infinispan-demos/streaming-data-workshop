@@ -37,10 +37,9 @@
       <artifactId>vertx-rx-java2</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.reactivex</groupId>
-      <artifactId>rxjava-string</artifactId>
+      <groupId>com.github.akarnokd</groupId>
+      <artifactId>rxjava2-jdk8-interop</artifactId>
     </dependency>
-
     <dependency>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-client-hotrod</artifactId>

@@ -2,11 +2,11 @@ package workshop.trains;
 
 import io.vertx.core.Future;
 import io.vertx.ext.web.handler.sockjs.BridgeOptions;
-import io.vertx.rx.java.RxHelper;
-import io.vertx.rxjava.core.AbstractVerticle;
-import io.vertx.rxjava.ext.web.Router;
-import io.vertx.rxjava.ext.web.RoutingContext;
-import io.vertx.rxjava.ext.web.handler.sockjs.SockJSHandler;
+import io.vertx.reactivex.SingleHelper;
+import io.vertx.reactivex.core.AbstractVerticle;
+import io.vertx.reactivex.ext.web.Router;
+import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.reactivex.ext.web.handler.sockjs.SockJSHandler;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
@@ -73,7 +73,7 @@ public class DelayedTrains extends AbstractVerticle {
           .doOnError(t -> log.log(Level.SEVERE, "HTTP server failed to start", t))
           .<Void>map(server -> null); // Ignore result
       })
-      .subscribe(RxHelper.toSubscriber(future));
+      .subscribe(SingleHelper.toObserver(future));
   }
 
   private void listen(RoutingContext ctx) {
@@ -114,7 +114,7 @@ public class DelayedTrains extends AbstractVerticle {
         queryClient.stop();
 
       fut.complete();
-    }).subscribe(RxHelper.toSubscriber(stopFuture));
+    }).subscribe(SingleHelper.toObserver(stopFuture));
   }
 
   private void positionsHandler(RoutingContext ctx) {

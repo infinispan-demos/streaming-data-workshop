@@ -1,15 +1,15 @@
 package workshop;
 
+import io.reactivex.Single;
 import io.vertx.core.Future;
-import io.vertx.rx.java.RxHelper;
-import io.vertx.rxjava.core.AbstractVerticle;
-import io.vertx.rxjava.core.Vertx;
-import io.vertx.rxjava.ext.web.Router;
-import io.vertx.rxjava.ext.web.RoutingContext;
-import io.vertx.rxjava.ext.web.client.HttpResponse;
-import io.vertx.rxjava.ext.web.client.WebClient;
-import io.vertx.rxjava.ext.web.codec.BodyCodec;
-import rx.Single;
+import io.vertx.reactivex.SingleHelper;
+import io.vertx.reactivex.core.AbstractVerticle;
+import io.vertx.reactivex.core.Vertx;
+import io.vertx.reactivex.ext.web.Router;
+import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.reactivex.ext.web.client.HttpResponse;
+import io.vertx.reactivex.ext.web.client.WebClient;
+import io.vertx.reactivex.ext.web.codec.BodyCodec;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -33,7 +33,7 @@ public class Main extends AbstractVerticle {
       .rxListen(8080)
       .doOnSuccess(server -> log.info("Main HTTP server started"))
       .<Void>map(server -> null) // Ignore result
-      .subscribe(RxHelper.toSubscriber(future));
+      .subscribe(SingleHelper.toObserver(future));
   }
 
   private void inject(RoutingContext ctx) {
