@@ -49,6 +49,181 @@
 </div>
 
 <div class="container">
+  <h1>Installation Steps</h1>
+  To do this workshop, it's necessary to have some components installed in the local machine.
+  Depending on your environment, you can find detailed installation instructions below:
+
+  <h2>Restricted Internet Environment</h2>
+  If you're in an environment with restricted internet connection (e.g. conference or public wifi), we have prepared a virtual box for you to run this workshop.
+  This image contains all the dependencies and tools you need to run the workshop so that your internet connectivity requirements are minimized.
+  The installation steps in this case involve installing Virtual Box 5.1 and setting it up so that it's adjusted to your environment.
+  <br/><br/>
+  Start by installing Virtual Box 5.1.
+  <br/><br/>
+  <div class="alert alert-warning" role="alert">
+    For Windows or Mac users, you should be able to just install them from the given files.
+    <br/>
+    However, for those running Unix/Linux environments, the pen drive contains Virtual Box packages but you might need to download and install dependencies separately.
+  </div>
+  Once the installation has completed, import the provided image into Virtual Box and adjust it for your environment:
+
+  <div class="alert alert-info" role="alert">
+    If using a trackpad, it is recommended to switch the <code>Pointing Device</code> to <code>USB Multi-Touch Tablet</code>.
+    <br/>
+    To do that, right click on the imported image and select <code>Settings</code>.
+    Then, go to <code>System</code> and apply the change there. Here's an screenshot to guide you:
+    <br/><br/>
+    <img src="img/multi-touch.png" class="img-rounded" height="75%" width="75%">
+  </div>
+
+  For a smooth experience on your environment, it is recommended that Virtual Box Guest Additions are installed.
+  To install them, you first need to add an optical drive to your image (if none present).
+  <br/><br/>
+  <img src="img/add-optical-drive.png" class="img-rounded" height="50%" width="50%">
+  <br/><br/>
+
+  Once you add it, initialize as empty by choosing <code>Leave empty</code>.
+  <br/><br/>
+  <img src="img/leave-empty.png" class="img-rounded" height="30%" width="30%">
+  <br/><br/>
+
+  To be able to copy/paste text from your environment to the virtual machine, you should enable <code>Shared Clipboard</code> by setting it to be <code>Bidirectional</code>.
+  This can be done via the <code>General / Advanced</code> tab in <code>Settings</code>
+  <br/><br/>
+  <img src="img/bidirectional-clipboard.png" class="img-rounded" height="75%" width="75%">
+  <br/><br/>
+
+  Next, select the virtual machine and click on <code>Start</code>.
+  When the virtual machine starts, type in <code>developer</code> as password.
+  <br/><br/>
+
+  When you start the virtual machine first time, the virtual machine will ask to choose the panel configuration.
+  In this dialog, you should choose <code>Use default config</code>.
+  <br/><br/>
+  <img src="img/panel-default-config.png" class="img-rounded" height="30%" width="30%">
+  <br/><br/>
+
+  Next, you will use the optical drive added earlier to install the Virtual Box Guest Additions.
+  These are necessary for you to be able to go full screen with the virtual machine.
+  With the image started, click on <code>Devices / Install Guest Additions CD image</code>.
+  If the CD does not autorun, you can install the guest additions from the <code>Terminal</code> by executing the following commands:
+  <br/><br/>
+
+  <pre><code>> cd /run/media/developer/VBOXADDITIONS_5.1.30_118389
+> sudo sh ./VBoxLinuxAdditions.run</code></pre>
+
+  <img src="img/install-additions-cmd-line.png" class="img-rounded" height="75%" width="75%">
+  <br/><br/>
+
+  <div class="alert alert-warning" role="alert">
+    Make sure you <strong>reboot the virtual machine</strong> after installing the guest additions for the changes to take effect.
+  </div>
+
+  From the time the virtual machine is created and the workshop is delivered, there might have been updates to code or steps.
+  To update the virtual machine with the latest workshop changes, open the <code>Terminal</code> and execute:
+  <br/><br/>
+  <pre><code>> cd streaming-data-workshop
+> git fetch origin
+> git pull</code></pre>
+  <br/>
+  <img src="img/update-workshop.png" class="img-rounded" height="75%" width="75%">
+  <br/><br/>
+
+  Finally, to help develop code, the virtual machine comes with both Eclipse and Intellij IDEA installed by default.
+  These are accessible via <code>Applications / Development</code>.
+  <br/><br/>
+  <img src="img/ides-in-vm.png" class="img-rounded" height="75%" width="75%">
+  <br/><br/>
+
+  <h3>Importing workshop into IntelliJ IDEA in virtual machine</h3>
+
+  Start by clicking on <code>Intellij IDEA</code> located in <code>Applications / Development</code>.
+  First time it runs, you will need to click on <code>Accept</code> in the JetBrains Privacy Policy dialog.
+  Then, from the starting menu, select <code>Import Project</code>:
+  <br/><br/>
+  <img src="img/intellij-import-project.png" class="img-rounded" height="75%" width="75%">
+  <br/><br/>
+
+  Next, select the <code>/home/developer/streaming-data-workshop/pom.xml</code> file and click <code>OK</code>:
+  <br/><br/>
+  <img src="img/intellij-select-pom.png" class="img-rounded" height="75%" width="75%">
+  <br/><br/>
+
+  In the next dialog entries, click <code>Next</code> until you get to dialog to select an SDK.
+  Click on the <code>+</code> sign and select <code>JDK</code>:
+  <br/><br/>
+  <img src="img/intellij-add-new-sdk.png" class="img-rounded" height="75%" width="75%">
+  <br/><br/>
+
+  Then, let Intellij IDEA select the default location for the JDK and click <code>OK</code>:
+  <br/><br/>
+  <img src="img/intellij-default-jdk-location.png" class="img-rounded" height="75%" width="75%">
+  <br/><br/>
+
+  Click <code>Next</code> and in next dialog click <code>Finish</code>
+
+  <h3>Importing Workshop Into Eclipse in Virtual Machine</h3>
+
+  Start by clicking on <code>Eclipse</code> located in <code>Applications / Development</code>.
+  Next, select the default workspace location suggested by Eclipse:
+  <br/><br/>
+  <img src="img/eclipse-default-workspace.png" class="img-rounded" height="75%" width="75%">
+  <br/><br/>
+
+  When Eclipse starts, select <code>File / Import</code>:
+  <br/><br/>
+  <img src="img/eclipse-import.png" class="img-rounded" height="75%" width="75%">
+  <br/><br/>
+
+  Then, select <code>Maven</code> and within it, <code>Existing Maven Projects</code> and click <code>Next</code>:
+  <br/><br/>
+  <img src="img/eclipse-existing-maven-projects.png" class="img-rounded" height="75%" width="75%">
+  <br/><br/>
+
+  Next, navigate to <code>/home/developer/streaming-data-workshop</code> and press <code>OK</code>:
+  <br/><br/>
+  <img src="img/eclipse-project-home.png" class="img-rounded" height="75%" width="75%">
+  <br/><br/>
+
+  Eclipse should discover all the modules within the workshop, so just click <code>Finish</code>:
+  <br/><br/>
+  <img src="img/eclipse-finish-import.png" class="img-rounded" height="75%" width="75%">
+  <br/><br/>
+
+  <div class="alert alert-warning" role="alert">
+    Eclipse might next report a message saying that no marketplace entries are found for <code>vertx-maven-plugin</code>.
+    Just click on <code>Resolve All Later</code> and <code>Finish</code>:
+    <br/><br/>
+    <img src="img/eclipse-maven-plugin-connectors.png" class="img-rounded" height="75%" width="75%">
+    <br/><br/>
+
+    If Eclipse says that continuing with import might result with build errors, just ignore it and click <code>OK</code>:
+    <br/><br/>
+    <img src="img/eclipse-ignore-errors-confirmation.png" class="img-rounded" height="75%" width="75%">
+    <br/><br/>
+
+    After doing this, you might see some errors in the project, you can simply ignore them or click on each of the errors select <code>Delete</code>
+    <br/><br/>
+    <img src="img/eclipse-ignore-errors-project.png" class="img-rounded" height="75%" width="75%">
+    <br/><br/>
+  </div>
+
+  <h2>Unrestricted Internet Environment</h2>
+  If you are in an environment with unrestricted internet connection (e.g. home or office), you can run this workshop directly on your machine.
+  These are the dependencies that you need to have installed and available in your path:
+  <ul>
+    <li>Docker version 1.13.1. If you have a newer Docker version installed, the workshop might still work but can't provide guarantees.</li>
+    <li><a href="https://github.com/openshift/origin/releases/tag/v3.6.1">OpenShift Client 3.6</a></li>
+    <li><a href="https://github.com/kubernetes/kubernetes/releases/tag/v1.6.11">Kubernetes 1.6</a></li>
+    <li><a href="https://github.com/johanhaleby/kubetail/tree/1.2.1">Kubetail 1.2.1</a></li>
+    <li><a href="https://github.com/creationix/nvm">Node.js Version Manager</a>.
+      Makes it easy to work with multiple Node.js versions</li>
+  </ul>
+  After installing these dependencies, start the Docker daemon.
+
+</div>
+
+<div class="container">
   <h1>Playground</h1>
 
   <p>We will start with a warmup for those that are not familiar with <strong>Eclipse Vert.x</strong>, <strong>Infinispan</strong> and <strong>Openshift</strong>.</p>
