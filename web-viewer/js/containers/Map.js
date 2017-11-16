@@ -26,6 +26,7 @@ const store = configureStore();
 frontendConfig.get().then(function (config) {
 
   const eventBus = new EventBus(config.url.eventbus);
+  eventBus.enableReconnect(true);
   eventBus.onopen = function () {
     eventBus.registerHandler('delayed-trains-positions', function (error, message) {
       if (error === null) {
