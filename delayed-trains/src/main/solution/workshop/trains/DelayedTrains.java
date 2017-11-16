@@ -50,6 +50,8 @@ public class DelayedTrains extends AbstractVerticle {
   public void start(Future<Void> future) throws Exception {
     Router router = Router.router(vertx);
 
+    router.get(DELAYED_TRAINS_POSITIONS_URI).blockingHandler(this::positionsHandler);
+
     SockJSHandler sockJSHandler = SockJSHandler.create(vertx);
     BridgeOptions options = new BridgeOptions();
     options.addOutboundPermitted(new PermittedOptions().setAddress(DELAYED_TRAINS_POSITIONS_ADDRESS));
@@ -114,6 +116,13 @@ public class DelayedTrains extends AbstractVerticle {
 
       fut.complete();
     }).subscribe(RxHelper.toSubscriber(stopFuture));
+  }
+
+  private void positionsHandler(RoutingContext ctx) {
+    log.info(() -> "HTTP GET " + DELAYED_TRAINS_POSITIONS_URI);
+    ctx.response()
+      .putHeader("Access-Control-Allow-Origin", "*")
+      .end(positions());
   }
 
   private String positions() {
