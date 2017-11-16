@@ -87,11 +87,11 @@ public class StationsInjector extends AbstractVerticle {
 
         Flowable<String> fileFlowable = rxReadGunzippedTextResource("cff-stop-2016-02-29__.jsonl.gz");
 
-        Flowable<Map.Entry<String, Stop>> pairFlowable =
-          fileFlowable.map(StationsInjector::toEntry);
+        // TODO 1: map each entry of the Flowable into a tuple of String/Stop with StationsInjector::toEntry
+        Flowable<Map.Entry<String, Stop>> pairFlowable = null;
 
-        Flowable<?> putFlowable =
-          pairFlowable.doOnNext(e -> stations.putAsync(e.getKey(), e.getValue()));
+        // TODO 2. for each entry, store it in the stations cache calling putAsync
+        Flowable<?> putFlowable = null;
 
         putFlowable.subscribe(v -> {}, t -> log.log(SEVERE, "Error while loading", t));
 
