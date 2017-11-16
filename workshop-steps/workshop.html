@@ -465,107 +465,95 @@ private void inject(RoutingContext ctx) {
     <img src="img/InMemoryLayer.png" alt="Inmemory Layer" class="img-rounded">
     <ul style="list-style: decimal;">
       <li>Open <kbd>DelayedTrains</kbd> class in the <kbd>delayed-trains</kbd> module</li>
-      <li>Modify the EventBus bridge <kbd>options</kbd> to allow sending messages to the browser
-        <pre><code class="java">SockJSHandler sockJSHandler = SockJSHandler.create(vertx);
-BridgeOptions options = new BridgeOptions();
-// TODO 1 - Modify options to allow sending messages to DELAYED_TRAINS_POSITIONS_ADDRESS to the browser
-sockJSHandler.bridge(options);
-router.route("/eventbus/*").handler(sockJSHandler);</code></pre>
-        <ul>
-          <li><kbd>TODO 1</kbd>
-            <p>Use <kbd>addOutboundPermitted</kbd> method to add a new instance of <kbd>PermittedOptions</kbd><br/>
-              <a class="btn btn-info" role="button" onclick="$('#array-sol-26').toggle();">Show/Hide Solution</a>
-            <div id="array-sol-26" style="display:none;">
-              <pre><code class="java">SockJSHandler sockJSHandler = SockJSHandler.create(vertx);
-BridgeOptions options = new BridgeOptions();
-options.addOutboundPermitted(new PermittedOptions().setAddress(DELAYED_TRAINS_POSITIONS_ADDRESS));
-sockJSHandler.bridge(options);
-router.route("/eventbus/*").handler(sockJSHandler);</code></pre>
-            </div>
-          </li>
-        </ul>
+      <li><kbd>TODO 1</kbd><br/>
+        Modify the EventBus bridge <kbd>options</kbd> to allow sending messages to the browser.
+        Use <kbd>addOutboundPermitted</kbd> method to add a new instance of <kbd>PermittedOptions</kbd> for
+        <kbd>DELAYED_TRAINS_POSITIONS_ADDRESS</kbd>.<br/>
+        <a class="btn btn-info" role="button" onclick="$('#array-sol-26').toggle();">Show/Hide Solution</a>
+        <div id="array-sol-26" style="display:none;">
+          <pre><code class="java">options.addOutboundPermitted(new PermittedOptions().setAddress(DELAYED_TRAINS_POSITIONS_ADDRESS));</code></pre>
+        </div>
       </li>
-      <li>Implement <code>publishPositions</code> method
-        <pre><code class="java">private void publishPositions() {
-    vertx.<String>executeBlocking(fut -> fut.complete(positions()), ar -> {
-      if (ar.succeeded()) {
-        // TODO 2 - Publish the current positions on the EventBus to the DELAYED_TRAINS_POSITIONS_ADDRESS
-      }
-    });
-  }</code></pre>
-        <ul>
-          <li><kbd>TODO 2</kbd>
-            <p>Use <kbd>eventBus.publish()</kbd> method to publish the asynchronous result to the
-              <kbd>DELAYED_TRAINS_POSITIONS_ADDRESS</kbd> address<br/>
-              <a class="btn btn-info" role="button" onclick="$('#array-sol-25').toggle();">Show/Hide Solution</a>
-            <div id="array-sol-25" style="display:none;">
-              <pre><code class="java">private void publishPositions() {
+      <li><kbd>TODO 2</kbd><br/>
+        Use <kbd>eventBus.publish()</kbd> method to publish the asynchronous result to the
+        <kbd>DELAYED_TRAINS_POSITIONS_ADDRESS</kbd> address<br/>
+        <a class="btn btn-info" role="button" onclick="$('#array-sol-25').toggle();">Show/Hide Solution</a>
+        <div id="array-sol-25" style="display:none;">
+          <pre><code class="java">vertx.eventBus().publish(DELAYED_TRAINS_POSITIONS_ADDRESS, ar.result());</code></pre>
+        </div>
+      </li>
+      <li><kbd>TODO 3</kbd><br/>
+        Create a Ickle query with the query factory. Ickle query are JPA like syntax queries.<br/>
+        An example of query : <br/>
+        <code>select tx.transactionId, tx.amount, tx.description from com.acme.Transaction tx
+          where amount > 10 and description = :desc</code>.<br/>
+        The parameter <code>desc</code> is replaced using <code>setParameter</code> method.<br/>
+        Create a query to get trains ids for all trains positions with a given train name.<br/>
+        <a class="btn btn-info" role="button" onclick="$('#array-sol-23').toggle();">Show/Hide Solution</a>
+        <div id="array-sol-23" style="display:none;">
+              <pre><code class="java">Query query = queryFactory.create("select tp.trainId from workshop.model.TrainPosition tp where name = :trainName");
+query.setParameter("trainName", trainName);</code></pre>
+        </div>
+      </li>
+      <li><kbd>TODO 4</kbd><br/>
+        Call the query and get the result<br/>
+        <a class="btn btn-info" role="button" onclick="$('#array-sol-24').toggle();">Show/Hide Solution</a>
+        <div id="array-sol-24" style="display:none;">
+          <pre><code class="java">List< Object[]> trains = query.list();</code></pre>
+        </div>
+      </li>
+    </ul>
+    <div>
+      <a class="btn btn-danger" role="button" onclick="$('#array-sol-5').toggle();">Show/Hide Solution</a>
+      <div id="array-sol-5" style="display:none;">
+        <div class="alert alert-info" role="alert">
+          You can deploy the solution by either of these two methods:
+          <ul>
+            <li>Copy/pasting the code and call: <code>mvn fabric8:deploy</code></li>
+            <li>Or simply call <code>mvn fabric8:deploy -Psolution</code></li>
+          </ul>
+        </div>
+        <pre>
+          <code class="java">  @Override
+  public void start(Future<Void> future) throws Exception {
+    Router router = Router.router(vertx);
+
+    router.get(DELAYED_TRAINS_POSITIONS_URI).blockingHandler(this::positionsHandler);
+
+    SockJSHandler sockJSHandler = SockJSHandler.create(vertx);
+    BridgeOptions options = new BridgeOptions();
+    options.addOutboundPermitted(new PermittedOptions().setAddress(DELAYED_TRAINS_POSITIONS_ADDRESS));
+    sockJSHandler.bridge(options);
+    router.route("/eventbus/*").handler(sockJSHandler);
+
+    router.get(LISTEN_URI).handler(this::listen);
+
+    vertx.<RemoteCacheManager>rxExecuteBlocking(fut -> fut.complete(createMgmtClient()))
+      .doOnSuccess(remoteClient -> mgmtClient = remoteClient)
+      .flatMap(z -> {
+        return vertx.<RemoteCacheManager>rxExecuteBlocking(fut -> fut.complete(createQueryClient()));
+      })
+      .doOnSuccess(remoteClient -> queryClient = remoteClient)
+      .flatMap(v -> {
+        return vertx.createHttpServer()
+          .requestHandler(router::accept)
+          .rxListen(8080)
+          .doOnSuccess(server -> log.info("HTTP server started"))
+          .doOnError(t -> log.log(Level.SEVERE, "HTTP server failed to start", t))
+          .<Void>map(server -> null); // Ignore result
+      })
+      .subscribe(RxHelper.toSubscriber(future));
+  }
+
+  private void publishPositions() {
     vertx.<String>executeBlocking(fut -> fut.complete(positions()), ar -> {
       if (ar.succeeded()) {
         vertx.eventBus().publish(DELAYED_TRAINS_POSITIONS_ADDRESS, ar.result());
       }
     });
-  }</code></pre>
-            </div>
-          </li>
-        </ul>
-      </li>
-      <li>Implement <code>getTrainId</code> method
-        <pre><code class="java"> private String getTrainId(Map.Entry< String, String> entry, RemoteCache< String, TrainPosition> positionsCache) {
-    if (!entry.getValue().isEmpty())
-      return entry.getValue();
+  }
 
-    String trainName = entry.getKey();
-    QueryFactory queryFactory = Search.getQueryFactory(positionsCache);
-
-    // TODO 3 - Create Infinispan Ickle to get train ids for all train positions with a given train name
-    Query query = null;
-
-    // TODO 4 - List the results of the query
-    List<Object[]> trains = null;
-
-    Iterator<Object[]> it = trains.iterator();
-    if (it.hasNext()) {
-      // Not accurate but simplest of methods
-      String trainId = (String) it.next()[0];
-      trainIds.put(trainName, trainId);
-      return trainId;
-    }
-
-    return null;
-  }</code></pre>
-
-        <ul>
-          <li><kbd>TODO 3</kbd>
-            <p>Create a Ickle query with the query factory. Ickle query are JPA like syntax queries.<br/>
-              Un example of query : <br/>
-              <code>select tx.transactionId, tx.amount, tx.description from com.acme.Transaction tx
-                where amount > 10 and description = :desc</code>.
-              <br/>The parameter <code>desc</code> is replaced using <code>setParameter</code> method.</p>
-            <br/>Create a query to get trains ids for all trains positions with a given train name.<br/>
-            <a class="btn btn-info" role="button" onclick="$('#array-sol-23').toggle();">Show/Hide Solution</a>
-            <div id="array-sol-23" style="display:none;">
-              <pre><code class="java">Query query = queryFactory.create("select tp.trainId from workshop.model.TrainPosition tp where name = :trainName");
-query.setParameter("trainName", trainName);</code></pre></div>
-          </li>
-          <li><kbd>TODO 4</kbd> Call the query and get the result
-            <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-24').toggle();">Show/Hide Solution</a>
-            <div id="array-sol-24" style="display:none;">
-              <pre><code class="java">List< Object[]> trains = query.list();</code></pre>
-            </div>
-          </li>
-        </ul>
-        <a class="btn btn-danger" role="button" onclick="$('#array-sol-5').toggle();">Show/Hide Solution</a>
-        <div id="array-sol-5" style="display:none;">
-          <div class="alert alert-info" role="alert">
-            You can deploy the solution by either of these two methods:
-            <ul>
-              <li>Copy/pasting the code and call: <code>mvn fabric8:deploy</code></li>
-              <li>Or simply call <code>mvn fabric8:deploy -Psolution</code></li>
-            </ul>
-          </div>
-          <pre>
-          <code class="java">private String getTrainId(Map.Entry< String, String> entry, RemoteCache< String, TrainPosition> positionsCache) {
+  private String getTrainId(Map.Entry< String, String> entry, RemoteCache< String, TrainPosition> positionsCache) {
     if (!entry.getValue().isEmpty())
       return entry.getValue();
 
@@ -587,14 +575,15 @@ query.setParameter("trainName", trainName);</code></pre></div>
 
     return null;
   }</code></pre>
-        </div>
-      </li>
-      <li>From command line, change directory to <code>delayed-trains</code> and redeploy with
-        <code>mvn fabric8:deploy</code></li>
-      <li>Relaunch <code>DelayedDashboard</code> from the previous exercise so that data injection is started.</li>
-      <li>Go to the board <a href="http://localhost:3000/" target="_target">front-end app</a></li>
-      <li>Monitor delayed trains !</li>
-    </ul>
+      </div>
+      <ul>
+        <li>From command line, change directory to <code>delayed-trains</code> and redeploy with
+          <code>mvn fabric8:deploy</code></li>
+        <li>Relaunch <code>DelayedDashboard</code> from the previous exercise so that data injection is started.</li>
+        <li>Go to the board <a href="http://localhost:3000/" target="_target">front-end app</a></li>
+        <li>Monitor delayed trains !</li>
+      </ul>
+    </div>
   </section>
 
 </div> <!-- /container -->
