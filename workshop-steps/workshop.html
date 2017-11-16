@@ -129,6 +129,15 @@
   <img src="img/update-workshop.png" class="img-rounded" height="75%" width="75%">
   <br/><br/>
 
+  <div class="alert alert-danger" role="alert">
+    If you're running this workshop <strong>completely offline</strong>, you need to adjust <code>/etc/hosts</code> file so that host names can be resolved locally:
+    <br/><br/>
+    <pre><code>127.0.0.1        datagrid-visualizer-myproject.127.0.0.1.nip.io
+127.0.0.1        delayed-listener-myproject.127.0.0.1.nip.io
+127.0.0.1        delayed-trains-myproject.127.0.0.1.nip.io
+127.0.0.1        workshop-main-myproject.127.0.0.1.nip.io</code></pre>
+  </div>
+
   Finally, to help develop code, the virtual machine comes with both Eclipse and Intellij IDEA installed by default.
   These are accessible via <code>Applications / Development</code>.
   <br/><br/>
