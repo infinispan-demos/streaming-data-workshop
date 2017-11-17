@@ -292,10 +292,10 @@
 
   <div class="alert alert-success" role="alert">
     <h4 class="alert-heading">What is Vert.x?</h4>
-    TODO
+    TODO @Thomas
     <hr/>
     <h4 class="alert-heading">What will Vert.x be used for in the workshop?</h4>
-    TODO
+    TODO @Thomas
   </div>
 
   <div class="alert alert-success" role="alert">
@@ -464,57 +464,58 @@ datagrid-1-zf16b
     </ol>
   </section>
 
-  <h1>Streaming Data</h1>
+  <h2>Ex2 :: Collect data</h2>
 
-  <h2>Ex3 :: Start</h2>
-  <ul>
-    <li>Go to the board : <a href="http://localhost:3000/" target="_target">front-end app</a></li>
-    <li>An empty map should be displayed. Otherwise make sure the <code>web-viewer</code> app is started: <code>cd ./web-viewer; ./start.sh</code></li>
-  </ul>
+  Now that the OpenShift is running and Infinispan data grid has been created it's time to start loading data into it.
+  <br/><br/>
+  This workshop works with two streams of data: train timetable data and train positions.
+  In this exercise, you will need to complete the work so that the train timetable information can be read from a file and injected into Infinispan data grid.
+  The code you write will run within a partially developed Vert.x verticle, which will run as a separate deployment on OpenShift.
+  Reading from the file will be done in a reactive way using Vert.x and RxJava2.
+  As well as reading the data, you will need to transform it slightly so that it can be stored remotely into Infinispan data grid.
+  <br/><br/>
+  <div class="alert alert-info" role="alert">
+    Remember that in a real-life scenario, you would directly consume the data streams directly from their sources.
+    However, since availability of the data streams cannot be guaranteed and to avoid potential overuse of these APIs, data from these streams has been captured in files that are available as part of the workshop.
+  </div>
+  <div class="alert alert-success" role="alert">
+    <h4 class="alert-heading">What is a Vert.x verticle?</h4>
+    TODO @Thomas
+    <hr/>
+    <h4 class="alert-heading">Why should I write reactive code with Vert.x?</h4>
+    TODO @Thomas
+    <hr/>
+    <h4 class="alert-heading">What is RxJava2? How does it relate to Vert.x?</h4>
+    TODO @Thomas
+    <hr/>
+    <h4 class="alert-heading">How do I use Vert.x to read data from a file and transform it?</h4>
+    TODO @Thomas
+    <hr/>
+    <h4 class="alert-heading">How do I store data remotely into Infinispan in a reactive way?</h4>
+    Infinispan stores data into caches, and if using Hot Rod protocol from Java, these are represented as instances of <code>RemoteCache</code>.
+    These caches store data as key/value pairs.
+    Once you have a <code>RemoteCache</code> instance, you can call <code>putAsync(key, value)</code> method to store data.
+    This method returns a <code>CompletableFuture</code> which provides an asynchronous handle for working with the result of the operation.
+  </div>
 
-  <h2>Ex4 :: Collect data</h2>
+  <h3>Architecture Diagram</h3>
+  In this exercise, you work will focus on the <code>stations-injector</code> module.
+  This module is in charge of taking the Transport OpenData information on train timetables from station boards around the country and feeding it into the Infinispan data grid.
+  <br/><br/>
+  There is also a module called <code>positions-injector</code> module which injects train positions, but this module has already been completed.
+  <br/><br/>
+  Finally, there is a <code>workshop-main</code> module which acts as gateway for the injector modules.
+  It's primary role is to set up everything for the injectors to do their job.
+  For example, this module creates the Infinispan caches where the injectors will store data.
+  <br/><br/>
+  <img src="img/collectionLayer.png" class="img-rounded" height="75%" width="75%">
 
-  <p>In this section we are going to import in a reactive and real-time way a file that contains data.
-  This code would work connecting to a remote web-service or any other data source. The data collected in the files are real data coming from
-  an real API on Swiss Transport.</p>
-
-
-  <h3>Make data injection work</h3>
+  <h3>Exercise</h3>
 
   <section id="inject">
-    <img src="img/collectionLayer.png" alt="Collection Layer" class="img-rounded">
     <ul style="list-style: decimal;">
-      <li>Open <kbd>StationsInjector</kbd></li>
-      <li>Implement <code>inject</code> method with RxJava
-        <pre><code class="java">router.get(STATIONS_INJECTOR_URI).handler(this::inject);
-
-private void inject(RoutingContext ctx) {
-    vertx. < RemoteCache < String, Stop>>rxExecuteBlocking(fut -> fut.complete(client.getCache(STATION_BOARDS_CACHE_NAME)))
-      // Remove data on start, to start clean
-      .map(stations -> fromFuture(stations.clearAsync()).to(x -> stations))
-      .subscribe(stations -> {
-        vertx.setPeriodic(5000L, l ->
-          vertx.executeBlocking(fut -> {
-            log.info(String.format("Progress: stored=%d%n", stations.size()));
-            fut.complete();
-          }, false, ar -> {}));
-
-        Observable<String> fileObservable = rxReadGunzippedTextResource("cff-stop-2016-02-29__.jsonl.gz");
-
-        // TODO 1: map each entry of the observable into a tuple of String/Stop with StationsInjector::toEntry
-        Observable<Map.Entry<String, Stop>> pairObservable = null;
-
-        // TODO 2. for each entry, store it in the stations cache calling putAsync
-        Observable<?> putObservable = null;
-
-        putObservable.subscribe(Actions.empty(),
-            t -> log.log(SEVERE, "Error while loading", t));
-
-        ctx.response().end("Injector started");
-      });
-  }
-        </code></pre>
-
+      <li>Open <kbd>workshop.stations.StationsInjector</kbd> class in <code>stations-injector</code> module</li>
+      <li>Implement the TODOs found in the <code>inject</code> method:
         <ul>
           <li><kbd>TODO 1</kbd> Map each entry into a tuple of String/Stop with <code>StationsInjector::toEntry</code>
             <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-13').toggle();">Show/Hide Solution</a>
@@ -565,23 +566,31 @@ private void inject(RoutingContext ctx) {
 }</code></pre>
         </div>
       </li>
-      <li>From command line, change directory to <code>stations-injector</code> and redeploy with <code>mvn fabric8:deploy</code></li>
-      <li>Force the injection start the injection with <code>curl http://workshop-main-myproject.127.0.0.1.nip.io/inject</code></li>
+      <li>Redeploy after making the code changes:
+        <br/><br/>
+        <pre><code>> cd stations-injector
+> mvn fabric8:deploy</code></pre>
+      </li>
+      <li>Force the injection start the injection visiting <a href="http://workshop-main-myproject.127.0.0.1.nip.io/inject">this URL</a> or executing this:
+        <br/><br/>
+        <pre><code>> curl http://workshop-main-myproject.127.0.0.1.nip.io/inject</code></pre>
+      </li>
       <li>Go to the <a href="http://datagrid-visualizer-myproject.127.0.0.1.nip.io/infinispan-visualizer/" target="_target"> visualizer</a> and see data being loaded.
-        <div class="alert alert-info">
+        <br/><br/>
+        <div class="alert alert-warning">
           If you don't see data being loaded, make sure <code>stations</code> cache selected in the drop down of the visualizer.
           It might take a few seconds for data to appear in the visualizer, so be patient :)
         </div>
+        <p>The image here corresponds to the state of 3 instances having data.</p>
+        <img src="img/infinispan-visu-loading.png" class="img-rounded" height="75%" width="75%"/>
       </li>
     </ul>
     <br/>
-    <p>The image here corresponds to the state of 3 instances having data.</p>
-    <img src="img/infinispan-visu-loading.png" alt="visualizer" class="img-rounded"/>
 
   </section>
 
 
-  <h2>Ex5 :: Transport data</h2>
+  <h2>Ex3 :: Transport data</h2>
 
   <section id="transport">
     <img src="img/transportLayer.png" alt="Transport Layer" class="img-rounded">
@@ -673,7 +682,13 @@ private void inject(RoutingContext ctx) {
   </section>
 
 
-  <h2>Ex6 :: Delayed trains positions</h2>
+  <h2>Ex4 :: Start train positions visualizer</h2>
+  <ul>
+    <li>Go to the board : <a href="http://localhost:3000/" target="_target">front-end app</a></li>
+    <li>An empty map should be displayed. Otherwise make sure the <code>web-viewer</code> app is started: <code>cd ./web-viewer; ./start.sh</code></li>
+  </ul>
+
+  <h2>Ex5 :: Delayed trains positions</h2>
 
   <section id="inmemory">
     <img src="img/InMemoryLayer.png" alt="Inmemory Layer" class="img-rounded">
