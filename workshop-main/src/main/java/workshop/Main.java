@@ -2,7 +2,7 @@ package workshop;
 
 import io.reactivex.Single;
 import io.vertx.core.Future;
-import io.vertx.reactivex.SingleHelper;
+import io.vertx.reactivex.CompletableHelper;
 import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.Router;
@@ -32,8 +32,8 @@ public class Main extends AbstractVerticle {
       .requestHandler(router::accept)
       .rxListen(8080)
       .doOnSuccess(server -> log.info("Main HTTP server started"))
-      .<Void>map(server -> null) // Ignore result
-      .subscribe(SingleHelper.toObserver(future));
+      .toCompletable() // Ignore result
+      .subscribe(CompletableHelper.toObserver(future));
   }
 
   private void inject(RoutingContext ctx) {

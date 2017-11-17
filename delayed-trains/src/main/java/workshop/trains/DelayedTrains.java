@@ -2,6 +2,7 @@ package workshop.trains;
 
 import io.vertx.core.Future;
 import io.vertx.ext.web.handler.sockjs.BridgeOptions;
+import io.vertx.reactivex.CompletableHelper;
 import io.vertx.reactivex.SingleHelper;
 import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.ext.web.Router;
@@ -65,15 +66,15 @@ public class DelayedTrains extends AbstractVerticle {
         return vertx.<RemoteCacheManager>rxExecuteBlocking(fut -> fut.complete(createQueryClient()));
       })
       .doOnSuccess(remoteClient -> queryClient = remoteClient)
-      .flatMap(v -> {
+      .flatMapCompletable(v -> {
         return vertx.createHttpServer()
           .requestHandler(router::accept)
           .rxListen(8080)
           .doOnSuccess(server -> log.info("HTTP server started"))
           .doOnError(t -> log.log(Level.SEVERE, "HTTP server failed to start", t))
-          .<Void>map(server -> null); // Ignore result
+          .toCompletable(); // Ignore result
       })
-      .subscribe(SingleHelper.toObserver(future));
+      .subscribe(CompletableHelper.toObserver(future));
   }
 
   private void listen(RoutingContext ctx) {
