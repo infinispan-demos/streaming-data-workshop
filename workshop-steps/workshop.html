@@ -130,7 +130,7 @@
   <br/><br/>
 
   <div class="alert alert-danger" role="alert">
-    If you're running this workshop <strong>completely offline</strong>, you need to adjust <code>/etc/hosts</code> file so that host names can be resolved locally:
+    If you're running this workshop <strong>completely offline</strong>, you need to adjust <code>/etc/hosts</code> file inside the virtual machine so that host names can be resolved locally:
     <br/><br/>
     <pre><code>127.0.0.1        datagrid-visualizer-myproject.127.0.0.1.nip.io
 127.0.0.1        delayed-listener-myproject.127.0.0.1.nip.io
@@ -240,13 +240,46 @@
 
 </div>
 
+
+<div class="container">
+  <h1>Use Case</h1>
+  In this workshop you will learn how to combine real-life data streams to build robust, reactive and scalable applications.
+  For that, the workshop will used Red Hat technologies that are very well suited for these kind of use cases: <strong>Eclipse Vert.x</strong>, <strong>Infinispan</strong> and <strong>Openshift</strong>.
+  The data set will be based around Swiss transport and will feature two publicly available data streams:
+
+  <br/><br/>
+  <img src="img/opendata-logo.png" class="img-rounded" height="10%" width="10%">
+  <br/><br/>
+  The first data stream comes from
+  <a href="https://opendata.ch">OpenData.ch</a>
+  which is the Swiss branch of the
+  <a href="https://okfn.org">Open Knowledge Foundation.</a>
+  This workshop will use their
+  <a href="http://transport.opendata.ch">Transport API</a>,
+  which exposes public Swiss transport timetable data.
+  <br/><br/>
+
+  <img src="img/sbb-logo.png" class="img" height="30%" width="30%">
+  <br/><br/>
+  The second data stream comes from
+  <a href="https://opendata.ch">sbb.ch</a>,
+  the Swiss national railway company.
+  This workshop will use the API that exposes the positions of trains at a given time.
+  <br/><br/>
+  Since the availability of these APIs can't be guaranteed when the workshop is delivered, the workshop will use previously captured data.
+  The workshop will slowly ramp up using this data and learning the technologies involved by building applications based on this data.
+</div>
+
+
 <div class="container">
   <h1>Playground</h1>
 
-  <p>We will start with a warm-up for those that are not familiar with <strong>Eclipse Vert.x</strong>, <strong>Infinispan</strong> and <strong>Openshift</strong>.</p>
+  <p>We will start with a warm-up for those that are not familiar with the Red Hat technologies in use.</p>
 
   <div class="alert alert-success" role="alert">
     <h4 class="alert-heading">What is OpenShift?</h4>
+    <img src="img/openshift.png" alt="Openshift" class="img-rounded" height="30%" width="30%">
+    <br/><br/>
     OpenShift is Red Hat's Platform-as-a-Service (Paas) that allows developers to quickly develop, host, and scale apps in a cloud environment.
     It uses Kubernetes for the orchestration of Docker containers where applications run.
     It can be run in a public environment or privately within your organization.
@@ -267,57 +300,168 @@
 
   <div class="alert alert-success" role="alert">
     <h4 class="alert-heading">What is Infinispan?</h4>
+    <img src="img/infinispan-logo.png" alt="Infinispan" class="img-rounded" height="20%" width="20%">
+    <br/>
     Infinispan is an in-memory a distributed in-memory key/value data grid.
     It uses peer-to-peer communication between different nodes, hence there are no master/slave nodes.
     Infinispan has multiple uses:
     <ul>
       <li>Distributed cache to boost the performance of your application.</li>
-      <li>Temporary in-memory data store with failover capabilities.</li>
+      <li>Temporary, scalable in-memory data store with failover capabilities.</li>
       <li>Data analysis via distributed Java Streams API or Spark/Hadoop integrations.</li>
       <li>Event-driven computation thanks to live-updating query functionality.</li>
     </ul>
     <hr/>
     <h4 class="alert-heading">What will Infinispan be used for in the workshop?</h4>
-    Infinispan's role will be to store data from coming from the mocked real-live data streams, and provide personalized real-time updates to the clients.
+    Infinispan's role will be to store data from coming from the mocked real-live data streams and provide personalized real-time updates to the clients.
   </div>
 
-  <h2>Ex1 :: Start Openshift and Create an Infinispan Cluster</h2>
-  <section id="openshift">
-    <img src="img/openshift.png" alt="Openshift" class="img-rounded" height="30%" width="30%">
-    <ul style="list-style: decimal;">
-      <li>Start a cluster with the service catalog</li>
+  <h2>Ex1 :: Start Openshift, Infinispan and Visualizer</h2>
+  In this first exercise you will first learn to how to start OpenShift and deploy a 3 node Infinispan cluster where data will be stored.
+  Then, you will deploy all components of the workshop, some of which will be already complete and some you will need to modify to complete the workshop.
+  <br/><br/>
+  <div class="alert alert-warning">
+    You can use less Infinispan nodes if your machine is not powerful enough.
+  </div>
+  <img src="img/diagram-openshift-infinispan.png" class="img-rounded" height="50%" width="50%"/>
+  <br/><br/>
+  <div class="alert alert-success" role="alert">
+    <h4 class="alert-heading">Why deploy multiple Infinispan nodes?</h4>
+    Infinispan nodes are in charge of keeping data in-memory.
+    By deploying multiple nodes and using smart data distribution techniques, Infinispan can guarantee that even if nodes fail, data will survive.
+    On top of that, by deploying multiple nodes, Infinispan offers more space for storing data.
+    <hr/>
+    <h4 class="alert-heading">How does Infinispan distribute data?</h4>
+    Infinispan uses consistent hash distribution techniques to decide which nodes stores which data.
+    For this workshop, Infinispan has been set up to keep 2 copies for each data.
+    If a new node starts, or one of the node fails, Infinispan rebalances the data so that 2 copies are still maintained for each data piece.
+    So, this means that with this set up, Infinispan can handle one node failing at the time and the data will still survive.
+  </div>
+
+  To start OpenShift, you will use the scripts provided by the workshop and follow the instructions below.
+  When starting OpenShift it will be loaded with the service catalog enabled, and you will create an Infinispan cluster using its service template in catalog.
+  Next, follow the step-by-step instructions:
+  <section id="start-openshift-infinispan">
+    <ol>
+      <li>Start OpenShift cluster with the script provided:</li>
       <pre><code>> cd streaming-data-workshop
 > ./start-openshift.sh</code></pre>
-      <li>Log in into <a href="https://127.0.0.1:8443" target="_blank">Openshift console</a> with <code>developer/developer</code></li>
-      <li>Click in "browse catalog"</li>
-    </ul>
-    <img src="img/openshift-catalog.png" alt="simple web app" class="img-rounded"/>
-  </section>
-
-  <section id="infinispan">
-    <img src="img/infinispan9_pixelsizes_600.gif" alt="Infinispan" class="img-rounded" height="20%" width="20%">
-    <ul style="list-style: decimal;">
-      <li>In openshift catalog, choose <kbd>Infinispan Ephemeral</kbd></li>
-      <li>Add the following configuration :
-          <pre><code>APPLICATION_NAME=datagrid
-NUMBER_OF_INSTANCES=3
-MANAGEMENT_USER/MANAGEMENT_PASSWORD=developer/developer</code></pre>
+      <li>Log in into <a href="https://127.0.0.1:8443" target="_blank">Openshift console</a> with <code>developer/developer</code>
+        <br/><br/>
+        <div class="alert alert-warning">
+          The rest of this section shows how to create an Infinispan cluster using the OpenShift user interface and explores some of its functionality.
+          If you prefer, you can skip the rest of this exercise by creating Infinispan cluster from command line :
+          <br/><br/>
+        <pre><code>> cd streaming-data-workshop
+> ./start-datagrid.sh</code></pre>
+        </div>
+      </li>
+      <li>From the service catalog shown in the homepage, select <kbd>infinispan-ephemeral</kbd>
+        <br/><br/>
+        <img src="img/openshift-catalog.png" class="img-rounded" height="50%" width="50%"/>
+      </li>
+      <li>Set <code>APPLICATION_NAME</code> to <kbd>datagrid</kbd>
+        <br/><br/>
+        <img src="img/template-application-name.png" class="img-rounded" height="50%" width="50%"/>
+      </li>
+      <li>Set <code>MANAGEMENT_PASSWORD</code> to <kbd>developer</kbd>
+        <br/>
+        Set <code>MANAGEMENT_USER</code> to <kbd>developer</kbd>
+        <br/>
+        Set <code>NUMBER_OF_INSTANCES</code> to <kbd>3</kbd>
+        <br/><br/>
+        <div class="alert alert-warning">
+          If running in a low powered environment, feel free to set the number of instances to <kbd>1</kbd>
+        </div>
+        <img src="img/template-mgmt-instances.png" class="img-rounded" height="50%" width="50%"/>
       </li>
       <li>Click <kbd>Next</kbd></li>
       <li>Click <kbd>Create</kbd></li>
-      <li>Go to <kbd>My project</kbd></li>
-      <li>You should see <kbd>datagrid</kbd> deployment with <kbd>3 pods</kbd> and <kbd>3 services</kbd> : datagrid-hotrod, datagrid-http and datagrid-management
-      <img src="img/datagrid-pods.png" alt="pods" class="img-rounded"/>
-      <div class="alert alert-warning">Alternatively, you can deploy de cluster easily from command line :</div>
-      <pre><code>cd streaming-data-workshop
-./start-datagrid.sh</code></pre></li>
+      <li>Go to <kbd>My project</kbd> to inspect the created Infinispan <code>datagrid</code> deployment.
+        If you click on the arrow next to <code>datagrid</code>, you'll get more information about the deployment.
+        <br/><br/>
+        <img src="img/datagrid-deployment.png" class="img-rounded" height="75%" width="75%"/>
+        <br/><br/>
+        Once expanded, you should see expanded information about the Infinispan deployment:
+        <br/><br/>
+        <img src="img/datagrid-deployment-expanded.png" class="img-rounded" height="75%" width="75%"/>
+        <br/><br/>
+        Assuming you set number of instances to 3, you should see the number of pods being 3 and the ring being blue.
+        <br/><br/>
+        <div class="alert alert-warning">
+          If part of the ring is orange, that means that some of pods are not ready yet.
+          Just give it some time and it should turn blue eventually.
+          <br/><br/>
+          If part of the ring is red, it means that one or more of the pods failed to start.
+          To see the logs, go to <code>Applications / Pods</code>, select the pod that's failed to start and inspect the <code>Logs</code> tab.
+        </div>
+        <div class="alert alert-info">
+          <code>kubetail</code> is very useful tool that can be used to tail logs belonging to multiple pods.
+          This is particularly useful for inspecting deployment progress of Infinispan nodes.
+          The easiest way to use <code>kubetail</code> is to call it passing in a label to monitor.
+          In the case of Infinispan, this label would be <code>-l application=datagrid</code>, e.g.
+          <br/><br/>
+          <pre><code>> kubetail -l application=datagrid
+Will tail 3 logs...
+datagrid-1-9bw5t
+datagrid-1-kk3hx
+datagrid-1-zf16b
+...
+          </code></pre>
+        </div>
+        The deployment should also saw the networking services it exposes.
+        In the case of Infinispan, these are:
+        <code>datagrid-hotrod</code> service on port <code>11222</code>,
+        <code>datagrid-http</code> service on port <code>8080</code>,
+        <code>datagrid-management</code> service on port <code>9990</code>.
+        <br/><br/>
+        <div class="alert alert-success" role="alert">
+          <h4 class="alert-heading">What is the <code>datagrid-hotrod</code> service?</h4>
+          This is the binary endpoint exposed by Infinispan to interact with data.
+          Hot Rod is the name of the binary protocol in use by this service.
+          As well as supporting data interaction, the protocol embeds cluster topology information.
+          This means that clients can react to backend topology changes without the need of any manual intervention.
+          Moreover, clients talking the Hot Rod protocol can apply the same consistent hash techniques used by the server.
+          What this means is that clients looking for a particular piece of data can figure out which server will contain the data they're looking for.
+          <hr/>
+          <h4 class="alert-heading">What is the <code>datagrid-http</code> service?</h4>
+          This is HTTP REST endpoint exposed by Infinispan to interact with data.
+          It's functionality is similar to the <code>datagrid-hotrod</code> service but over HTTP.
+          However, the REST protocol does not expose topology information and hence it's not as powerful as <code>datagrid-hotrod</code> one.
+          Also, the REST protocol is currently text based so it's slower <code>datagrid-hotrod</code>.
+          Its main advantage is that it offers a quick and easy way to store/retrieve data without the need to have a client that understands the Hot Rod protocol.
+          This service won't be used during the workshop.
+          <hr/>
+          <h4 class="alert-heading">What is the <code>datagrid-management</code> service?</h4>
+          This service exposes the Infinispan management console via the route shown.
+          You can access this console using the credentials you set when the Infinispan datagrid was created
+          (if you followed these instructions, that'd be <code>developer/develper</code>).
+          It allows you monitor and manage Infinispan specific parameters, number of entries stored, read/write ratios...etc.
+          On top of that, it exposes some management operations, such as creating caches.
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <section id="deploy-all-visualizer">
+    Next, lets deploy all the components of the workshop and once they're ready you'll explore the Infinispan visualizer:
+    <ol>
       <li>Deploy all the components for the workshop with <code>./deploy-all.sh</code></strong></li>
       <li>Check the <strong>Infinispan Visualizer</strong> <a href="http://datagrid-visualizer-myproject.127.0.0.1.nip.io/infinispan-visualizer/" target="_target">here</a>
-        <br/>
+        <br/><br/>
+        <div class="alert alert-success" role="alert">
+          <h4 class="alert-heading">What is the Infinispan datagrid visualizer?</h4>
+          This is just a tool used for Infinispan users to get a visual representation of the data grid.
+          Each big coloured ball represents an Infinispan node in the cluster.
+          Below each ball you can see the IP and port information for each of nodes.
+          On top of that, when data gets stored in the data grid, you will see more little balls appearing around each big ball.
+          These little balls represent data items stored in each node.
+          As more data gets loaded, you should see more and more little balls appearing.
+        </div>
         <p>The image here corresponds to the state of 3 instances without data.</p>
-        <img src="img/infinispan-visu.png" alt="visualizer" class="img-rounded"/>
+        <img src="img/infinispan-visu.png" alt="visualizer" class="img-rounded" height="75%" width="75%"/>
       </li>
-    </ul>
+    </ol>
   </section>
 
   <h1>Streaming Data</h1>
