@@ -6,6 +6,7 @@ import io.reactivex.Single;
 import io.reactivex.schedulers.Schedulers;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
+import io.vertx.reactivex.CompletableHelper;
 import io.vertx.reactivex.SingleHelper;
 import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.core.RxHelper;
@@ -51,14 +52,14 @@ public class PositionsInjector extends AbstractVerticle {
     vertx
       .<RemoteCacheManager>rxExecuteBlocking(fut -> fut.complete(createClient()))
       .doOnSuccess(remoteClient -> client = remoteClient)
-      .flatMap(v -> {
+      .flatMapCompletable(v -> {
         return vertx.createHttpServer()
           .requestHandler(router::accept)
           .rxListen(8080)
           .doOnSuccess(server -> log.info("Positions injector HTTP server started"))
           .doOnError(t -> log.log(Level.SEVERE, "Positions injector HTTP server failed to start", t))
-          .<Void>map(server -> null); // Ignore result
-      }).subscribe(SingleHelper.toObserver(future));
+          .toCompletable(); // Ignore result
+      }).subscribe(CompletableHelper.toObserver(future));
   }
 
   @Override
