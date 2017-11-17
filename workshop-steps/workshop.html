@@ -470,7 +470,7 @@ datagrid-1-zf16b
   <br/><br/>
   This workshop works with two streams of data: train timetable data and train positions.
   In this exercise, you will need to complete the work so that the train timetable information can be read from a file and injected into Infinispan data grid.
-  The code you write will run within a partially developed Vert.x verticle, which will run as a separate deployment on OpenShift.
+  The code you write will run within a partially developed Vert.x Verticle, which will run as a separate deployment on OpenShift.
   Reading from the file will be done in a reactive way using Vert.x and RxJava2.
   As well as reading the data, you will need to transform it slightly so that it can be stored remotely into Infinispan data grid.
   <br/><br/>
@@ -479,7 +479,7 @@ datagrid-1-zf16b
     However, since availability of the data streams cannot be guaranteed and to avoid potential overuse of these APIs, data from these streams has been captured in files that are available as part of the workshop.
   </div>
   <div class="alert alert-success" role="alert">
-    <h4 class="alert-heading">What is a Vert.x verticle?</h4>
+    <h4 class="alert-heading">What is a Vert.x Verticle?</h4>
     TODO @Thomas
     <hr/>
     <h4 class="alert-heading">Why should I write reactive code with Vert.x?</h4>
@@ -499,6 +499,7 @@ datagrid-1-zf16b
   </div>
 
   <h3>Architecture Diagram</h3>
+
   In this exercise, you work will focus on the <code>stations-injector</code> module.
   This module is in charge of taking the Transport OpenData information on train timetables from station boards around the country and feeding it into the Infinispan data grid.
   <br/><br/>
@@ -571,14 +572,14 @@ datagrid-1-zf16b
         <pre><code>> cd stations-injector
 > mvn fabric8:deploy</code></pre>
       </li>
-      <li>Force the injection start the injection visiting <a href="http://workshop-main-myproject.127.0.0.1.nip.io/inject">this URL</a> or executing this:
+      <li>Force the injection to by visiting <a href="http://workshop-main-myproject.127.0.0.1.nip.io/inject">this URL</a> or executing:
         <br/><br/>
         <pre><code>> curl http://workshop-main-myproject.127.0.0.1.nip.io/inject</code></pre>
       </li>
       <li>Go to the <a href="http://datagrid-visualizer-myproject.127.0.0.1.nip.io/infinispan-visualizer/" target="_target"> visualizer</a> and see data being loaded.
         <br/><br/>
         <div class="alert alert-warning">
-          If you don't see data being loaded, make sure <code>stations</code> cache selected in the drop down of the visualizer.
+          If you don't see data being loaded, make sure <code>station-boards</code> cache selected in the drop down of the visualizer.
           It might take a few seconds for data to appear in the visualizer, so be patient :)
         </div>
         <p>The image here corresponds to the state of 3 instances having data.</p>
@@ -592,37 +593,69 @@ datagrid-1-zf16b
 
   <h2>Ex3 :: Transport data</h2>
 
+  With the data loaded into Infinispan data grid, it's time to extract meaningful data out of it.
+  In this exercise, you will develop a Java FX based dashboard for tracking delayed trains around the country.
+  To do that, you will use the data from the train timetables that you've fed into the <code>station-boards</code> cache, and you will create an Infinispan Continuous Query to detect delayed trains.
+  For each delayed train that you found, you will need to push it to the Vert.x Event Bus.
+  The event bus will then push the each delayed train over Sock.js and WebSockets to the JavaFX dashboard.
+  The JavaFX dashboard will run outside OpenShift and can be started from your favourite IDE.
+  <br/><br/>
+  <div class="alert alert-success" role="alert">
+    <h4 class="alert-heading">What is Infinispan Continuous Query?</h4>
+    Data stored into Infinispan can be queried remotely via a query builder API.
+    Queries are sent to Infinispan returning a result set of key/value pairs that match that query.
+    Moreover, Infinispan offers the possibility to attach a live-updating listener to the query.
+    What this means is that instead of getting a result set and iterating over it, you can a callback into the listener for each matching entry.
+    Also, if after executing the query new data is inserted that matches the query, the listener will be invoked with each entry that matches the query.
+    On the other hand, if data that was part of the result set stops being stored in Infinispan, the listener can also get invoked.
+    This combination of query and listener is what Infinispan calls Continuous Query.
+    <hr/>
+    <h4 class="alert-heading">How do I create an Infinispan Continuous Query?</h4>
+    To be able to execute an Infinispan Continuous Query, you first need to get Infinispan to index the data.
+    For this workshop, all the steps required for the data to be indexed have been done for you.
+    This means that as data was being loaded into Infinispan data grid, it was already being indexed.
+    If you want to find out more on how to get data indexed, check
+    <a href="http://infinispan.org/docs/stable/user_guide/user_guide.html#query.remote">Infinispan's user guide</a>
+    and the workshop code that is part of the <code>data-model</code> module.
+    <br/><br/>
+    With the data indexed, the next step is to create the query.
+    To create a query, you need to get a reference to <code>RemoteCache</code> and then create a <code>QueryFactory</code> for it.
+    Once you have it, use the query builder API to create the query, here's an example:
+    <br/><br/>
+    <pre><code lang="java">Query query = queryFactory.from(Book.class)
+   .having("title").like("%Infinispan%")
+   .build();</code></pre>
+    Next, you need to create an instance of <code>ContinuousQueryListener</code> and decide which of the callbacks you'll implement:
+    <code>resultJoining</code>, <code>resultUpdated</code> and/or <code>resultLeaving</code>.
+    Once you have the query and listener, you need to bind them together.
+    To do that, retrieve an instance of <code>ContinuousQuery</code> and bind the query and listener together:
+    <br/><br/>
+    <pre><code lang="java">continuousQuery.addContinuousQueryListener(query, listener)</code></pre>
+    <hr/>
+    <h4 class="alert-heading">What is the Vert.x Event Bus?</h4>
+    TODO @Thomas
+    <hr/>
+    <h4 class="alert-heading">How do I push events into the Vert.x Event Bus?</h4>
+    TODO @Thomas
+  </div>
+
+  <h3>Architecture Diagram</h3>
+
+  The focus of this exercise will be to implement the missing code fragments in <code>delay-listener</code> module.
+  This module is in charge of registering the Infinispan Continuous Query and pushing the changes over the Vert.x Event Bus so that the Java FX dashboard running outside gets updated.
+  <br/><br/>
+  The JavaFX dashboard, which runs outside of OpenShift, connects to the <code>delay-listener</code> via HTTP and registers a WebSocket listener.
+  Upon connection, <code>delay-listener</code> module kickstarts data injection by calling the <code>workshop-main</code> module, and registers the continuous query.
+  As data gets injected, data that matches the continuous query gets pushed to the <code>delay-listener</code> module which in turn ships it to the JavaFX dashboard.
+  <br/><br/>
+  <img src="img/transportLayer.png" class="img-rounded" height="75%" width="75%">
+
+  <h3>Exercise</h3>
+
   <section id="transport">
-    <img src="img/transportLayer.png" alt="Transport Layer" class="img-rounded">
     <ul style="list-style: decimal;">
-      <li>Open <kbd>DelayedListener</kbd> class in the <kbd>delayed-listener</kbd> module</li>
-      <li>Implement <code>inject</code> method with <strong>continuous query</strong>
-        <pre><code class="java">private void addContinuousQuery(RemoteCache< String, Stop> stations) {
-    QueryFactory queryFactory = Search.getQueryFactory(stations);
-
-    // TODO 1 - Create query for Stop where delayMin is bigger than 0
-    Query query = null;
-
-    ContinuousQueryListener<String, Stop> listener =
-      new ContinuousQueryListener<String, Stop>() {
-        @Override
-        public void resultJoining(String id, Stop stop) {
-          String stopAsJson = toJson(stop);
-          // TODO 2 - Publish stopAsJson to "delayed-trains" event-bus address
-          // ...
-
-          RemoteCache<String, String> delayed = client.getCache(DELAYED_TRAINS_CACHE_NAME);
-          delayed.putAsync(stop.train.getName(), stop.train.getName());
-        }
-      };
-
-    ContinuousQuery<String, Stop> continuousQuery = Search.getContinuousQuery(stations);
-    continuousQuery.removeAllListeners();
-
-    // TODO 3 - Join query with listener
-    // ...
-  }</code></pre>
-
+      <li>Open <kbd>workshop.delayed.DelayedListener</kbd> class in the <kbd>delayed-listener</kbd> module</li>
+      <li>Implement the TODOs found in the <code>addContinuousQuery</code> method:
         <ul>
           <li><kbd>TODO 1</kbd> Create query for <code>Stop</code> where <strong>delayMin</strong> is bigger than 0 using the <code>QueryFactory</code>
             <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-17').toggle();">Show/Hide Solution</a>
@@ -675,9 +708,16 @@ datagrid-1-zf16b
   }</code></pre>
         </div>
       </li>
-      <li>From command line, change directory to <code>delayed-listener</code> and redeploy with <code>mvn fabric8:deploy</code></li>
-      <li>Go to <kbd>delayed-dashboard</kbd> module and launch <code>DelayedDashboard</code> main</li>
-      <li>Monitor the delayed trains !</li>
+      <li>Redeploy after making the code changes:
+        <br/><br/>
+        <pre><code>> cd stations-injector
+> mvn fabric8:deploy</code></pre>
+      </li>
+      <li>Go to <kbd>delayed-dashboard</kbd> module and launch <code>dashboard.DelayedDashboard</code> class from your IDE.</li>
+      <li>Monitor the delayed trains!
+        <br/><br/>
+        <img src="img/delayed-trains-dashboard.png" class="img-rounded" height="50%" width="50%">
+      </li>
     </ul>
   </section>
 
