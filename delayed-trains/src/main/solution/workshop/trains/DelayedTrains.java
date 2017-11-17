@@ -1,6 +1,7 @@
 package workshop.trains;
 
 import io.vertx.core.Future;
+import io.vertx.ext.bridge.PermittedOptions;
 import io.vertx.ext.web.handler.sockjs.BridgeOptions;
 import io.vertx.reactivex.SingleHelper;
 import io.vertx.reactivex.core.AbstractVerticle;
