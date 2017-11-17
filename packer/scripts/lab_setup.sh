@@ -3,6 +3,11 @@
 set -e
 set -x
 
+# Workaround for
+# https://bugzilla.redhat.com/show_bug.cgi?id=1504709
+# https://bugzilla.redhat.com/show_bug.cgi?id=1511375
+sudo mv /usr/share/rhel/secrets /usr/share/rhel/secrets.bak 2>/dev/null || echo "Info: /usr/share/rhel/secrets does not exist"
+
 WORKSHOP=streaming-data-workshop
 WORKSHOP_DIR=${HOME}/${WORKSHOP}
 
