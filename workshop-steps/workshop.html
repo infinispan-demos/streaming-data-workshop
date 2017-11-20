@@ -641,12 +641,12 @@ datagrid-1-zf16b
 
   <h3>Architecture Diagram</h3>
 
-  The focus of this exercise will be to implement the missing code fragments in <code>delay-listener</code> module.
+  The focus of this exercise will be to implement the missing code fragments in <code>delayed-listener</code> module.
   This module is in charge of registering the Infinispan Continuous Query and pushing the changes over the Vert.x Event Bus so that the Java FX dashboard running outside gets updated.
   <br/><br/>
-  The JavaFX dashboard, which runs outside of OpenShift, connects to the <code>delay-listener</code> via HTTP and registers a WebSocket listener.
-  Upon connection, <code>delay-listener</code> module kickstarts data injection by calling the <code>workshop-main</code> module, and registers the continuous query.
-  As data gets injected, data that matches the continuous query gets pushed to the <code>delay-listener</code> module which in turn ships it to the JavaFX dashboard.
+  The JavaFX dashboard, which runs outside of OpenShift, connects to the <code>delayed-listener</code> via HTTP and registers a WebSocket listener.
+  Upon connection, <code>delayed-listener</code> module kickstarts data injection by calling the <code>workshop-main</code> module, and registers the continuous query.
+  As data gets injected, data that matches the continuous query gets pushed to the <code>delayed-listener</code> module which in turn ships it to the JavaFX dashboard.
   <br/><br/>
   <img src="img/transportLayer.png" class="img-rounded" height="75%" width="75%">
 
@@ -722,67 +722,137 @@ datagrid-1-zf16b
   </section>
 
 
-  <h2>Ex4 :: Start train positions visualizer</h2>
-  <ul>
-    <li>Go to the board : <a href="http://localhost:3000/" target="_target">front-end app</a></li>
-    <li>An empty map should be displayed. Otherwise make sure the <code>web-viewer</code> app is started: <code>cd ./web-viewer; ./start.sh</code></li>
-  </ul>
+  <h2>Ex4 :: Delayed trains positions</h2>
 
-  <h2>Ex5 :: Delayed trains positions</h2>
+  The aim of this exercise is to combine delayed train information with train positions information.
+  In this exercise, you will complete a Google Maps based application that displays locations of delayed trains.
+  As a hypothetical use case, such application could be used to locate problematic areas in the country, maybe as a result of train congestion?
+  <br/><br/>
+  In this first part of this exercise, you will have to make sure you can regularly push delayed train position updates to the Google Maps based application.
+  The second part of the exercise will consist of matching of delayed train information that was displayed in the dashboard with the train position information.
+  This matching will be done using Infinispan Ickle query language.
+  <br/><br/>
+
+  <div class="alert alert-success" role="alert">
+    <h4 class="alert-heading">What is Ickle?</h4>
+    Ickle is Infinispan new query language introduced in Java 9.
+    It's a light, small subset of JP-QL making it familiar for the users.
+    <hr/>
+    <h4 class="alert-heading">What is the difference between query builder API and Ickle?</h4>
+    The query builder API was originally introduced in Infinispan 6 at a time where the main focus was Java users.
+    So, the builder API was very much tailored for Java users.
+    As Infinispan has moved on to support other languages, this builder API was difficult to replicate in other languages.
+    So, it was decided to create a text-based query language that would be more easily portable.
+    Ickle queries support all of the query builder features with the addition of full-text matching.
+    If you want to learn more about the motivations of Ickle, make sure you check out
+    <a href="http://blog.infinispan.org/2016/12/meet-ickle.html">this blog post</a>.
+    <hr/>
+    <h4 class="alert-heading">What does an Ickle query look like?</h4>
+    Here is an example Ickle query.
+    It retrieves transaction id, amount and description for transactions with amount bigger than 10 and a matching description.
+    <br/><br/>
+    <pre><code>select tx.transactionId, tx.amount, tx.description from com.acme.Transaction tx
+      where amount > 10 and description = :desc</code></pre>
+    The parameter <code>desc</code> is replaced using <code>setParameter</code> method.<br/>
+  </div>
+
+  <h3>Architecture Diagram</h3>
+
+  The focus of this exercise will be to implement the missing code fragments in <code>delayed-trains</code> module.
+  <br/><br/>
+  <img src="img/InMemoryLayer.png" class="img-rounded" height="75%" width="75%">
+
+  <br/><br/>
+  This exercise assumes that all the data injectors are complete.
+  The delayed train dashboard is not strictly necessary for this exercise, but starting it up is an easy way to get data injection started.
+  On top of that, it also guarantees that delay train information is flowing.
+  So, it is recommended that you use it again here.
+  <br/><br/>
+
+  In the previous exercise, you might have noticed that after sending delayed train info via the Vert.x event bus to the dashboard, the train info was being stored in an Infinispan cache.
+  For this exercise, the <code>delayed-trains</code> module contains a Vert.x Verticle which locally caches any delayed trains added to this Infinispan cache.
+  The Google Maps front-end, which is already developed for you, connects to this Vert.x verticle to receive delayed train positions.
+  <br/><br/>
+
+  In this first part of this exercise, you will have to make sure you can regularly push delayed train position updates using the Vert.x Event Bus.
+  The path through which Vert.x Event Bus will push changes to the Google Maps application will be <code>/eventbus</code>.
+  The second part of the exercise will consist of matching of delayed train information and the train positions using Infinispan Ickle querys.
+
+  <br/><br/>
+  <div class="alert alert-info" role="alert">
+    <h4 class="alert-heading">Matching delayed trains and their positions</h4>
+    As it often happens with real life data streams, the two data streams don't easily match up.
+    When you look at the train timetable information, which comes from individual stations, you know that for example, a train on route <code>S 9</code> is delayed.
+    However, in a given train route, there might be multiple trains doing the route at one give point in time.
+    So, when the train timetable information says that a train on route <code>S 9</code> is delayed, you don't exactly know which of all the trains doing the route is exactly.
+    The train position data stream does gives you the individual train identifier, but since is not given by the train timetable data stream, there's no direct link.
+    For this workshop, the code provided for you simply takes the first matching train with a given route name from the train positions data stream.
+    This is of course not accurate but it's good enough for the workshop.
+    In real life, given that each train stations geo location is known and you know the geo locations of each train, you could potentially figure out the link using geo location approximation.
+  </div>
+
+  <div class="alert alert-danger" role="alert">
+    If running this workshop completely offline, Google Maps won't be available.
+    So, to be able to complete the exercise without the need of Google Maps, there is URL in path <code>/positions</code> which can be accessed to retrieve the delayed train positions.
+    The output should resemble something like this:
+    <br/><br/>
+    <pre><code>train_id        train_category  train_name      train_lastStopName      position_lat    position_lng    position_bearing
+84/26411/18/24/95       R       R 7377  Sonceboz-Sombeval       47.194977       7.166263        200.0
+84/26701/18/20/95       R       R 11065 Coppet  46.316335       6.187086        50.0
+...
+</code></pre>
+  </div>
+
 
   <section id="inmemory">
-    <img src="img/InMemoryLayer.png" alt="Inmemory Layer" class="img-rounded">
-    <ul style="list-style: decimal;">
-      <li>Open <kbd>DelayedTrains</kbd> class in the <kbd>delayed-trains</kbd> module</li>
-      <li><kbd>TODO 1</kbd><br/>
-        Modify the EventBus bridge <kbd>options</kbd> to allow sending messages to the browser.
-        Use <kbd>addOutboundPermitted</kbd> method to add a new instance of <kbd>PermittedOptions</kbd> for
-        <kbd>DELAYED_TRAINS_POSITIONS_ADDRESS</kbd>.<br/>
-        <a class="btn btn-info" role="button" onclick="$('#array-sol-26').toggle();">Show/Hide Solution</a>
-        <div id="array-sol-26" style="display:none;">
-          <pre><code class="java">options.addOutboundPermitted(new PermittedOptions().setAddress(DELAYED_TRAINS_POSITIONS_ADDRESS));</code></pre>
-        </div>
+    <ol>
+      <li>Start train positions visualizer:
+        <pre><code>> cd web-viewer
+> ./start</code></pre>
       </li>
-      <li><kbd>TODO 2</kbd><br/>
-        Use <kbd>eventBus.publish()</kbd> method to publish the asynchronous result to the
-        <kbd>DELAYED_TRAINS_POSITIONS_ADDRESS</kbd> address<br/>
-        <a class="btn btn-info" role="button" onclick="$('#array-sol-25').toggle();">Show/Hide Solution</a>
-        <div id="array-sol-25" style="display:none;">
-          <pre><code class="java">vertx.eventBus().publish(DELAYED_TRAINS_POSITIONS_ADDRESS, ar.result());</code></pre>
-        </div>
-      </li>
-      <li><kbd>TODO 3</kbd><br/>
-        Create a Ickle query with the query factory. Ickle query are JPA like syntax queries.<br/>
-        An example of query : <br/>
-        <code>select tx.transactionId, tx.amount, tx.description from com.acme.Transaction tx
-          where amount > 10 and description = :desc</code>.<br/>
-        The parameter <code>desc</code> is replaced using <code>setParameter</code> method.<br/>
-        Create a query to get trains ids for all trains positions with a given train name.<br/>
-        <a class="btn btn-info" role="button" onclick="$('#array-sol-23').toggle();">Show/Hide Solution</a>
-        <div id="array-sol-23" style="display:none;">
+      <li>Open <kbd>workshop.trains.DelayedTrains</kbd> class in the <kbd>delayed-trains</kbd> module</li>
+      <li>Implement the TODOs found in the code:
+        <ul>
+          <li><kbd>TODO 1</kbd> Modify the EventBus bridge <code>options</code> to allow sending messages to the browser.
+            Use <code>addOutboundPermitted</code> method to add a new instance of <code>PermittedOptions</code> for
+            <code>DELAYED_TRAINS_POSITIONS_ADDRESS</code>.<br/>
+            <a class="btn btn-info" role="button" onclick="$('#array-sol-26').toggle();">Show/Hide Solution</a>
+            <div id="array-sol-26" style="display:none;">
+              <pre><code class="java">options.addOutboundPermitted(new PermittedOptions().setAddress(DELAYED_TRAINS_POSITIONS_ADDRESS));</code></pre>
+            </div>
+          </li>
+          <li><kbd>TODO 2</kbd> Use <code>eventBus.publish()</code> method to publish the asynchronous result to the
+            <code>DELAYED_TRAINS_POSITIONS_ADDRESS</code> address<br/>
+            <a class="btn btn-info" role="button" onclick="$('#array-sol-25').toggle();">Show/Hide Solution</a>
+            <div id="array-sol-25" style="display:none;">
+              <pre><code class="java">vertx.eventBus().publish(DELAYED_TRAINS_POSITIONS_ADDRESS, ar.result());</code></pre>
+            </div>
+          </li>
+          <li><kbd>TODO 3</kbd> Create an Ickle query to get trains ids for all trains positions with a given train name.<br/>
+            <a class="btn btn-info" role="button" onclick="$('#array-sol-23').toggle();">Show/Hide Solution</a>
+            <div id="array-sol-23" style="display:none;">
               <pre><code class="java">Query query = queryFactory.create("select tp.trainId from workshop.model.TrainPosition tp where name = :trainName");
 query.setParameter("trainName", trainName);</code></pre>
-        </div>
-      </li>
-      <li><kbd>TODO 4</kbd><br/>
-        Call the query and get the result<br/>
-        <a class="btn btn-info" role="button" onclick="$('#array-sol-24').toggle();">Show/Hide Solution</a>
-        <div id="array-sol-24" style="display:none;">
-          <pre><code class="java">List< Object[]> trains = query.list();</code></pre>
-        </div>
-      </li>
-    </ul>
-    <div>
-      <a class="btn btn-danger" role="button" onclick="$('#array-sol-5').toggle();">Show/Hide Solution</a>
-      <div id="array-sol-5" style="display:none;">
-        <div class="alert alert-info" role="alert">
-          You can deploy the solution by either of these two methods:
-          <ul>
-            <li>Copy/pasting the code and call: <code>mvn fabric8:deploy</code></li>
-            <li>Or simply call <code>mvn fabric8:deploy -Psolution</code></li>
-          </ul>
-        </div>
-        <pre>
+            </div>
+          </li>
+          <li><kbd>TODO 4</kbd> Call the query and get the result<br/>
+            <a class="btn btn-info" role="button" onclick="$('#array-sol-24').toggle();">Show/Hide Solution</a>
+            <div id="array-sol-24" style="display:none;">
+              <pre><code class="java">List< Object[]> trains = query.list();</code></pre>
+            </div>
+          </li>
+        </ul>
+        <div>
+          <a class="btn btn-danger" role="button" onclick="$('#array-sol-5').toggle();">Show/Hide Solution</a>
+          <div id="array-sol-5" style="display:none;">
+            <div class="alert alert-info" role="alert">
+              You can deploy the solution by either of these two methods:
+              <ul>
+                <li>Copy/pasting the code and call: <code>mvn fabric8:deploy</code></li>
+                <li>Or simply call <code>mvn fabric8:deploy -Psolution</code></li>
+              </ul>
+            </div>
+            <pre>
           <code class="java">  @Override
   public void start(Future<Void> future) throws Exception {
     Router router = Router.router(vertx);
@@ -844,15 +914,23 @@ query.setParameter("trainName", trainName);</code></pre>
 
     return null;
   }</code></pre>
-      </div>
-      <ul>
-        <li>From command line, change directory to <code>delayed-trains</code> and redeploy with
-          <code>mvn fabric8:deploy</code></li>
-        <li>Relaunch <code>DelayedDashboard</code> from the previous exercise so that data injection is started.</li>
-        <li>Go to the board <a href="http://localhost:3000/" target="_target">front-end app</a></li>
-        <li>Monitor delayed trains !</li>
-      </ul>
-    </div>
+          </div>
+        </div>
+      </li>
+      <li>Redeploy after making the code changes:
+        <br/><br/>
+        <pre><code>> cd delayed-trains
+> mvn fabric8:deploy</code></pre>
+      </li>
+      <li>Go to <kbd>delayed-dashboard</kbd> module and re-launch <code>dashboard.DelayedDashboard</code> class from your IDE.
+        This will restart train data injectors.
+        Verify that you still see delayed trains appearing in the dashboard!
+      </li>
+      <li>Go to the <a href="http://localhost:3000/" target="_target">front-end app</a>, you should see small dots representing trains moving around.
+        <br/><br/>
+        <img src="img/delayed-trains-map.png" class="img-rounded" height="75%" width="75%">
+      </li>
+    </ol>
   </section>
 
 </div> <!-- /container -->
