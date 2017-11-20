@@ -53,7 +53,12 @@
   To do this workshop, it's necessary to have some components installed in the local machine.
   Depending on your environment, you can find detailed installation instructions below:
 
-  <h2>Restricted Internet Environment</h2>
+  <ul>
+    <li><a href="#_restricted-internet-environment">Restricted Internet Environment</a></li>
+    <li><a href="#_unrestricted-internet-environment">Unrestricted Internet Environment</a></li>
+  </ul>
+
+  <h2 id="_restricted-internet-environment">Restricted Internet Environment</h2>
   If you're in an environment with restricted internet connection (e.g. conference or public wifi), we have prepared a virtual box for you to run this workshop.
   This image contains all the dependencies and tools you need to run the workshop so that your internet connectivity requirements are minimized.
   The installation steps in this case involve installing Virtual Box 5.1 and setting it up so that it's adjusted to your environment.
@@ -130,12 +135,15 @@
   <br/><br/>
 
   <div class="alert alert-danger" role="alert">
-    If you're running this workshop <strong>completely offline</strong>, you need to adjust <code>/etc/hosts</code> file inside the virtual machine so that host names can be resolved locally:
+    If you're running this workshop <strong>completely offline</strong>, you need to adjust <code>/etc/hosts</code> file inside the virtual machine so that host names can be resolved locally.
+    To do that, execute the following command:
     <br/><br/>
-    <pre><code>127.0.0.1        datagrid-visualizer-myproject.127.0.0.1.nip.io
+    <pre><code>> sudo sh -c 'cat >> /etc/hosts << EOF
+127.0.0.1        datagrid-visualizer-myproject.127.0.0.1.nip.io
 127.0.0.1        delayed-listener-myproject.127.0.0.1.nip.io
 127.0.0.1        delayed-trains-myproject.127.0.0.1.nip.io
-127.0.0.1        workshop-main-myproject.127.0.0.1.nip.io</code></pre>
+127.0.0.1        workshop-main-myproject.127.0.0.1.nip.io
+EOF'</code></pre>
   </div>
 
   Finally, to help develop code, the virtual machine comes with both Eclipse and Intellij IDEA installed by default.
@@ -225,7 +233,7 @@
     <br/><br/>
   </div>
 
-  <h2>Unrestricted Internet Environment</h2>
+  <h2 id="_unrestricted-internet-environment">Unrestricted Internet Environment</h2>
   If you are in an environment with unrestricted internet connection (e.g. home or office), you can run this workshop directly on your machine.
   These are the dependencies that you need to have installed and available in your path:
   <ul>
