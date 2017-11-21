@@ -529,12 +529,12 @@ datagrid-1-zf16b
           <li><kbd>TODO 1</kbd> Map each entry into a tuple of String/Stop with <code>StationsInjector::toEntry</code>
             <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-13').toggle();">Show/Hide Solution</a>
             <div id="array-sol-13" style="display:none;">
-              <pre><code class="java">Flowable<Map.Entry<String, Stop>> pairFlowable = fileFlowable.map(StationsInjector::toEntry);</code></pre></div>
+              <pre><code class="java">Flowable&lt;Map.Entry&lt;String, Stop&gt;&gt; pairFlowable = fileFlowable.map(StationsInjector::toEntry);</code></pre></div>
           </li>
           <li><kbd>TODO 2</kbd> For each entry, store it in the stations cache calling <code>putAsync</code>
             <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-14').toggle();">Show/Hide Solution</a>
             <div id="array-sol-14" style="display:none;">
-              <pre><code class="java">Flowable<?> putFlowable = pairFlowable.doOnNext(e -> stations.putAsync(e.getKey(), e.getValue()));</code></pre></div>
+              <pre><code class="java">Flowable&lt;?&gt; putFlowable = pairFlowable.doOnNext(e -> stations.putAsync(e.getKey(), e.getValue()));</code></pre></div>
           </li>
         </ul>
 
