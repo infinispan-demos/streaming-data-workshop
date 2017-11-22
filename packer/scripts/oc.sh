@@ -3,19 +3,19 @@
 set -e
 set -x
 
-sudo dnf install -y python2 python-yaml
+sudo dnf install -y python2 python-toml
 
 sudo python - <<END
 
-import yaml
+import toml
 
 with open('/etc/containers/registries.conf', 'r') as f:
-  config = yaml.load(f)
+  config = toml.load(f)
 
-config['insecure_registries'] = ['172.30.0.0/16']
+config['registries']['insecure']['registries'] = ['172.30.0.0/16']
 
 with file('/etc/containers/registries.conf', 'w') as f:
-  yaml.dump(config, f)
+  toml.dump(config, f)
 
 END
 
