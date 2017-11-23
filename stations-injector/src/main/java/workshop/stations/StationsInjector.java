@@ -78,7 +78,7 @@ public class StationsInjector extends AbstractVerticle {
       .<RemoteCache<String, Stop>>rxExecuteBlocking(fut -> fut.complete(client.getCache(STATION_BOARDS_CACHE_NAME)))
       // Remove data on start, to start clean
       .flatMap(stations -> CompletableInterop.fromFuture(stations.clearAsync()).andThen(Single.just(stations)))
-      .subscribeOn(RxHelper.scheduler(vertx))
+      .subscribeOn(RxHelper.scheduler(vertx.getOrCreateContext()))
       .subscribe(stations -> {
         vertx.setPeriodic(5000L, l ->
           vertx.executeBlocking(fut -> {

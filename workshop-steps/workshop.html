@@ -548,12 +548,12 @@ datagrid-1-zf16b
             </ul>
           </div>
         <pre>
-          <code class="java">  private void inject(RoutingContext ctx) {
+          <code class="java">private void inject(RoutingContext ctx) {
     vertx
-      .<RemoteCache<String, Stop>>rxExecuteBlocking(fut -> fut.complete(client.getCache(STATION_BOARDS_CACHE_NAME)))
+      .&lt;RemoteCache&lt;String, Stop&gt;&gt;rxExecuteBlocking(fut -> fut.complete(client.getCache(STATION_BOARDS_CACHE_NAME)))
       // Remove data on start, to start clean
       .flatMap(stations -> CompletableInterop.fromFuture(stations.clearAsync()).andThen(Single.just(stations)))
-      .subscribeOn(RxHelper.scheduler(vertx))
+      .subscribeOn(RxHelper.scheduler(vertx.getOrCreateContext()))
       .subscribe(stations -> {
         vertx.setPeriodic(5000L, l ->
           vertx.executeBlocking(fut -> {
@@ -561,12 +561,12 @@ datagrid-1-zf16b
             fut.complete();
           }, false, ar -> {}));
 
-        Flowable<String> fileFlowable = rxReadGunzippedTextResource("cff-stop-2016-02-29__.jsonl.gz");
+        Flowable&lt;String&gt; fileFlowable = rxReadGunzippedTextResource("cff-stop-2016-02-29__.jsonl.gz");
 
-        Flowable<Map.Entry<String, Stop>> pairFlowable =
+        Flowable&lt;Map.Entry&lt;String, Stop&gt;&gt; pairFlowable =
           fileFlowable.map(StationsInjector::toEntry);
 
-        Flowable<?> putFlowable =
+        Flowable&lt;?&gt; putFlowable =
           pairFlowable.doOnNext(e -> stations.putAsync(e.getKey(), e.getValue()));
 
         putFlowable.subscribe(v -> {}, t -> log.log(SEVERE, "Error while loading", t));

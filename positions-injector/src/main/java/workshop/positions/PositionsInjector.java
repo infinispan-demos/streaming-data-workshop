@@ -77,7 +77,7 @@ public class PositionsInjector extends AbstractVerticle {
       .<RemoteCache<String, TrainPosition>>rxExecuteBlocking(fut -> fut.complete(client.getCache(TRAIN_POSITIONS_CACHE_NAME)))
       // Remove data on start, to start clean
       .flatMap(positions -> CompletableInterop.fromFuture(positions.clearAsync()).andThen(Single.just(positions)))
-      .subscribeOn(RxHelper.scheduler(vertx))
+      .subscribeOn(RxHelper.scheduler(vertx.getOrCreateContext()))
       .subscribe(positions -> {
         vertx.setPeriodic(5000L, l ->
           vertx.executeBlocking(fut -> {
