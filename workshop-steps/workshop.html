@@ -340,10 +340,23 @@ EOF'</code></pre>
     On top of that, by deploying multiple nodes, Infinispan offers more space for storing data.
     <hr/>
     <h4 class="alert-heading">How does Infinispan distribute data?</h4>
-    Infinispan uses consistent hash distribution techniques to decide which nodes stores which data.
-    For this workshop, Infinispan has been set up to keep 2 copies for each data.
-    If a new node starts, or one of the node fails, Infinispan rebalances the data so that 2 copies are still maintained for each data piece.
-    So, this means that with this set up, Infinispan can handle one node failing at the time and the data will still survive.
+    <div class="row">
+      <div class="col-xs-2">
+        <img src="img/consistent-hash.png" class="img-rounded" height="110%" width="110%"/>
+      </div>
+      <div class="col-xs-10">
+        Infinispan uses consistent hash distribution techniques to decide which nodes stores which data.
+        For this workshop, Infinispan has been set up to keep 2 copies for each data.
+        <br/><br/>
+        Data is represented as a key/value pair and for each pair there's a node which is the owner.
+        The owner is decided applying consistent hash algorithms to the key.
+        The rest of copies of the data are stored in secondary owner nodes.
+        <br/><br/>
+        If a new node starts, or one of the node fails, Infinispan rebalances the data so that 2 copies are still maintained for each data piece.
+        So, this means that with this set up, Infinispan can handle one node failing at the time and the data will still survive.
+      </div>
+    </div>
+
   </div>
 
   To start OpenShift, you will use the scripts provided by the workshop and follow the instructions below.
