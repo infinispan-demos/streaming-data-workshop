@@ -938,8 +938,9 @@ query.setParameter("trainName", trainName);</code></pre>
               </ul>
             </div>
             <pre>
-          <code class="java">  @Override
-  public void start(Future<Void> future) throws Exception {
+          <code class="java">
+  @Override
+  public void start(Future&lt;Void&gt; future) throws Exception {
     Router router = Router.router(vertx);
 
     router.get(DELAYED_TRAINS_POSITIONS_URI).blockingHandler(this::positionsHandler);
@@ -952,32 +953,32 @@ query.setParameter("trainName", trainName);</code></pre>
 
     router.get(LISTEN_URI).handler(this::listen);
 
-    vertx.<RemoteCacheManager>rxExecuteBlocking(fut -> fut.complete(createMgmtClient()))
-      .doOnSuccess(remoteClient -> mgmtClient = remoteClient)
-      .flatMap(z -> {
-        return vertx.<RemoteCacheManager>rxExecuteBlocking(fut -> fut.complete(createQueryClient()));
+    vertx.&lt;RemoteCacheManager&gt;rxExecuteBlocking(fut -&gt; fut.complete(createMgmtClient()))
+      .doOnSuccess(remoteClient -&gt; mgmtClient = remoteClient)
+      .flatMap(z -&gt; {
+        return vertx.&lt;RemoteCacheManager&gt;rxExecuteBlocking(fut -&gt; fut.complete(createQueryClient()));
       })
-      .doOnSuccess(remoteClient -> queryClient = remoteClient)
-      .flatMap(v -> {
+      .doOnSuccess(remoteClient -&gt; queryClient = remoteClient)
+      .flatMapCompletable(v -&gt; {
         return vertx.createHttpServer()
           .requestHandler(router::accept)
           .rxListen(8080)
-          .doOnSuccess(server -> log.info("HTTP server started"))
-          .doOnError(t -> log.log(Level.SEVERE, "HTTP server failed to start", t))
-          .<Void>map(server -> null); // Ignore result
+          .doOnSuccess(server -&gt; log.info("HTTP server started"))
+          .doOnError(t -&gt; log.log(Level.SEVERE, "HTTP server failed to start", t))
+          .toCompletable(); // Ignore result
       })
-      .subscribe(RxHelper.toSubscriber(future));
+      .subscribe(CompletableHelper.toObserver(future));
   }
 
   private void publishPositions() {
-    vertx.<String>executeBlocking(fut -> fut.complete(positions()), ar -> {
+    vertx.&lt;String&gt;executeBlocking(fut -&gt; fut.complete(positions()), ar -&gt; {
       if (ar.succeeded()) {
         vertx.eventBus().publish(DELAYED_TRAINS_POSITIONS_ADDRESS, ar.result());
       }
     });
   }
 
-  private String getTrainId(Map.Entry< String, String> entry, RemoteCache< String, TrainPosition> positionsCache) {
+  private String getTrainId(Map.Entry&lt;String, String&gt; entry, RemoteCache&lt;String, TrainPosition&gt; positionsCache) {
     if (!entry.getValue().isEmpty())
       return entry.getValue();
 
@@ -987,9 +988,9 @@ query.setParameter("trainName", trainName);</code></pre>
     Query query = queryFactory.create("select tp.trainId from workshop.model.TrainPosition tp where name = :trainName");
     query.setParameter("trainName", trainName);
 
-    List<Object[]> trains = query.list();
+    List&lt;Object[]&gt; trains = query.list();
 
-    Iterator<Object[]> it = trains.iterator();
+    Iterator&lt;Object[]&gt; it = trains.iterator();
     if (it.hasNext()) {
       // Not accurate but simplest of methods
       String trainId = (String) it.next()[0];
