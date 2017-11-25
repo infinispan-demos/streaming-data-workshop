@@ -306,10 +306,13 @@ EOF'</code></pre>
 
   <div class="alert alert-success" role="alert">
     <h4 class="alert-heading">What is Vert.x?</h4>
-    TODO @Thomas
+    Vert.x is a toolkit to build reactive and distributed applications on the Java Virtual Machine.
+    It provides various asynchronous and non-blocking APIs and it's non-opinionated, so you can combine them to build a wide range of applications:
+    Web applications, Microservices, Networking, embedded / IoT, you name it.
     <hr/>
     <h4 class="alert-heading">What will Vert.x be used for in the workshop?</h4>
-    TODO @Thomas
+    Vert.x will be used to start HTTP servers and expose the REST API of some of the workshop components.
+    It will also be used push delayed trains positions with the EventBus bridge, a WebSocket extension of the Vert.x EventBus to the browser.
   </div>
 
   <div class="alert alert-success" role="alert">
@@ -507,16 +510,54 @@ datagrid-1-zf16b
   </div>
   <div class="alert alert-success" role="alert">
     <h4 class="alert-heading">What is a Vert.x Verticle?</h4>
-    TODO @Thomas
+    A verticle is the unit of deployement for Vert.x applications.
+    When you deploy a verticle, Vert.x assigns an event loop which will handle all of this verticle events.
+    From a code perspective, a verticle is just a class which extends <code>io.vertx.AbstractVerticle</code>.
     <hr/>
     <h4 class="alert-heading">Why should I write reactive code with Vert.x?</h4>
-    TODO @Thomas
+    Vert.x is a great platform to build reactive applications on the JVM because:
+    <ul>
+      <li>it allows to scale easily across all the CPU cores by deploying multiple instances of your verticle</li>
+      <li>it provides facilities to re-use all the existing libraries from the JVM ecosystem, even the synchronous and blocking ones.</li>
+    </ul>
     <hr/>
     <h4 class="alert-heading">What is Reactive Streams and RxJava2? How does it relate to Vert.x?</h4>
-    TODO @Thomas
-    <hr/>
-    <h4 class="alert-heading">How do I use Vert.x to read data from a file and transform it?</h4>
-    TODO @Thomas
+    <p style="font-style: italic">
+      Reactive Streams is an initiative to provide a standard for asynchronous stream processing with non-blocking back pressure.
+      This encompasses efforts aimed at runtime environments (JVM and JavaScript) as well as network protocols.
+      <span style="font-weight: bold; display: block; text-align: right;">http://www.reactive-streams.org/</span>
+    </p>
+    <p>
+      So Reactive streams on its own is just about exchanging data. RxJava however is about transforming, composing and coordinating flows of data or events.
+      For example, you can transform a stream of <code>Integer</code> to their <code>String</code> form with the
+      <code>map</code> operator:
+    <pre><code class="java">Flowable&lt;String&gt; = integerFlowable.map(integer -&gt; integer.toString());</code></pre>
+    RxJava is reactive streams compliant since RxJava2.
+    </p>
+    <p>
+      Vert.x provides a so-called <span style="font-style: italic">rxified</span> API.
+      This means that you can work with Vert.x modules using RxJava constructs (<code>Flowable</code>,
+      <code>Single</code>, ...etc) instead of callbacks.
+      Let's take an example. Here is how you would send an HTTP request with the callback-based API:
+    <pre><code class="java">
+    WebClient client = WebClient.create(vertx);
+    client.get(8080, host, uri)
+      .as(BodyCodec.string())
+      .send(ar -> {
+        // Handle the result
+      });
+</code></pre>
+    And the equivalent with the rxified API:
+    <pre><code class="java">
+    WebClient client = WebClient.create(vertx);
+    Single&lt;HttpResponse&lt;String&gt;&gt; responseSingle = client.get(8080, host, uri)
+      .as(BodyCodec.string())
+      .rxSend();
+</code></pre>
+    Note that in the first example, the request is sent as soon as you invoke <code>send</code>.
+    However, in the second example, nothing happens when you invoke <code>rxSend</code>.
+    Only when you <span style="font-style: italic">subscribe</span> to the <code>Single</code> the request is sent.
+    </p>
     <hr/>
     <h4 class="alert-heading">How do I store data remotely into Infinispan in a reactive way?</h4>
     Infinispan stores data into caches, and if using Hot Rod protocol from Java, these are represented as instances of <code>RemoteCache</code>.
@@ -661,10 +702,26 @@ datagrid-1-zf16b
     <pre><code lang="java">continuousQuery.addContinuousQueryListener(query, listener)</code></pre>
     <hr/>
     <h4 class="alert-heading">What is the Vert.x Event Bus?</h4>
-    TODO @Thomas
+    <p>
+      The event bus allows different parts of your application to communicate with each other.
+      It can be clustered so it doesn't matter if your services are in the same of different Vert.x instances.
+      It can even be bridged to allow client side JavaScript running in a browser to communicate on the same event bus.
+    </p>
+    <p>
+      So the event bus forms a distributed peer-to-peer messaging system spanning multiple server nodes and multiple browsers.
+    </p>
+    <p>
+      The event bus supports publish/subscribe, point to point, and request-response messaging.
+      The event bus API is very simple. It basically involves registering handlers, unregistering handlers and sending and publishing messages.
+    </p>
     <hr/>
     <h4 class="alert-heading">How do I push events into the Vert.x Event Bus?</h4>
-    TODO @Thomas
+    There is a single event bus instance for every Vert.x instance and it is obtained using the method
+    <code>eventBus</code> method:
+    <pre><code class="java">EventBus eventBus = vertx.eventBus();</code></pre>
+    Publishing a message is simple. Just use <code>publish</code> specifying the address to publish it to:
+    <pre><code class="java">eventBus.publish("news.uk.sport", "Yay! Someone kicked a ball");</code></pre>
+    That message will then be delivered to all handlers registered against the <code>news.uk.sport</code> address.
   </div>
 
   <h3>Architecture Diagram</h3>
