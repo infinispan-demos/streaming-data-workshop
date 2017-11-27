@@ -610,28 +610,27 @@ datagrid-1-zf16b
         <pre>
           <code class="java">private void inject(RoutingContext ctx) {
     vertx
-      .&lt;RemoteCache&lt;String, Stop&gt;&gt;rxExecuteBlocking(fut -> fut.complete(client.getCache(STATION_BOARDS_CACHE_NAME)))
+      .&lt;RemoteCache&lt;String, Stop&gt;&gt;rxExecuteBlocking(fut -&gt; fut.complete(client.getCache(STATION_BOARDS_CACHE_NAME)))
       // Remove data on start, to start clean
-      .flatMap(stations -> CompletableInterop.fromFuture(stations.clearAsync()).andThen(Single.just(stations)))
+      .flatMap(stations -&gt; CompletableInterop.fromFuture(stations.clearAsync()).andThen(Single.just(stations)))
       .subscribeOn(RxHelper.scheduler(vertx.getOrCreateContext()))
-      .subscribe(stations -> {
-        vertx.setPeriodic(5000L, l ->
-          vertx.executeBlocking(fut -> {
+      .subscribe(stations -&gt; {
+        vertx.setPeriodic(5000L, l -&gt;
+          vertx.executeBlocking(fut -&gt; {
             log.info(String.format("Progress: stored=%d%n", stations.size()));
             fut.complete();
-          }, false, ar -> {}));
+          }, false, ar -&gt; {}));
 
         Flowable&lt;String&gt; fileFlowable = rxReadGunzippedTextResource("cff-stop-2016-02-29__.jsonl.gz");
 
-        Flowable&lt;Map.Entry&lt;String, Stop&gt;&gt; pairFlowable =
-          fileFlowable.map(StationsInjector::toEntry);
+        Flowable&lt;Map.Entry&lt;String, Stop&gt;&gt; pairFlowable = fileFlowable.map(StationsInjector::toEntry);
 
-        Completable putCompletable = pairFlowable.flatMapCompletable(e -> {
+        Completable completable = pairFlowable.map(e -&gt; {
           CompletableFuture&lt;Stop&gt; putCompletableFuture = stations.putAsync(e.getKey(), e.getValue());
           return CompletableInterop.fromFuture(putCompletableFuture);
-        });
+        }).to(flowable -&gt; Completable.merge(flowable, 100));
 
-        putCompletable.subscribe(() -> {}, t -> log.log(SEVERE, "Error while loading", t));
+        completable.subscribe(() -&gt; {}, t -&gt; log.log(SEVERE, "Error while loading", t));
 
         ctx.response().end("Injector started");
       });

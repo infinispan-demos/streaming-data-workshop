@@ -90,15 +90,14 @@ public class StationsInjector extends AbstractVerticle {
 
         Flowable<String> fileFlowable = rxReadGunzippedTextResource("cff-stop-2016-02-29__.jsonl.gz");
 
-        Flowable<Map.Entry<String, Stop>> pairFlowable =
-          fileFlowable.map(StationsInjector::toEntry);
+        Flowable<Map.Entry<String, Stop>> pairFlowable = fileFlowable.map(StationsInjector::toEntry);
 
-        Completable putCompletable = pairFlowable.flatMapCompletable(e -> {
+        Completable completable = pairFlowable.map(e -> {
           CompletableFuture<Stop> putCompletableFuture = stations.putAsync(e.getKey(), e.getValue());
           return CompletableInterop.fromFuture(putCompletableFuture);
-        });
+        }).to(flowable -> Completable.merge(flowable, 100));
 
-        putCompletable.subscribe(() -> {}, t -> log.log(SEVERE, "Error while loading", t));
+        completable.subscribe(() -> {}, t -> log.log(SEVERE, "Error while loading", t));
 
         ctx.response().end("Injector started");
       });

@@ -1,6 +1,7 @@
 package workshop.positions;
 
 import hu.akarnokd.rxjava2.interop.CompletableInterop;
+import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
 import io.reactivex.schedulers.Schedulers;
@@ -87,8 +88,8 @@ public class PositionsInjector extends AbstractVerticle {
 
         rxReadGunzippedTextResource("cff_train_position-2016-02-29__.jsonl.gz")
           .map(PositionsInjector::toEntry)
-          .flatMapCompletable(e -> CompletableInterop.fromFuture(positions.putAsync(e.getKey(), e.getValue())))
-          .subscribeOn(Schedulers.io())
+          .map(e -> CompletableInterop.fromFuture(positions.putAsync(e.getKey(), e.getValue())))
+          .to(flowable -> Completable.merge(flowable, 100))
           .subscribe(() -> {}, t -> log.log(SEVERE, "Error while loading", t));
 
         ctx.response().end("Injector started");

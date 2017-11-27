@@ -93,13 +93,13 @@ public class StationsInjector extends AbstractVerticle {
         // TODO 1: map each entry of the Flowable into a tuple of String/Stop with StationsInjector::toEntry
         Flowable<Map.Entry<String, Stop>> pairFlowable = null;
 
-        Completable putCompletable = pairFlowable.flatMapCompletable(e -> {
+        Completable completable = pairFlowable.map(e -> {
           // TODO 2. store each entry in the stations cache calling putAsync
           CompletableFuture<Stop> putCompletableFuture = null;
           return CompletableInterop.fromFuture(putCompletableFuture);
-        });
+        }).to(flowable -> Completable.merge(flowable, 100));
 
-        putCompletable.subscribe(() -> {}, t -> log.log(SEVERE, "Error while loading", t));
+        completable.subscribe(() -> {}, t -> log.log(SEVERE, "Error while loading", t));
 
         ctx.response().end("Injector started");
       });
