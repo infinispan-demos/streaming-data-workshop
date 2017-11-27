@@ -42,3 +42,5 @@ tar zxf ${OC_TARBALL}
 mkdir --parents ${HOME}/bin
 mv ${OC_DIR}/oc ${HOME}/bin
 rm -rf ${OC_DIR} ${OC_TARBALL}
+# Programs like kubetail expects kubectl but oc exposes the commands
+ln -s ${HOME}/bin/oc ${HOME}/bin/kubectl
