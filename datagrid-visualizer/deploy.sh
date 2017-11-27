@@ -4,8 +4,6 @@ set -e -x
 
 APP=datagrid-visualizer
 
-oc project myproject
-
 oc new-build --binary --name=${APP}
 oc start-build ${APP} --from-dir=. --follow
 oc new-app ${APP}
