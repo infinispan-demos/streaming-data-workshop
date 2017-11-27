@@ -1,6 +1,7 @@
 package workshop.stations;
 
 import hu.akarnokd.rxjava2.interop.CompletableInterop;
+import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
 import io.reactivex.schedulers.Schedulers;
@@ -32,6 +33,7 @@ import java.util.AbstractMap;
 import java.util.Date;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
@@ -91,10 +93,13 @@ public class StationsInjector extends AbstractVerticle {
         // TODO 1: map each entry of the Flowable into a tuple of String/Stop with StationsInjector::toEntry
         Flowable<Map.Entry<String, Stop>> pairFlowable = null;
 
-        // TODO 2. for each entry, store it in the stations cache calling putAsync
-        Flowable<?> putFlowable = null;
+        Completable putCompletable = pairFlowable.flatMapCompletable(e -> {
+          // TODO 2. store each entry in the stations cache calling putAsync
+          CompletableFuture<Stop> putCompletableFuture = null;
+          return CompletableInterop.fromFuture(putCompletableFuture);
+        });
 
-        putFlowable.subscribe(v -> {}, t -> log.log(SEVERE, "Error while loading", t));
+        putCompletable.subscribe(() -> {}, t -> log.log(SEVERE, "Error while loading", t));
 
         ctx.response().end("Injector started");
       });

@@ -594,7 +594,7 @@ datagrid-1-zf16b
           <li><kbd>TODO 2</kbd> For each entry, store it in the stations cache calling <code>putAsync</code>
             <br/><a class="btn btn-info" role="button" onclick="$('#array-sol-14').toggle();">Show/Hide Solution</a>
             <div id="array-sol-14" style="display:none;">
-              <pre><code class="java">Flowable&lt;?&gt; putFlowable = pairFlowable.doOnNext(e -> stations.putAsync(e.getKey(), e.getValue()));</code></pre></div>
+              <pre><code class="java">CompletableFuture&lt;Stop&gt; putCompletableFuture = stations.putAsync(e.getKey(), e.getValue());</code></pre></div>
           </li>
         </ul>
 
@@ -626,10 +626,12 @@ datagrid-1-zf16b
         Flowable&lt;Map.Entry&lt;String, Stop&gt;&gt; pairFlowable =
           fileFlowable.map(StationsInjector::toEntry);
 
-        Flowable&lt;?&gt; putFlowable =
-          pairFlowable.doOnNext(e -> stations.putAsync(e.getKey(), e.getValue()));
+        Completable putCompletable = pairFlowable.flatMapCompletable(e -> {
+          CompletableFuture&lt;Stop&gt; putCompletableFuture = stations.putAsync(e.getKey(), e.getValue());
+          return CompletableInterop.fromFuture(putCompletableFuture);
+        });
 
-        putFlowable.subscribe(v -> {}, t -> log.log(SEVERE, "Error while loading", t));
+        putCompletable.subscribe(() -> {}, t -> log.log(SEVERE, "Error while loading", t));
 
         ctx.response().end("Injector started");
       });
