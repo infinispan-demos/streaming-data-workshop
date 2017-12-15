@@ -1,0 +1,5 @@
+kafka:
+  bootstrap.servers: kafka:9092
+  acks: all
+  retries: 10000
+  max.in.flight.requests.per.connection: 1
