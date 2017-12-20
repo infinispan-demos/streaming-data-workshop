@@ -49,6 +49,8 @@
     <module>delayed-listener</module>
     <module>delayed-trains</module>
     <module>delayed-dashboard</module>
+    <module>positions-transport</module>
+    <module>stations-transport</module>
   </modules>
 
   <dependencyManagement>
@@ -81,6 +83,11 @@
             <artifactId>rxjava</artifactId>
           </exclusion>
         </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.infinispan.kafka</groupId>
+        <artifactId>infinispan-kafka</artifactId>
+        <version>0.1</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

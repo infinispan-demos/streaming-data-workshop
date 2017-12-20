@@ -1,12 +1,15 @@
 package workshop.model;
 
-import org.infinispan.protostream.MessageMarshaller;
+import static workshop.model.ModelUtils.bs;
+import static workshop.model.ModelUtils.str;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Objects;
 
-import static workshop.model.ModelUtils.bs;
-import static workshop.model.ModelUtils.str;
+import org.infinispan.protostream.MessageMarshaller;
+
+import io.vertx.core.json.JsonObject;
 
 public class TrainPosition implements Serializable {
 
@@ -55,9 +58,34 @@ public class TrainPosition implements Serializable {
       '}';
   }
 
-  public static TrainPosition make(String trainId, String name, int delay, String cat, String lastStopName, TimedPosition current) {
+  public static TrainPosition make(String message) {
+    JsonObject json = new JsonObject(message);
+
+    String trainId = json.getString("trainid");
+    long ts = json.getLong("timeStamp");
+    String name = json.getString("name").trim();
+    String cat = json.getString("category").trim();
+    String lastStopName = json.getString("lstopname").trim();
+    int delay = Integer.valueOf(orNull(json.getString("delay"), "0"));
+
+    double y = Double.parseDouble(json.getString("y")) / 1000000;
+    double x = Double.parseDouble(json.getString("x")) / 1000000;
+    String dirOrEmpty = json.getString("direction");
+    Double direction = dirOrEmpty.isEmpty() ? null : Double.parseDouble(dirOrEmpty) * 10;
+    TimedPosition current = new TimedPosition(ts, new GeoLocBearing(y, x, direction));
+
+    // TODO: Parse future positions to get continuous move (poly field)
+
+    return TrainPosition.make(trainId, name, delay, cat, lastStopName, current);
+  }
+
+  private static TrainPosition make(String trainId, String name, int delay, String cat, String lastStopName, TimedPosition current) {
     return new TrainPosition(
       bs(trainId), bs(name), delay, bs(cat), bs(lastStopName), current);
+  }
+
+  private static <T> T orNull(Object obj, T defaultValue) {
+    return Objects.isNull(obj) ? defaultValue : (T) obj;
   }
 
   public static final class Marshaller implements MessageMarshaller<TrainPosition> {
@@ -94,5 +122,4 @@ public class TrainPosition implements Serializable {
     }
 
   }
-
 }

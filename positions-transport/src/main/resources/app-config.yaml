@@ -1,0 +1,7 @@
+kafka:
+  bootstrap.servers: kafka:9092
+  topic: train-positions
+  acks: 1
+  group.id: the_group
+  retries: 10000
+  max.in.flight.requests.per.connection: 1

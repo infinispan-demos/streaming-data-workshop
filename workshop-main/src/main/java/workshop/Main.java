@@ -43,6 +43,8 @@ public class Main extends AbstractVerticle {
       .flatMap(x -> httpGet(DELAYED_TRAINS_HOST, LISTEN_URI))
       .flatMap(x -> httpGet(STATIONS_INJECTOR_HOST, STATIONS_INJECTOR_URI))
       .flatMap(x -> httpGet(POSITIONS_INJECTOR_HOST, POSITIONS_INJECTOR_URI))
+      .flatMap(x -> httpGet(POSITIONS_TRANSPORT_HOST, POSITIONS_TRANSPORT_URI))
+      .flatMap(x -> httpGet(STATIONS_TRANSPORT_HOST, STATIONS_TRANSPORT_URI))
       .subscribe(rsp -> {
         log.info("Inject replied: " + rsp.body());
         ctx.response().end("Inject OK");

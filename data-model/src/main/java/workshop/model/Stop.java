@@ -21,6 +21,9 @@ import org.infinispan.protostream.MessageMarshaller;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.Objects;
+
+import io.vertx.core.json.JsonObject;
 
 /**
  * @author galderz
@@ -51,6 +54,36 @@ public class Stop implements Serializable {
       ", station=" + station +
       ", departureTs=" + departureTs +
       '}';
+  }
+
+  public static Stop make(String message) {
+    JsonObject json = new JsonObject(message);
+    String trainName = json.getString("name");
+    String trainTo = json.getString("to");
+    String trainCat = json.getString("category");
+    String trainOperator = json.getString("operator");
+
+    Train train = Train.make(trainName, trainTo, trainCat, trainOperator);
+
+    JsonObject jsonStop = json.getJsonObject("stop");
+    JsonObject jsonStation = jsonStop.getJsonObject("station");
+    long stationId = Long.parseLong(jsonStation.getString("id"));
+    String stationName = jsonStation.getString("name");
+    Station station = Station.make(stationId, stationName);
+
+    Date departureTs = new Date(jsonStop.getLong("departureTimestamp") * 1000);
+    int delayMin = orNull(jsonStop.getValue("delay"), 0);
+
+    String stopId = String.format(
+      "%s/%s/%s/%s",
+      stationId, trainName, trainTo, jsonStop.getString("departure")
+    );
+
+    return Stop.make(train, delayMin, station, departureTs);
+  }
+
+  private static <T> T orNull(Object obj, T defaultValue) {
+    return Objects.isNull(obj) ? defaultValue : (T) obj;
   }
 
   public static final class Marshaller implements MessageMarshaller<Stop> {
