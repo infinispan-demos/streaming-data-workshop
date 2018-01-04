@@ -74,14 +74,8 @@ public class StationsInjector extends AbstractVerticle {
   private void inject(RoutingContext ctx) {
     Flowable<String> fileFlowable = rxReadGunzippedTextResource("cff-stop-2016-02-29__.jsonl.gz");
 
-    // TODO 1: map each entry of the Flowable into a tuple of String/Stop with StationsInjector::toEntry
-    Flowable<Map.Entry<String, Stop>> pairFlowable = null;
+    // TODO 1: map each entry of the Flowable into a tuple of String/String with StationsInjector::toEntry and
 
-    // TODO 2. for each entry, send it to Kafka using the dispatch method
-    Flowable<?> putFlowable = null;
-
-    putFlowable.subscribe(v -> {
-    }, t -> log.log(SEVERE, "Error while loading", t));
 
     ctx.response().end("Injector started");
   }
@@ -133,19 +127,11 @@ public class StationsInjector extends AbstractVerticle {
     return ConfigRetriever.create(vertx, new ConfigRetrieverOptions().addStore(store)).rxGetConfig();
   }
 
-  private Completable dispatch(Map.Entry<String, Stop> entry) {
-    ProducerRecord<String, String> record
-      = new ProducerRecord<>(STATION_BOARDS_TOPIC, entry.getKey(), Json.encode(entry.getValue()));
-    return new AsyncResultCompletable(
-      handler ->
-        stream.write(record, x -> {
-          if (x.succeeded()) {
-            log.info("Entry written in Kafka: " + entry.getKey());
-            handler.handle(Future.succeededFuture());
-          } else {
-            handler.handle(Future.failedFuture(x.cause()));
-          }
-        }));
+  private Completable dispatch(Map.Entry<String, String> entry) {
+    // TODO 2: send it to kafka
+    return new AsyncResultCompletable(h -> {
+      log.info("Entry read " + entry.getValue());
+    });
   }
 
 }
