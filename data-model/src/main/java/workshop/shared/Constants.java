@@ -4,6 +4,8 @@ public final class Constants {
 
   public static final String STATION_BOARDS_CACHE_NAME = "station-boards";
   public static final String TRAIN_POSITIONS_CACHE_NAME = "train-positions";
+  public static final String TRAIN_POSITIONS_TOPIC = "train-positions";
+  public static final String STATION_BOARDS_TOPIC = "station-boards";
   public static final String DELAYED_TRAINS_CACHE_NAME = "delayed-trains";
 
   public static final String STATION_BOARD_PROTO = "/station-board.proto";
