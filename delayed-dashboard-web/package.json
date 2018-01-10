@@ -1,0 +1,8 @@
+{
+  "name": "delayed-dashboard-web",
+  "version": "0.1.0",
+  "dependencies": {
+    "patternfly": "3.30.0",
+    "vertx3-eventbus-client": "3.5.0"
+  }
+}
