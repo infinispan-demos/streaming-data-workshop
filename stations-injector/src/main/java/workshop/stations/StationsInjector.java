@@ -41,33 +41,22 @@ public class StationsInjector extends AbstractVerticle {
 
   private static final Logger log = Logger.getLogger(StationsInjector.class.getName());
 
-  private KafkaWriteStream<String, String> stream;
-
   @Override
   public void start(Future<Void> future) {
     Router router = Router.router(vertx);
     router.get(STATIONS_INJECTOR_URI).handler(this::inject);
 
-    retrieveConfiguration()
-      .doOnSuccess(json ->
-        stream = KafkaWriteStream
-          .create(vertx.getDelegate(), json.getJsonObject("kafka").getMap(), String.class, String.class))
-      .flatMapCompletable(v ->
-        vertx.createHttpServer()
-          .requestHandler(router::accept)
-          .rxListen(8080)
-          .doOnSuccess(server -> log.info("Station injector HTTP server started"))
-          .doOnError(t -> log.log(Level.SEVERE, "Station injector HTTP server failed to start", t))
-          .toCompletable() // Ignore result
-      )
+    vertx.createHttpServer()
+      .requestHandler(router::accept)
+      .rxListen(8080)
+      .doOnSuccess(server -> log.info("Station injector HTTP server started"))
+      .doOnError(t -> log.log(Level.SEVERE, "Station injector HTTP server failed to start", t))
+      .toCompletable()
       .subscribe(CompletableHelper.toObserver(future));
   }
 
   @Override
   public void stop() {
-    if (Objects.nonNull(stream)) {
-      stream.close();
-    }
   }
 
   // TODO: Duplicate
