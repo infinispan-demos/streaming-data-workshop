@@ -1,5 +1,6 @@
 package workshop.stations;
 
+import static java.util.logging.Level.SEVERE;
 import static workshop.shared.Constants.DATAGRID_HOST;
 import static workshop.shared.Constants.DATAGRID_PORT;
 import static workshop.shared.Constants.STATIONS_TRANSPORT_URI;
@@ -19,12 +20,15 @@ import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
 
 import io.reactivex.Single;
+import hu.akarnokd.rxjava2.interop.CompletableInterop;
+import io.reactivex.Completable;
 import io.vertx.config.ConfigRetrieverOptions;
 import io.vertx.config.ConfigStoreOptions;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
 import io.vertx.reactivex.CompletableHelper;
+import io.vertx.reactivex.FlowableHelper;
 import io.vertx.reactivex.config.ConfigRetriever;
 import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.ext.web.Router;
@@ -71,11 +75,12 @@ public class StationsPusher extends AbstractVerticle {
         log.info("Connected to Infinispan");
         client = infinispan.remoteClient;
         cache = infinispan.cache;
-        consumer.handler(record -> {
-          log.info("Object read from kafka id=" + record.key());
-          Stop stop = Stop.make(record.value());
-          cache.putAsync(record.key(), stop);
-        });
+
+        FlowableHelper.toFlowable(consumer).
+          map(e -> CompletableInterop.fromFuture(cache.putAsync(e.key(), Stop.make(e.value()))))
+          .to(flowable -> Completable.merge(flowable, 100))
+          .subscribe(() -> {}, t -> log.log(SEVERE, "Error while loading", t));
+
         consumer.subscribe(Collections.singleton(STATION_BOARDS_TOPIC), ar -> {
           if (ar.succeeded()) {
             log.info("Subscription correct to " + STATION_BOARDS_TOPIC);

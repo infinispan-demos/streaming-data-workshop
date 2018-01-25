@@ -1,5 +1,6 @@
 package workshop.positions;
 
+import static java.util.logging.Level.SEVERE;
 import static workshop.shared.Constants.DATAGRID_HOST;
 import static workshop.shared.Constants.DATAGRID_PORT;
 import static workshop.shared.Constants.POSITIONS_TRANSPORT_URI;
@@ -8,7 +9,6 @@ import static workshop.shared.Constants.TRAIN_POSITIONS_TOPIC;
 
 import java.util.Collections;
 import java.util.Objects;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.infinispan.client.hotrod.RemoteCache;
@@ -18,6 +18,8 @@ import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
 
+import hu.akarnokd.rxjava2.interop.CompletableInterop;
+import io.reactivex.Completable;
 import io.reactivex.Single;
 import io.vertx.config.ConfigRetrieverOptions;
 import io.vertx.config.ConfigStoreOptions;
@@ -25,6 +27,7 @@ import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
 import io.vertx.reactivex.CompletableHelper;
+import io.vertx.reactivex.FlowableHelper;
 import io.vertx.reactivex.config.ConfigRetriever;
 import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.ext.web.Router;
@@ -57,7 +60,7 @@ public class PositionsPusher extends AbstractVerticle {
           .requestHandler(router::accept)
           .rxListen(8080)
           .doOnSuccess(server -> log.info("Positions transport HTTP server started"))
-          .doOnError(t -> log.log(Level.SEVERE, "Positions transport HTTP server failed to start", t))
+          .doOnError(t -> log.log(SEVERE, "Positions transport HTTP server failed to start", t))
           .toCompletable() // Ignore result
       )
       .subscribe(CompletableHelper.toObserver(future));
@@ -69,17 +72,17 @@ public class PositionsPusher extends AbstractVerticle {
         log.info("Connected to Infinispan");
         client = infinispan.remoteClient;
         cache = infinispan.cache;
-        consumer.handler(record -> {
-          log.info("Object read from kafka id=" + record.key());
-          TrainPosition trainPosition = TrainPosition.make(record.value());
-          log.info("cache " + cache);
-          cache.putAsync(record.key(), trainPosition);
-        });
+
+        FlowableHelper.toFlowable(consumer).
+          map(e -> CompletableInterop.fromFuture(cache.putAsync(e.key(), TrainPosition.make(e.value()))))
+          .to(flowable -> Completable.merge(flowable, 100))
+          .subscribe(() -> {}, t -> log.log(SEVERE, "Error while loading", t));
+
         consumer.subscribe(Collections.singleton(TRAIN_POSITIONS_TOPIC), ar -> {
           if (ar.succeeded()) {
             log.info("Subscription correct to " + TRAIN_POSITIONS_TOPIC);
           } else {
-            log.log(Level.SEVERE, "Could not connect to the topic", ar.cause());
+            log.log(SEVERE, "Could not connect to the topic", ar.cause());
           }
         });
       }).subscribe();
@@ -135,7 +138,7 @@ public class PositionsPusher extends AbstractVerticle {
       return new Infinispan(client, client.getCache(TRAIN_POSITIONS_CACHE_NAME));
 
     } catch (Exception e) {
-      log.log(Level.SEVERE, "Error creating client", e);
+      log.log(SEVERE, "Error creating client", e);
       throw new RuntimeException(e);
     }
   }
