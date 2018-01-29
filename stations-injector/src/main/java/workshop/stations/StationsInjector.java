@@ -49,10 +49,13 @@ public class StationsInjector extends AbstractVerticle {
     vertx.createHttpServer()
       .requestHandler(router::accept)
       .rxListen(8080)
-      .doOnSuccess(server -> log.info("Station injector HTTP server started"))
-      .doOnError(t -> log.log(Level.SEVERE, "Station injector HTTP server failed to start", t))
-      .toCompletable()
-      .subscribe(CompletableHelper.toObserver(future));
+      .subscribe(
+        server -> {
+          log.info("HTTP server started");
+          future.complete();
+        },
+        future::fail
+      );
   }
 
   @Override
