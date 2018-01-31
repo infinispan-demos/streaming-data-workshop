@@ -35,7 +35,7 @@
     <vertx.version>3.5.0</vertx.version>
     <infinispan.version>9.1.1.Final</infinispan.version>
     <vertx-maven-plugin.version>1.0.13</vertx-maven-plugin.version>
-    <fabric8-maven-plugin.version>3.5.32</fabric8-maven-plugin.version>
+    <fabric8-maven-plugin.version>3.5.34</fabric8-maven-plugin.version>
 
     <workshop.solution>false</workshop.solution>
   </properties>

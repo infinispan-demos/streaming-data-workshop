@@ -10,7 +10,7 @@ NS=myproject
 
 oc project ${NS}
 
-oc process -n openshift infinispan-ephemeral -p \
+oc process infinispan-ephemeral -p \
   NUMBER_OF_INSTANCES=${NUM_NODES} \
   NAMESPACE=${NS} \
   APPLICATION_NAME=${APP} \

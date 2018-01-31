@@ -14,7 +14,6 @@ import io.vertx.reactivex.ext.web.codec.BodyCodec;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static workshop.Admin.*;
 import static workshop.shared.Constants.*;
 
 public class Main extends AbstractVerticle {
@@ -31,6 +30,7 @@ public class Main extends AbstractVerticle {
     vertx.createHttpServer()
       .requestHandler(router::accept)
       .rxListen(8080)
+      .flatMap(server -> vertx.rxExecuteBlocking(Admin::createRemoteCaches))
       .doOnSuccess(server -> log.info("Main HTTP server started"))
       .toCompletable() // Ignore result
       .subscribe(CompletableHelper.toObserver(future));
@@ -39,7 +39,7 @@ public class Main extends AbstractVerticle {
   private void inject(RoutingContext ctx) {
     log.info("HTTP GET /inject");
     vertx
-      .<Void>rxExecuteBlocking(fut -> fut.complete(createRemoteCaches()))
+      .rxExecuteBlocking(Admin::clearCaches)
       .flatMap(x -> httpGet(DELAYED_TRAINS_HOST, LISTEN_URI))
       .flatMap(x -> httpGet(STATIONS_INJECTOR_HOST, STATIONS_INJECTOR_URI))
       .flatMap(x -> httpGet(POSITIONS_INJECTOR_HOST, POSITIONS_INJECTOR_URI))

@@ -125,7 +125,6 @@ public class PositionsInjector extends AbstractVerticle {
       handler ->
         stream.write(record, x -> {
           if (x.succeeded()) {
-            log.info("Entry written in Kafka: " + entry.getKey());
             handler.handle(Future.succeededFuture());
           } else {
             handler.handle(Future.failedFuture(x.cause()));

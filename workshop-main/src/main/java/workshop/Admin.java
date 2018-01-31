@@ -1,5 +1,6 @@
 package workshop;
 
+import io.vertx.reactivex.core.Future;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
@@ -24,7 +25,7 @@ class Admin {
 
   private static final Logger log = Logger.getLogger(Admin.class.getName());
 
-  static Void createRemoteCaches() {
+  static void createRemoteCaches(Future<Void> f) {
     RemoteCacheManager client = createClient();
     try {
       RemoteCache<String, String> protoCache = client.getCache(PROTOBUF_METADATA_CACHE_NAME);
@@ -34,10 +35,18 @@ class Admin {
       client.administration().createCache(STATION_BOARDS_CACHE_NAME, "distributed");
       client.administration().createCache(TRAIN_POSITIONS_CACHE_NAME, "distributed");
       client.administration().createCache(DELAYED_TRAINS_CACHE_NAME, "replicated");
-      return null;
+      clearCaches(client);
+      f.complete();
     } finally {
       client.stop();
     }
+  }
+
+  static void clearCaches(Future<Void> f) {
+    RemoteCacheManager client = createClient();
+    clearCaches(client);
+    client.stop();
+    f.complete();
   }
 
   private static RemoteCacheManager createClient() {
@@ -65,6 +74,12 @@ class Admin {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private static void clearCaches(RemoteCacheManager client) {
+    client.getCache(STATION_BOARDS_CACHE_NAME).clear();
+    client.getCache(TRAIN_POSITIONS_CACHE_NAME).clear();
+    client.getCache(DELAYED_TRAINS_CACHE_NAME).clear();
   }
 
 }

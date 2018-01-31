@@ -4,11 +4,17 @@ import static workshop.shared.Constants.DATAGRID_HOST;
 import static workshop.shared.Constants.DATAGRID_PORT;
 import static workshop.shared.Constants.STATIONS_TRANSPORT_URI;
 import static workshop.shared.Constants.STATION_BOARDS_CACHE_NAME;
+import static workshop.shared.Constants.STATION_BOARDS_TOPIC;
 
+import java.util.Collections;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import hu.akarnokd.rxjava2.interop.CompletableInterop;
+import io.reactivex.Completable;
+import io.vertx.core.Handler;
+import io.vertx.reactivex.FlowableHelper;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
@@ -19,12 +25,11 @@ import org.infinispan.protostream.SerializationContext;
 import io.reactivex.Single;
 import io.vertx.config.ConfigRetrieverOptions;
 import io.vertx.config.ConfigStoreOptions;
-import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.kafka.client.consumer.KafkaReadStream;
-import io.vertx.reactivex.CompletableHelper;
 import io.vertx.reactivex.config.ConfigRetriever;
 import io.vertx.reactivex.core.AbstractVerticle;
+import io.vertx.reactivex.core.Future;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import workshop.model.Station;
@@ -38,47 +43,61 @@ public class StationsPusher extends AbstractVerticle {
 
   private static final Logger log = Logger.getLogger(StationsPusher.class.getName());
 
-  private KafkaReadStream<String, String> consumer;
-  private RemoteCacheManager client;
-  private RemoteCache<String, Stop> cache;
+  private KafkaReadStream<String, String> kafka;
+  private RemoteCache<String, Stop> stopCache;
 
   @Override
-  public void start(Future<Void> future) {
+  public void start(io.vertx.core.Future<Void> future) {
 
     Router router = Router.router(vertx);
-    router.get(STATIONS_TRANSPORT_URI).handler(this::consumeAndPushToCache);
+    router.get(STATIONS_TRANSPORT_URI).handler(this::push);
 
-    retrieveConfiguration()
-      .doOnSuccess(json ->
-        consumer = KafkaReadStream.create(vertx.getDelegate(), json.getJsonObject("kafka").getMap(), String.class, String.class))
-      .flatMapCompletable(v ->
+    kafkaCfg()
+      .flatMap(json ->
+        Single.just(KafkaReadStream
+          .create(vertx.getDelegate(), json.getJsonObject("kafka").getMap(), String.class, String.class))
+      ).flatMap(stream ->
         vertx.createHttpServer()
           .requestHandler(router::accept)
           .rxListen(8080)
-          .doOnSuccess(server -> log.info("Stations transport HTTP server started"))
-          .doOnError(t -> log.log(Level.SEVERE, "Stations transport HTTP server failed to start", t))
-          .toCompletable() // Ignore result
-      )
-      .subscribe(CompletableHelper.toObserver(future));
-
+          .map(s -> stream)
+      ).subscribe(
+        stream -> {
+          kafka = stream;
+          log.info("HTTP server and Kafka reader stream started");
+          future.complete();
+        },
+        future::fail
+      );
   }
 
-  private void consumeAndPushToCache(RoutingContext ctx) {
-    vertx.<Infinispan>rxExecuteBlocking(fut -> fut.complete(createClient()))
-      .doOnSuccess(infinispan -> {
-        log.info("Connected to Infinispan");
-        client = infinispan.remoteClient;
-        cache = infinispan.cache;
-        // TODO 1: Add a handler to the consumer that will push Stop in Infinispan
+  private void push(RoutingContext ctx) {
+    vertx
+      .rxExecuteBlocking(StationsPusher::remoteCacheManager)
+      .flatMap(remote -> vertx.rxExecuteBlocking(remoteCache(remote)))
+      .subscribe(cache -> {
+        stopCache = cache;
 
-        // TODO 2: Subscribe the consumer to the STATION_BOARDS_TOPIC
+        FlowableHelper
+          .toFlowable(kafka)
+          .map(e -> CompletableInterop.fromFuture(cache.putAsync(e.key(), Stop.make(e.value()))))
+          .to(flowable -> Completable.merge(flowable, 100))
+          .subscribe(
+            () -> {},
+            failure -> log.log(Level.SEVERE, "Error while storing to data grid", failure)
+          );
 
-      }).subscribe();
-
-    ctx.response().end("Transporter started");
+        kafka.subscribe(Collections.singleton(STATION_BOARDS_TOPIC), result -> {
+          if (result.succeeded()) {
+            ctx.response().end("Transporter started, subscribed to: " + STATION_BOARDS_TOPIC);
+          } else {
+            ctx.response().end("Could not connect to the topic");
+          }
+        });
+      });
   }
 
-  private Single<JsonObject> retrieveConfiguration() {
+  private Single<JsonObject> kafkaCfg() {
     ConfigStoreOptions store = new ConfigStoreOptions()
       .setType("file")
       .setFormat("yaml")
@@ -90,25 +109,11 @@ public class StationsPusher extends AbstractVerticle {
 
   @Override
   public void stop() {
-    if (Objects.nonNull(consumer)) {
-      consumer.close();
-    }
-    if (Objects.nonNull(client)) {
-      client.stopAsync();
-    }
+    if (Objects.nonNull(kafka)) kafka.close();
+    if (Objects.nonNull(stopCache)) stopCache.getRemoteCacheManager().stop();
   }
 
-  public static class Infinispan {
-    final RemoteCacheManager remoteClient;
-    final RemoteCache<String, Stop> cache;
-
-    public Infinispan(RemoteCacheManager remoteClient, RemoteCache<String, Stop> cache) {
-      this.remoteClient = remoteClient;
-      this.cache = cache;
-    }
-  }
-
-  private static Infinispan createClient() {
+  private static void remoteCacheManager(Future<RemoteCacheManager> f) {
     try {
       RemoteCacheManager client = new RemoteCacheManager(
         new ConfigurationBuilder().addServer()
@@ -123,11 +128,15 @@ public class StationsPusher extends AbstractVerticle {
       ctx.registerMarshaller(new Stop.Marshaller());
       ctx.registerMarshaller(new Station.Marshaller());
       ctx.registerMarshaller(new Train.Marshaller());
-      return new Infinispan(client, client.getCache(STATION_BOARDS_CACHE_NAME));
-
+      f.complete(client);
     } catch (Exception e) {
       log.log(Level.SEVERE, "Error creating client", e);
       throw new RuntimeException(e);
     }
   }
+
+  private static Handler<Future<RemoteCache<String, Stop>>> remoteCache(RemoteCacheManager remote) {
+    return f -> f.complete(remote.getCache(STATION_BOARDS_CACHE_NAME));
+  }
+
 }
