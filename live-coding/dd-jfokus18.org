@@ -1,0 +1,288 @@
+* Home golders
+** Vert.x OpenShift example
+#+BEGIN_SRC shell
+~/1/vert.x-openshift
+#+END_SRC
+** Live coding
+#+BEGIN_SRC shell
+~/1/streaming-data-kubernetes
+#+END_SRC
+* Pre Talk
+
+* Live coding
+** Simple Vert.x App
+*** Start OpenShift cluster
+#+BEGIN_SRC shell
+oc cluster up
+#+END_SRC
+*** Add dependencies required by app
+Use live template
+*** Add Vert.x, Fabric8 and properties
+Use live template
+*** Example verticle
+#+BEGIN_SRC java
+@Override
+public void start(Future<Void> future) {
+   Router router = Router.router(vertx);
+   router.get("/").handler(rc -> {
+      rc.response().end("Hej världen!");
+   });
+
+   vertx.createHttpServer()
+      .requestHandler(router::accept)
+      .rxListen(8080)
+      .subscribe(
+         server -> {
+            log.info("HTTP server started");
+            future.complete();
+         },
+         future::fail
+      );
+}
+#+END_SRC
+*** Deploy app
+#+BEGIN_SRC shell
+mvn fabric8:deploy
+#+END_SRC
+*** Check out and explain OpenShift UI
+https://127.0.0.1:8443
+*** Verify app
+Clicking on http://vertx-openshift-example-myproject.127.0.0.1.nip.io/
+** Stream -> Vert.x -> System.out
+*** Implement /inject
+#+BEGIN_SRC java
+private void inject(RoutingContext ctx) {
+  Flowable<String> fileFlowable = rxReadGunzippedTextResource("cff-stop-2016-02-29__.jsonl.gz");
+  fileFlowable
+    .map(StationsInjector::toEntry)
+    .flatMapCompletable(this::dispatch)
+    .subscribeOn(Schedulers.io())
+    .subscribe(
+      () -> ctx.response().end("Injector started"),
+      failure -> injectFailure(ctx, failure)
+    );
+}
+#+END_SRC
+*** Add inject failure
+Live template ~ddij~
+*** Deploy stations injector
+#+BEGIN_SRC shell
+cd stations-injector
+mvn fabric8:deploy
+#+END_SRC
+*** Kick off injector
+#+BEGIN_SRC shell
+curl http://stations-injector-myproject.127.0.0.1.nip.io/inject
+#+END_SRC
+*** Show data being consumed and printed
+#+BEGIN_SRC shell
+kubetail -l app=stations-injector
+#+END_SRC
+** Stream -> Vert.x -> Kafka
+*** Stations Injector
+**** Add Kafka write stream
+#+BEGIN_SRC java
+private KafkaWriteStream<String, String> kafka;
+#+END_SRC
+**** Construct and assign write stream
+Use ~ddkwc~ for expanding write stream create code
+#+BEGIN_SRC java
+kafkaCfg()
+  .flatMap(json ->
+    Single.just(KafkaWriteStream
+      .create(vertx.getDelegate(), json.getJsonObject("kafka").getMap(),
+        String.class, String.class))
+  ).flatMap(stream ->
+    vertx.createHttpServer()
+      .requestHandler(router::accept)
+      .rxListen(8080)
+      .map(s -> stream)
+  ).subscribe(
+    stream -> {
+      kafka = stream;
+      log.info("HTTP server and Kafka writer stream started");
+      future.complete();
+    },
+    future::fail
+  );
+#+END_SRC
+**** Close stream
+Use ~ddkc~ live template in stop() method
+*** Stations Pusher
+**** Add Kafka read stream
+#+BEGIN_SRC java
+private KafkaWriteStream<String, String> kafka;
+#+END_SRC
+**** Close kafka stream
+Use ~ddkc~ live template in stop() method
+**** Create producer record in dispatcher
+Use ~ddpr~ live template in dispatch() method
+**** Implement writing to Kafka
+Use ~ddkw~ live template in dispatch() method
+**** Convert kafka to Flowable and print read elements
+#+BEGIN_SRC java
+FlowableHelper
+  .toFlowable(kafka)
+  .forEach(e -> log.info("Entry read from kafka: " + e.key()));
+#+END_SRC
+**** Subscribe reader to Kafka topic
+Use ~ddks~ live template in push() method
+*** Start kafka
+#+BEGIN_SRC shell
+./start-kafka.sh
+#+END_SRC
+*** Deploy injector and transport changes
+#+BEGIN_SRC shell
+cd stations-injector
+mvn fabric8:deploy
+cd ..
+cd stations-transport
+mvn fabric8:deploy
+#+END_SRC
+*** Start transport and injector
+#+BEGIN_SRC shell
+curl http://stations-transport-myproject.127.0.0.1.nip.io/push
+curl http://stations-injector-myproject.127.0.0.1.nip.io/inject
+#+END_SRC
+*** Show logs
+Using ~kubetail~ or OpenShift pod consoles
+** Kafka -> Infinispan
+*** Add RemoteCache instance variable
+#+BEGIN_SRC java
+private RemoteCache<String, Stop> stopCache;
+#+END_SRC
+*** Add Infinispan client to push
+Code the following and put FlowableHelper and kafka subscribe inside
+#+BEGIN_SRC java
+vertx
+  .rxExecuteBlocking(StationsPusher::remoteCacheManager)
+  .flatMap(remote -> vertx.rxExecuteBlocking(remoteCache(remote)))
+  .subscribe(cache -> {
+    stopCache = cache;
+    ...
+#+END_SRC
+*** Store each entry that comes from Kafka
+#+BEGIN_SRC java
+.map(e -> CompletableInterop.fromFuture(cache.putAsync(e.key(), Stop.make(e.value()))))
+#+END_SRC
+*** Add flow control to avoid overloading server
+#+BEGIN_SRC java
+.to(flowable -> Completable.merge(flowable, 100))
+#+END_SRC
+*** Add error handling
+Use ~ddsbif~ live template at the end of Flowable
+*** Create data grid via OpenShift UI
+**** Log in and make sure ~oc~ points to right place
+oc login -u developer -p developer https://127.0.0.1:8443
+**** Add Infinispan data grid templates
+#+BEGIN_SRC shell
+cd openshift
+oc create -f infinispan-centos7-imagestream.json
+oc create -f infinispan-ephemeral-template.json
+#+END_SRC
+**** Follow UI to create data grid
+- Click on ~Add to Project~, select ~Browse Catalog~
+- Type ~infinispan~ and select ~infinispan-ephemeral~
+- Give it these parameters:
+#+BEGIN_SRC shell
+APPLICATION_NAME: datagrid
+MANAGEMENT_USER: developer
+MANAGEMENT_PASSWORD: developer
+NUMBER_OF_INSTANCES: 3
+#+END_SRC
+*** Deploy remaining components of deep dive
+- This includes a main entry point that creates the station board cache
+- It also includes a data grid visualizer
+- TODO: Think about something to talk about while this is running
+#+BEGIN_SRC shell
+./deploy-all.sh
+#+END_SRC
+*** Show data grid visualizer
+URL: http://datagrid-visualizer-myproject.127.0.0.1.nip.io/infinispan-visualizer/
+Select ~station-boards~ caches
+Not much appearing for now
+*** Start main injector
+#+BEGIN_SRC shell
+curl http://workshop-main-myproject.127.0.0.1.nip.io/inject
+#+END_SRC
+*** Show data grid visualizer filling up
+URL: http://datagrid-visualizer-myproject.127.0.0.1.nip.io/infinispan-visualizer/
+*** Create continuous query listener
+#+BEGIN_SRC java
+private void addContinuousQuery(RemoteCache<String, Stop> stations) {
+  QueryFactory queryFactory = Search.getQueryFactory(stations);
+
+  Query query = queryFactory.from(Stop.class)
+    .having("delayMin").gt(0L)
+    .build();
+
+  ContinuousQueryListener<String, Stop> listener =
+    new ContinuousQueryListener<String, Stop>() {
+      @Override
+      public void resultJoining(String id, Stop stop) {
+        JsonObject stopAsJson = toJson(stop);
+        vertx.eventBus().publish("delayed-trains", stopAsJson);
+        // lcpd
+      }
+    };
+
+  ContinuousQuery<String, Stop> continuousQuery = Search.getContinuousQuery(stations);
+  continuousQuery.removeAllListeners();
+  continuousQuery.addContinuousQueryListener(query, listener);
+}
+#+END_SRC
+*** Store delayed trains
+For later live coding, press ~ddpd~ in hole
+*** Redeploy delay-listener component
+#+BEGIN_SRC shell
+cd delay-listener
+mvn fabric8:deploy
+#+END_SRC
+*** Restart the injector
+#+BEGIN_SRC shell
+curl http://workshop-main-myproject.127.0.0.1.nip.io/inject
+#+END_SRC
+*** Start dashboard from IDE
+Run ~dashboard.DelayedDashboard~ class
+** Infinispan -> Event Bus
+*** Add sockjs bridge details
+Live code template ~ddsj~
+*** Add permitted address to be broadcasted
+#+BEGIN_SRC java
+options.addOutboundPermitted(new PermittedOptions()
+  .setAddress(DELAYED_TRAINS_POSITIONS_ADDRESS));
+#+END_SRC
+*** Publish positions to event bus
+#+BEGIN_SRC java
+vertx
+  .rxExecuteBlocking(this::positions)
+  .subscribe(
+    positions ->
+      vertx.eventBus().publish(DELAYED_TRAINS_POSITIONS_ADDRESS, positions)
+  );
+#+END_SRC
+*** Create query to get all train IDs for trains with a certain route name
+#+BEGIN_SRC java
+Query query = queryFactory.create(
+    "select tp.trainId from workshop.model.TrainPosition tp where name = :trainName");
+query.setParameter("trainName", trainName);
+#+END_SRC
+*** Execute the query
+#+BEGIN_SRC java
+List<Object[]> trains = query.list();
+#+END_SRC
+*** Get first train ID returned (not the most accurate)
+Live template ~ddti~
+*** Restart the injector
+#+BEGIN_SRC shell
+curl http://workshop-main-myproject.127.0.0.1.nip.io/inject
+#+END_SRC
+*** Start dashboard from IDE
+Run ~dashboard.DelayedDashboard~ class
+*** Start train position viewer
+#+BEGIN_SRC shell
+nodejs
+npm start
+#+END_SRC
+*** Show delayed train positions moving around
+http://localhost:3000
