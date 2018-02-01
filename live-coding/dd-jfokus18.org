@@ -1,4 +1,4 @@
-* Home golders
+* Home folders
 ** Vert.x OpenShift example
 #+BEGIN_SRC shell
 ~/1/vert.x-openshift
@@ -7,38 +7,71 @@
 #+BEGIN_SRC shell
 ~/1/streaming-data-kubernetes
 #+END_SRC
+* First time
+** Adjust Docker settings
+- Disable "Start Docker when you log in"
+- Disable "Automatic check for updates"
+- Advanced / CPUs 6 / Memory 12.0 GB
+- Daemon / Insecure Registries / 172.30.0.0/16
 * Pre Talk
-
+** Start Gas Mask
+Load ~streaming-data-deep-dive~ file
+** Restart Docker
+To have a clean environment
 * Live coding
 ** Simple Vert.x App
-*** Start OpenShift cluster
-#+BEGIN_SRC shell
-oc cluster up
-#+END_SRC
 *** Add dependencies required by app
-Use live template
-*** Add Vert.x, Fabric8 and properties
-Use live template
-*** Example verticle
+Live template ~ddmd~
+*** Create simple Vert.x verticle
+Add parent verticle
+#+BEGIN_SRC java
+extends AbstractVerticle
+#+END_SRC
+Add partial start method
 #+BEGIN_SRC java
 @Override
 public void start(Future<Void> future) {
    Router router = Router.router(vertx);
    router.get("/").handler(rc -> {
-      rc.response().end("Hej världen!");
+      rc.response().end("Hello world!");
    });
 
    vertx.createHttpServer()
       .requestHandler(router::accept)
-      .rxListen(8080)
-      .subscribe(
-         server -> {
-            log.info("HTTP server started");
-            future.complete();
-         },
-         future::fail
+      .listen(8080,
+         ...
       );
 }
+#+END_SRC
+Live template ~ddrh~ handling the result
+*** Add main for running verticle
+Live template ~ddvm~
+*** Run Verticle from IDE and Verify verticle works
+#+BEGIN_SRC shell
+curl http://127.0.0.1:8080
+#+END_SRC
+*** Switch verticle to using RxJava2
+#+BEGIN_SRC java
+.rxListen(8080)
+.subscribe(
+   server -> {
+      log.info("HTTP server started");
+      future.complete();
+   },
+   future::fail
+);
+#+END_SRC
+*** Run Verticle from IDE and Verify verticle works
+#+BEGIN_SRC shell
+curl http://127.0.0.1:8080
+#+END_SRC
+*** Add Vert.x properties
+Live template ~ddvp~
+*** Add Maven plugins for OpenShift
+Live template ~ddmp~
+*** Start OpenShift cluster
+#+BEGIN_SRC shell
+oc cluster up
 #+END_SRC
 *** Deploy app
 #+BEGIN_SRC shell
@@ -47,7 +80,9 @@ mvn fabric8:deploy
 *** Check out and explain OpenShift UI
 https://127.0.0.1:8443
 *** Verify app
-Clicking on http://vertx-openshift-example-myproject.127.0.0.1.nip.io/
+#+BEGIN_SRC shell
+curl http://vertx-openshift-example-myproject.127.0.0.1.nip.io
+#+END_SRC
 ** Stream -> Vert.x -> System.out
 *** Implement /inject
 #+BEGIN_SRC java
