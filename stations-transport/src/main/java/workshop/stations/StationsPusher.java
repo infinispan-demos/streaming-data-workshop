@@ -43,7 +43,7 @@ public class StationsPusher extends AbstractVerticle {
 
   private static final Logger log = Logger.getLogger(StationsPusher.class.getName());
 
-  private KafkaReadStream<String, String> kafka;
+  // TODO live coding
 
   @Override
   public void start(io.vertx.core.Future<Void> future) {
