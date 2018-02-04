@@ -132,24 +132,6 @@ public class DelayedTrains extends AbstractVerticle {
     if (!entry.getValue().isEmpty())
       return entry.getValue();
 
-    String trainName = entry.getKey();
-    QueryFactory queryFactory = Search.getQueryFactory(positionsCache);
-
-    // TODO 3 - Create Infinispan Ickle to get train ids for all train positions with a given train name
-    Query query = queryFactory.create("select tp.trainId from workshop.model.TrainPosition tp where name = :trainName");
-    query.setParameter("trainName", trainName);
-
-    // TODO 4 - List the results of the query
-    List<Object[]> trains = query.list();
-
-    Iterator<Object[]> it = trains.iterator();
-    if (it.hasNext()) {
-      // Not accurate but simplest of methods
-      String trainId = (String) it.next()[0];
-      trainIds.put(trainName, trainId);
-      return trainId;
-    }
-
     return null;
   }
 
