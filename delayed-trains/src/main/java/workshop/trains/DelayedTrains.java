@@ -47,11 +47,7 @@ public class DelayedTrains extends AbstractVerticle {
 
     router.get(DELAYED_TRAINS_POSITIONS_URI).blockingHandler(this::positionsHandler);
 
-    SockJSHandler sockJSHandler = SockJSHandler.create(vertx);
-    BridgeOptions options = new BridgeOptions();
-    options.addOutboundPermitted(new PermittedOptions().setAddress(DELAYED_TRAINS_POSITIONS_ADDRESS));
-    sockJSHandler.bridge(options);
-    router.route("/eventbus/*").handler(sockJSHandler);
+    // TODO live coding
 
     router.get(LISTEN_URI).handler(this::listen);
 
@@ -86,12 +82,7 @@ public class DelayedTrains extends AbstractVerticle {
   }
 
   private void publishPositions() {
-    vertx
-      .rxExecuteBlocking(this::positions)
-      .subscribe(
-        positions ->
-          vertx.eventBus().publish(DELAYED_TRAINS_POSITIONS_ADDRESS, positions)
-      );
+    // TODO live coding
   }
 
   private void addDelayedTrainsListener(Future<Void> f) {

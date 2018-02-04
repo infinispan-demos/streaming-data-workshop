@@ -44,7 +44,6 @@ public class StationsPusher extends AbstractVerticle {
   private static final Logger log = Logger.getLogger(StationsPusher.class.getName());
 
   private KafkaReadStream<String, String> kafka;
-  private RemoteCache<String, Stop> stopCache;
 
   @Override
   public void start(io.vertx.core.Future<Void> future) {
@@ -72,29 +71,8 @@ public class StationsPusher extends AbstractVerticle {
   }
 
   private void push(RoutingContext ctx) {
-    vertx
-      .rxExecuteBlocking(StationsPusher::remoteCacheManager)
-      .flatMap(remote -> vertx.rxExecuteBlocking(remoteCache(remote)))
-      .subscribe(cache -> {
-        stopCache = cache;
-
-        FlowableHelper
-          .toFlowable(kafka)
-          .map(e -> CompletableInterop.fromFuture(cache.putAsync(e.key(), Stop.make(e.value()))))
-          .to(flowable -> Completable.merge(flowable, 100))
-          .subscribe(
-            () -> {},
-            failure -> log.log(Level.SEVERE, "Error while storing to data grid", failure)
-          );
-
-        kafka.subscribe(Collections.singleton(STATION_BOARDS_TOPIC), result -> {
-          if (result.succeeded()) {
-            ctx.response().end("Transporter started, subscribed to: " + STATION_BOARDS_TOPIC);
-          } else {
-            ctx.response().end("Could not connect to the topic");
-          }
-        });
-      });
+    // TODO live coding
+    ctx.response().end("TODO");
   }
 
   private Single<JsonObject> kafkaCfg() {
@@ -110,7 +88,6 @@ public class StationsPusher extends AbstractVerticle {
   @Override
   public void stop() {
     if (Objects.nonNull(kafka)) kafka.close();
-    if (Objects.nonNull(stopCache)) stopCache.getRemoteCacheManager().stop();
   }
 
   private static void remoteCacheManager(Future<RemoteCacheManager> f) {

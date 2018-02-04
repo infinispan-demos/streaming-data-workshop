@@ -36,26 +36,19 @@ public class StationsInjector extends AbstractVerticle {
 
   private static final Logger log = Logger.getLogger(StationsInjector.class.getName());
 
-  private KafkaWriteStream<String, String> kafka;
-
   @Override
   public void start(Future<Void> future) {
     Router router = Router.router(vertx);
     router.get(STATIONS_INJECTOR_URI).handler(this::inject);
 
-    kafkaCfg()
-      .flatMap(json ->
-        Single.just(KafkaWriteStream
-          .create(vertx.getDelegate(), json.getJsonObject("kafka").getMap(), String.class, String.class))
-      ).flatMap(stream ->
-        vertx.createHttpServer()
-          .requestHandler(router::accept)
-          .rxListen(8080)
-          .map(s -> stream)
-      ).subscribe(
-        stream -> {
-          kafka = stream;
-          log.info("HTTP server and Kafka writer stream started");
+    // TODO live coding
+    vertx
+      .createHttpServer()
+      .requestHandler(router::accept)
+      .rxListen(8080)
+      .subscribe(
+        server -> {
+          log.info("Station injector HTTP server started");
           future.complete();
         },
         future::fail
@@ -64,24 +57,13 @@ public class StationsInjector extends AbstractVerticle {
 
   @Override
   public void stop() {
-    if (Objects.nonNull(kafka)) kafka.close();
+    // TODO live coding
   }
 
   // TODO: Duplicate
   private void inject(RoutingContext ctx) {
-    Flowable<String> fileFlowable = rxReadGunzippedTextResource("cff-stop-2016-02-29__.jsonl.gz");
-    fileFlowable
-      .map(StationsInjector::toEntry)
-      .flatMapCompletable(this::dispatch)
-      .subscribeOn(Schedulers.io())
-      .doOnError(StationsInjector::injectFailure)
-      .subscribe();
-
-    ctx.response().end("Injector started");
-  }
-
-  private static void injectFailure(Throwable t) {
-    log.log(SEVERE, "Error while loading", t);
+    // TODO live coding
+    ctx.response().end("TODO");
   }
 
   // TODO: Duplicate
@@ -132,19 +114,11 @@ public class StationsInjector extends AbstractVerticle {
   }
 
   private Completable dispatch(Map.Entry<String, String> entry) {
-    ProducerRecord<String, String> record
-      = new ProducerRecord<>(STATION_BOARDS_TOPIC, entry.getKey(), entry.getValue());
+    // TODO live coding
 
     return new AsyncResultCompletable(h -> {
-      //log.info("Entry read " + entry.getValue());
-      kafka.write(record, res -> {
-        if (res.succeeded()) {
-          //log.info("Entry written " + entry.getKey());
-          h.handle(Future.succeededFuture());
-        }
-        else
-          h.handle(Future.failedFuture(res.cause()));
-      });
+      log.info("Entry read " + entry.getKey());
+      // TODO live coding
     });
   }
 
