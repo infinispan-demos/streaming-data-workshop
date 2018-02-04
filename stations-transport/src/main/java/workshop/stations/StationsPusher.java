@@ -87,7 +87,7 @@ public class StationsPusher extends AbstractVerticle {
 
   @Override
   public void stop() {
-    if (Objects.nonNull(kafka)) kafka.close();
+    // TODO live coding
   }
 
   private static void remoteCacheManager(Future<RemoteCacheManager> f) {
