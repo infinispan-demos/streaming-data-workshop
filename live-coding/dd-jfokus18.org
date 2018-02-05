@@ -5,7 +5,7 @@
 #+END_SRC
 ** Live coding
 #+BEGIN_SRC shell
-~/1/streaming-data-kubernetes
+~/1/streaming-data-workshop
 #+END_SRC
 * First time
 ** Adjust Docker settings
@@ -33,7 +33,7 @@ Add partial start method
 public void start(Future<Void> future) {
    Router router = Router.router(vertx);
    router.get("/").handler(rc -> {
-      rc.response().end("Hello world!");
+      rc.response().end(Thread.currentThread().getName() + "Hello world!");
    });
 
    vertx.createHttpServer()
@@ -56,9 +56,9 @@ curl http://127.0.0.1:8080
 .subscribe(
    server -> {
       log.info("HTTP server started");
-      future.complete();
+      startFuture.complete();
    },
-   future::fail
+   startFuture::fail
 );
 #+END_SRC
 *** Run Verticle from IDE and Verify verticle works
@@ -71,6 +71,7 @@ Live template ~ddvp~
 Live template ~ddmp~
 *** Start OpenShift cluster
 #+BEGIN_SRC shell
+oc36
 oc cluster up
 #+END_SRC
 *** Deploy app
@@ -99,19 +100,19 @@ private void inject(RoutingContext ctx) {
 }
 #+END_SRC
 *** Add inject failure
-Live template ~ddij~
+Live template ~ddif~
 *** Deploy stations injector
 #+BEGIN_SRC shell
 cd stations-injector
 mvn fabric8:deploy
 #+END_SRC
+*** Show logs for injector
+#+BEGIN_SRC shell
+kubetail -l app=stations-injector
+#+END_SRC
 *** Kick off injector
 #+BEGIN_SRC shell
 curl http://stations-injector-myproject.127.0.0.1.nip.io/inject
-#+END_SRC
-*** Show data being consumed and printed
-#+BEGIN_SRC shell
-kubetail -l app=stations-injector
 #+END_SRC
 ** Stream -> Vert.x -> Kafka
 *** Stations Injector
@@ -124,9 +125,7 @@ Use ~ddkwc~ for expanding write stream create code
 #+BEGIN_SRC java
 kafkaCfg()
   .flatMap(json ->
-    Single.just(KafkaWriteStream
-      .create(vertx.getDelegate(), json.getJsonObject("kafka").getMap(),
-        String.class, String.class))
+    // ddkwc
   ).flatMap(stream ->
     vertx.createHttpServer()
       .requestHandler(router::accept)
@@ -141,19 +140,36 @@ kafkaCfg()
     future::fail
   );
 #+END_SRC
-**** Close stream
-Use ~ddkc~ live template in stop() method
-*** Stations Pusher
-**** Add Kafka read stream
-#+BEGIN_SRC java
-private KafkaWriteStream<String, String> kafka;
-#+END_SRC
-**** Close kafka stream
+**** Close kafka write stream
 Use ~ddkc~ live template in stop() method
 **** Create producer record in dispatcher
 Use ~ddpr~ live template in dispatch() method
 **** Implement writing to Kafka
 Use ~ddkw~ live template in dispatch() method
+*** Start kafka
+#+BEGIN_SRC shell
+./start-kafka.sh
+#+END_SRC
+*** Deploy injector changes
+#+BEGIN_SRC shell
+cd stations-injector
+mvn fabric8:deploy
+#+END_SRC
+*** Show logs of injector
+#+BEGIN_SRC shell
+kubetail -l app=stations-injector
+#+END_SRC
+*** Start injector
+#+BEGIN_SRC shell
+curl http://stations-injector-myproject.127.0.0.1.nip.io/inject
+#+END_SRC
+*** Stations Pusher
+**** Add Kafka read stream
+#+BEGIN_SRC java
+private KafkaReadStream<String, String> kafka;
+#+END_SRC
+**** Close kafka read stream
+Use ~ddkc~ live template in stop() method
 **** Convert kafka to Flowable and print read elements
 #+BEGIN_SRC java
 FlowableHelper
@@ -162,25 +178,20 @@ FlowableHelper
 #+END_SRC
 **** Subscribe reader to Kafka topic
 Use ~ddks~ live template in push() method
-*** Start kafka
+*** Deploy transport changes
 #+BEGIN_SRC shell
-./start-kafka.sh
-#+END_SRC
-*** Deploy injector and transport changes
-#+BEGIN_SRC shell
-cd stations-injector
-mvn fabric8:deploy
-cd ..
 cd stations-transport
 mvn fabric8:deploy
+#+END_SRC
+*** Show logs for transport and injector
+#+BEGIN_SRC shell
+kubetail -l group=workshop
 #+END_SRC
 *** Start transport and injector
 #+BEGIN_SRC shell
 curl http://stations-transport-myproject.127.0.0.1.nip.io/push
 curl http://stations-injector-myproject.127.0.0.1.nip.io/inject
 #+END_SRC
-*** Show logs
-Using ~kubetail~ or OpenShift pod consoles
 ** Kafka -> Infinispan
 *** Add RemoteCache instance variable
 #+BEGIN_SRC java
@@ -228,13 +239,14 @@ NUMBER_OF_INSTANCES: 3
 *** Deploy remaining components of deep dive
 - This includes a main entry point that creates the station board cache
 - It also includes a data grid visualizer
-- TODO: Think about something to talk about while this is running
 #+BEGIN_SRC shell
 ./deploy-all.sh
 #+END_SRC
 *** Show data grid visualizer
 URL: http://datagrid-visualizer-myproject.127.0.0.1.nip.io/infinispan-visualizer/
+
 Select ~station-boards~ caches
+
 Not much appearing for now
 *** Start main injector
 #+BEGIN_SRC shell
@@ -257,7 +269,7 @@ private void addContinuousQuery(RemoteCache<String, Stop> stations) {
       public void resultJoining(String id, Stop stop) {
         JsonObject stopAsJson = toJson(stop);
         vertx.eventBus().publish("delayed-trains", stopAsJson);
-        // lcpd
+        // ddpd
       }
     };
 
@@ -308,6 +320,11 @@ List<Object[]> trains = query.list();
 #+END_SRC
 *** Get first train ID returned (not the most accurate)
 Live template ~ddti~
+*** Redeploy delayed trains component changes
+#+BEGIN_SRC shell
+cd delayed-trains
+mvn fabric8:deploy
+#+END_SRC
 *** Restart the injector
 #+BEGIN_SRC shell
 curl http://workshop-main-myproject.127.0.0.1.nip.io/inject
@@ -316,6 +333,7 @@ curl http://workshop-main-myproject.127.0.0.1.nip.io/inject
 Run ~dashboard.DelayedDashboard~ class
 *** Start train position viewer
 #+BEGIN_SRC shell
+cd web-viewer
 nodejs
 npm start
 #+END_SRC
