@@ -3,5 +3,5 @@
 set -e -x
 
 ./start-openshift.sh
-./start-datagrid.sh
+setup-datagrid.sh
 ./deploy-solution.sh
