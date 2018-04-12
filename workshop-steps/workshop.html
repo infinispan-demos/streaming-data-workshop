@@ -626,10 +626,15 @@ Using project "myproject".</code></pre>
       </li>
       <li>Redeploy after making the code changes:
         <br/><br/>
-        <pre><code>> cd stations-injector
-> mvn fabric8:deploy</code></pre>
+        <pre><code>> cd delayed-listener
+> ./deploy.sh</code></pre>
       </li>
-      <li>Go to <kbd>delayed-dashboard</kbd> module and launch <code>dashboard.DelayedDashboard</code> class from your IDE.</li>
+      <li>Go to <kbd>delayed-dashboard</kbd> module and locate <code>dashboard.DelayedDashboard</code>.
+        <br/><br/>
+        Launch this class passing in <code>-Dhttp.host=</code> pointing to the route for the <kbd>delayed-listener</kbd> endpoint:
+        <br/><br/>
+        <pre><code class="java">-Dhttp.host=delayed-listener-myproject.apps.${OPENSHIFT_NAME}.${OPENSHIFT_MASTER_IP}.nip.io</code></pre>
+      </li>
       <li>Monitor the delayed trains!
         <br/><br/>
         <img src="img/delayed-trains-dashboard.png" class="img-rounded" height="50%" width="50%">
