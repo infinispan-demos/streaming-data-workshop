@@ -56,7 +56,7 @@
     <li>
       <a hre="https://github.com/openshift/origin/releases/tag/v3.7.1">OpenShift client tools 3.7.1</a>.
       Once you've installed it, try logging into the OpenShift instance in the cloud:
-      <br/><br/><pre><code>> export OPENSHIFT_NAME=devoxxfr-workshop
+      <br/><br/><pre><code>> export OPENSHIFT_NAME=...
 > export OPENSHIFT_MASTER_IP=...
 > oc login -u developer -p developer https://console.${OPENSHIFT_NAME}.${OPENSHIFT_MASTER_IP}.nip.io:8443
 
@@ -299,8 +299,8 @@ Using project "myproject".</code></pre>
       <li>Check the <strong>Infinispan Visualizer</strong> in:
         <br/><br/>
         <code>
-          <a href="http://datagrid-visualizer-myproject.apps.devoxxfr-workshop.{OPENSHIFT_MASTER_IP}.nip.io/infinispan-visualizer/">
-            http://datagrid-visualizer-myproject.apps.devoxxfr-workshop.{OPENSHIFT_MASTER_IP}.nip.io/infinispan-visualizer/
+          <a href="http://datagrid-visualizer-myproject.apps.${OPENSHIFT_NAME}.{OPENSHIFT_MASTER_IP}.nip.io/infinispan-visualizer/">
+            http://datagrid-visualizer-myproject.apps.${OPENSHIFT_NAME}.{OPENSHIFT_MASTER_IP}.nip.io/infinispan-visualizer/
           </a>
         </code>
         <br/><br/>
@@ -470,13 +470,13 @@ Using project "myproject".</code></pre>
       <li>Redeploy after making the code changes:
         <br/><br/>
         <pre><code>> cd stations-injector
-> mvn fabric8:deploy</code></pre>
+> ./deploy.sh</code></pre>
       </li>
-      <li>Force the injection to by visiting <a href="http://workshop-main-myproject.127.0.0.1.nip.io/inject">this URL</a> or executing:
+      <li>Force the injection to by visiting the URL below or executing:
         <br/><br/>
-        <pre><code>> curl http://workshop-main-myproject.127.0.0.1.nip.io/inject</code></pre>
+        <pre><code>> curl http://workshop-main-myproject.apps.${OPENSHIFT_NAME}.{OPENSHIFT_MASTER_IP}.nip.io/inject</code></pre>
       </li>
-      <li>Go to the <a href="http://datagrid-visualizer-myproject.127.0.0.1.nip.io/infinispan-visualizer/" target="_target"> visualizer</a> and see data being loaded.
+      <li>Go to the visualizer and see data being loaded.
         <br/><br/>
         <div class="alert alert-warning">
           If you don't see data being loaded, make sure <code>station-boards</code> cache selected in the drop down of the visualizer.
