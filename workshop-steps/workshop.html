@@ -727,9 +727,18 @@ Using project "myproject".</code></pre>
 
   <section id="inmemory">
     <ol>
+      <li>
+        Open <code>web-viewer/config/default.json</code> and change eventbus hostname to match the one on OpenShift.
+        <br/><br/>
+        <pre><code>"eventbus": "http://delayed-trains-myproject.apps.${OPENSHIFT_NAME}.${OPENSHIFT_MASTER_IP}.nip.io/eventbus"</code></pre>
+        <div class="alert alert-warning">
+          Remember to replace <code>${OPENSHIFT_NAME}</code> and <code>${OPENSHIFT_MASTER_IP}</code> with the correct values!
+        </div>
+      </li>
       <li>Start train positions visualizer:
+        <br/><br/>
         <pre><code>> cd web-viewer
-> ./start</code></pre>
+> ./start.sh</code></pre>
       </li>
       <li>Open <kbd>workshop.trains.DelayedTrains</kbd> class in the <kbd>delayed-trains</kbd> module</li>
       <li>Implement the TODOs found in the code:
@@ -842,7 +851,7 @@ query.setParameter("trainName", trainName);</code></pre>
       <li>Redeploy after making the code changes:
         <br/><br/>
         <pre><code>> cd delayed-trains
-> mvn fabric8:deploy</code></pre>
+> ./deploy.sh</code></pre>
       </li>
       <li>Go to <kbd>delayed-dashboard</kbd> module and re-launch <code>dashboard.DelayedDashboard</code> class from your IDE.
         This will restart train data injectors.
