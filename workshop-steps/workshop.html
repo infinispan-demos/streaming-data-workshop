@@ -53,8 +53,26 @@
   To do this workshop, it's necessary to have some components installed in the local machine:
 
   <ul>
+    <li>Use test credentials handed out and log into
+      <a href="https://console.cloud.google.com">Google Cloud Console</a>.
+
+      Go to
+      <code>Compute Engine/VM instances</code>
+      to find out OpenShift cluster name and external IP address.
+
+      <br/><br/>
+      <div class="alert alert-info" role="alert">
+        The OpenShift cluster name is the name of the node without the
+        <code>-master</code>.
+        <br/><br/>
+        e.g. for
+        <code>devoxxfr-workshop-master</code>
+        VM instance name, the name of the OpenShift cluster is
+        <code>devoxxfr-workshop</code>
+      </div>
+
+    </li>
     <li>
-      <a hre="https://github.com/openshift/origin/releases/tag/v3.7.1">OpenShift client tools 3.7.1</a>.
       <a hre="https://github.com/openshift/origin/releases/tag/v3.7.2">OpenShift client tools 3.7.2</a>.
       Once you've installed it, try logging into the OpenShift instance in the cloud:
       <br/><br/><pre><code>> export OPENSHIFT_NAME=...
