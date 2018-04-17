@@ -1,14 +1,13 @@
 package workshop.delayed;
 
 import io.reactivex.Single;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.bridge.BridgeEventType;
 import io.vertx.ext.bridge.PermittedOptions;
 import io.vertx.ext.web.handler.sockjs.BridgeOptions;
-import io.vertx.reactivex.SingleHelper;
 import io.vertx.reactivex.core.AbstractVerticle;
+import io.vertx.reactivex.core.Future;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.client.HttpResponse;
@@ -40,36 +39,61 @@ public class DelayedListener extends AbstractVerticle {
 
   private static final Logger log = Logger.getLogger(DelayedListener.class.getName());
 
-  private RemoteCacheManager client;
+  private RemoteCacheManager remote;
+  private RemoteCache<String, Stop> stationBoardsCache;
+  private ContinuousQuery<String, Stop> continuousQuery;
 
   @Override
-  public void start(Future<Void> future) throws Exception {
+  public void start(io.vertx.core.Future<Void> future) {
     log.info("Starting delay listener verticle");
 
     Router router = Router.router(vertx);
     router.route("/eventbus/*").handler(this.sockJSHandler());
 
     vertx
-      .<RemoteCacheManager>rxExecuteBlocking(fut -> fut.complete(createClient()))
-      .doOnSuccess(remoteClient -> client = remoteClient)
-      .flatMap(v -> {
-        log.info("Starting delay listener HTTP server");
-        return vertx.createHttpServer()
+      .rxExecuteBlocking(this::remoteCacheManager)
+      .flatMap(x ->
+        vertx
+          .createHttpServer()
           .requestHandler(router::accept)
-          .rxListen(8080);
-
-      })
-      .doOnSuccess(v -> log.info("Listener HTTP server started"))
-      .subscribe(res -> future.complete(), future::fail);
+          .rxListen(8080)
+      )
+      .subscribe(
+        server -> {
+          log.info("Http server started and connected to datagrid");
+          future.complete();
+        }
+        , future::fail
+      );
   }
 
   private void listen() {
-    httpGet(WORKSHOP_MAIN_HOST, WORKSHOP_MAIN_URI)
-      .flatMap(rsp -> {
-        return vertx.<RemoteCache<String, Stop>>rxExecuteBlocking(fut -> {
-          fut.complete(client.getCache(STATION_BOARDS_CACHE_NAME));
-        });
-      }).subscribe(this::addContinuousQuery, t -> log.log(Level.SEVERE, "Error starting listener", t));
+    vertx
+      .rxExecuteBlocking(stationBoardsCache())
+      .flatMap(x -> vertx.rxExecuteBlocking(this::removeContinuousQueryListeners))
+      .flatMap(x -> httpGet(WORKSHOP_MAIN_HOST, WORKSHOP_MAIN_URI))
+      .flatMap(x -> vertx.rxExecuteBlocking(this::addContinuousQuery))
+      .subscribe(
+        x -> {}
+        , t -> log.log(Level.SEVERE, "Error starting listener", t)
+      );
+  }
+
+  private void removeContinuousQueryListeners(Future<Void> f) {
+    continuousQuery.removeAllListeners();
+    f.complete();
+  }
+
+  private Handler<Future<Void>> stationBoardsCache() {
+    return f -> {
+      log.info("Get station boards cache and continuous query");
+      if (Objects.isNull(stationBoardsCache) && Objects.isNull(continuousQuery)) {
+        this.stationBoardsCache = remote.getCache(STATION_BOARDS_CACHE_NAME);
+        this.continuousQuery = Search.getContinuousQuery(this.stationBoardsCache);
+      }
+
+      f.complete();
+    };
   }
 
   private Single<HttpResponse<String>> httpGet(String host, String uri) {
@@ -81,8 +105,9 @@ public class DelayedListener extends AbstractVerticle {
       .rxSend();
   }
 
-  private void addContinuousQuery(RemoteCache<String, Stop> stations) {
-    QueryFactory queryFactory = Search.getQueryFactory(stations);
+  private void addContinuousQuery(Future<Void> f) {
+    log.info("Add continuous query");
+    QueryFactory queryFactory = Search.getQueryFactory(stationBoardsCache);
 
     Query query = queryFactory.from(Stop.class)
       .having("delayMin").gt(0L)
@@ -92,26 +117,27 @@ public class DelayedListener extends AbstractVerticle {
       new ContinuousQueryListener<String, Stop>() {
         @Override
         public void resultJoining(String id, Stop stop) {
+          log.info(String.format("[%d] Stop id=%s joining result%n", this.hashCode(), id));
           JsonObject stopAsJson = toJson(stop);
           vertx.eventBus().publish("delayed-trains", stopAsJson);
-          RemoteCache<String, String> delayed = client.getCache(DELAYED_TRAINS_CACHE_NAME);
+          RemoteCache<String, String> delayed = remote.getCache(DELAYED_TRAINS_CACHE_NAME);
           delayed.putAsync(stop.train.getName(), stop.train.getName());
         }
       };
 
-    ContinuousQuery<String, Stop> continuousQuery = Search.getContinuousQuery(stations);
-    continuousQuery.removeAllListeners();
     continuousQuery.addContinuousQueryListener(query, listener);
+    log.info("Continuous query added");
+    f.complete();
   }
 
   @Override
-  public void stop(Future<Void> stopFuture) throws Exception {
-    vertx.<Void>rxExecuteBlocking(fut -> {
-      if (Objects.nonNull(client)) {
-        client.stop();
-      }
-      fut.complete();
-    }).subscribe(SingleHelper.toObserver(stopFuture));
+  public void stop(io.vertx.core.Future<Void> future) {
+    if (Objects.nonNull(remote)) {
+      remote.stopAsync()
+        .thenRun(future::complete);
+    } else {
+      future.complete();
+    }
   }
 
   private static JsonObject toJson(Stop stop) {
@@ -139,25 +165,30 @@ public class DelayedListener extends AbstractVerticle {
     return sockJSHandler;
   }
 
-  private static RemoteCacheManager createClient() {
+  private void remoteCacheManager(Future<Void> f) {
     try {
-      RemoteCacheManager client = new RemoteCacheManager(
+      remote = new RemoteCacheManager(
         new ConfigurationBuilder().addServer()
           .host(DATAGRID_HOST)
           .port(DATAGRID_PORT)
           .marshaller(ProtoStreamMarshaller.class)
           .build());
 
-      SerializationContext ctx = ProtoStreamMarshaller.getSerializationContext(client);
+      SerializationContext ctx =
+        ProtoStreamMarshaller.getSerializationContext(remote);
 
-      ctx.registerProtoFiles(FileDescriptorSource.fromResources("station-board.proto"));
+      ctx.registerProtoFiles(
+        FileDescriptorSource.fromResources("station-board.proto")
+      );
+
       ctx.registerMarshaller(new Stop.Marshaller());
       ctx.registerMarshaller(new Station.Marshaller());
       ctx.registerMarshaller(new Train.Marshaller());
-      return client;
+
+      f.complete();
     } catch (Exception e) {
       log.log(Level.SEVERE, "Error creating client", e);
-      throw new RuntimeException(e);
+      f.fail(e);
     }
   }
 
