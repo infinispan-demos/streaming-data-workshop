@@ -50,34 +50,45 @@
 
 <div class="container">
   <h1>Installation Steps</h1>
-  To do this workshop, it's necessary to have some components installed in the local machine:
+  To do this workshop, follow these installation steps:
 
   <ul>
     <li>Use test credentials handed out and log into
       <a href="https://console.cloud.google.com">Google Cloud Console</a>.
 
+      Open the Google Cloud Shell and type:
+      <br/><br/>
+<pre><code>> git clone https://github.com/infinispan-demos/streaming-data-workshop
+> cd streaming-data-workshop/openshifter/test-account
+> ./provision-openshift.sh</code></pre>
+
+      <div class="alert alert-warning">
+        If at some point OpenShift connection times out, log into the Google Cloud Shell and do:
+        <br/><br/>
+        <pre><code>> cd streaming-data-workshop/openshifter/test-account
+> docker run -e -ti -v `pwd`:/root/data docker.io/osevg/openshifter create streaming-data-workshop</code></pre>
+        Doing this will re-provision the OpenShift cluster and should get back online.
+      </div>
+
       Go to
       <code>Compute Engine/VM instances</code>
-      to find out OpenShift cluster name and external IP address.
-
+      to find out the OpenShift master IP address.
+      The OpenShift console is located in:
       <br/><br/>
+      <code>https://console.streaming-data-workshop.${OPENSHIFT_MASTER_IP}.nip.io:8443/console</code>
+      <br/><br/>
+
       <div class="alert alert-info" role="alert">
-        The OpenShift cluster name is the name of the node without the
-        <code>-master</code>.
-        <br/><br/>
-        e.g. for
-        <code>devoxxfr-workshop-master</code>
-        VM instance name, the name of the OpenShift cluster is
-        <code>devoxxfr-workshop</code>
+        Default credentials in OpenShift are <kbd>developer/developer</kbd>
       </div>
 
     </li>
-    <li>
-      <a hre="https://github.com/openshift/origin/releases/tag/v3.7.2">OpenShift client tools 3.7.2</a>.
+    <li>Install
+      <a hre="https://github.com/openshift/origin/releases/tag/v3.7.2">OpenShift client tools 3.7.2</a>
+      in your local machine.
       Once you've installed it, try logging into the OpenShift instance in the cloud:
-      <br/><br/><pre><code>> export OPENSHIFT_NAME=...
-> export OPENSHIFT_MASTER_IP=...
-> oc login -u developer -p developer https://console.${OPENSHIFT_NAME}.${OPENSHIFT_MASTER_IP}.nip.io:8443
+      <br/><br/><pre><code>> export OPENSHIFT_MASTER_IP=...
+> oc login -u developer -p developer https://console.streaming-data-workshop.${OPENSHIFT_MASTER_IP}.nip.io:8443
 
 Login successful.
 
@@ -85,12 +96,12 @@ You have one project on this server: "myproject"
 
 Using project "myproject".</code></pre>
     </li>
-    <li><a href="https://github.com/creationix/nvm">Node.js Version Manager</a>.
+    <li>Install <a href="https://github.com/creationix/nvm">Node.js Version Manager</a> in your local machine.
       Makes it easy to work with multiple Node.js versions.
       Then install the Node.js version to be used in the workshop:
       <br/><br/><pre><code>> nvm install 4.2</code></pre>
     </li>
-    <li>Apache Maven</li>
+    <li>Install Apache Maven in your local machine.</li>
   </ul>
 
 
@@ -218,8 +229,8 @@ Using project "myproject".</code></pre>
     <ol>
       <li>Set up OpenShift cluster with the script provided:</li>
       <pre><code>> cd streaming-data-workshop
-> ./setup-gcp-openshift.sh ${OPENSHIFT_NAME} ${OPENSHIFT_MASTER_IP}</code></pre>
-      <li>Log in into <a href="https://127.0.0.1:8443" target="_blank">Openshift console</a> with <code>developer/developer</code>
+> ./setup-gcp-openshift.sh streaming-data-workshop ${OPENSHIFT_MASTER_IP}</code></pre>
+      <li>Log in into Openshift console with <code>developer/developer</code>
         <br/><br/>
         <div class="alert alert-warning">
           The rest of this section shows how to create an Infinispan cluster using the OpenShift user interface and explores some of its functionality.
