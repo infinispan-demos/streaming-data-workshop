@@ -37,7 +37,7 @@ nodes:
     docker: 100 # The docker storage disk in GB
 
 gce:
-  account: service-account-key.json
+  account: openshifter.json
   # See a list of regions & zones: https://cloud.google.com/compute/docs/regions-zones/regions-zones
   region: europe-west1
   zone: europe-west1-b
