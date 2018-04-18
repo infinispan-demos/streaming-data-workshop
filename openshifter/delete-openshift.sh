@@ -1,6 +1,8 @@
 #!/bin/bash
 
-NAME=${1}
+set -e -x
+
+NAME=streaming-data-workshop
 
 gcloud compute disks delete $NAME-master-docker --quiet
 gcloud compute disks delete $NAME-master-root --quiet

@@ -59,15 +59,24 @@
       Open the Google Cloud Shell and type:
       <br/><br/>
 <pre><code>> git clone https://github.com/infinispan-demos/streaming-data-workshop
-> cd streaming-data-workshop/openshifter/test-account
+> cd streaming-data-workshop/openshifter
 > ./provision-openshift.sh</code></pre>
 
       <div class="alert alert-warning">
-        If at some point OpenShift connection times out, log into the Google Cloud Shell and do:
+        If at some point OpenShift connection times out or if provisioning fails with error while running docker
+        , log into the Google Cloud Shell and do:
         <br/><br/>
-        <pre><code>> cd streaming-data-workshop/openshifter/test-account
+        <pre><code>> cd streaming-data-workshop/openshifter
 > docker run -e -ti -v `pwd`:/root/data docker.io/osevg/openshifter create streaming-data-workshop</code></pre>
-        Doing this will re-provision the OpenShift cluster and should get back online.
+        Doing this will re-provision the OpenShift cluster and it should get back online.
+      </div>
+
+      <div class="alert alert-info" role="alert">
+        If running OpenShift on your account and you want to delete OpenShift, open Google Cloud Shell and execute:
+        <br/><br/>
+        <pre><code>> cd streaming-data-workshop/openshifter
+> docker run -e -ti -v `pwd`:/root/data docker.io/osevg/openshifter destroy streaming-data-workshop</code></pre>
+        If any timeouts happen while destroying OpenShift, call <code>delete-openshift.sh</code> script from same folder.
       </div>
 
       Go to
