@@ -1,4 +1,4 @@
-name: devoxxfr-workshop
+name: streaming-data-hol
 provider: gce
 type: origin
 release: v3.7.2
