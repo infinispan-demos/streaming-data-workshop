@@ -1,4 +1,4 @@
-name: streaming-data-hol
+name: streaming-data-workshop
 provider: gce
 type: origin
 release: v3.7.2
