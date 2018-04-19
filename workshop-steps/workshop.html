@@ -52,11 +52,13 @@
   <h1>Installation Steps</h1>
   To do this workshop, follow these installation steps:
 
+  <h2>Install OpenShift Cluster on Google Cloud Platform</h2>
   <ul>
+    <li>Use Chome or Firefox, open an Incognito/Guest window in your browser</li>
     <li>Use test credentials handed out and log into
-      <a href="https://console.cloud.google.com">Google Cloud Console</a>.
-
-      Open the Google Cloud Shell and type:
+      <a href="https://console.cloud.google.com">Google Cloud Console</a>.</li>
+    <li>Select the pre-created projects from the Projects list.</li>
+    <li>Open the Google Cloud Shell, we'll setup the OpenShift Cluster from within the Cloud Shell:
       <br/><br/>
 <pre><code>> git clone https://github.com/infinispan-demos/streaming-data-workshop
 > cd streaming-data-workshop/openshifter
@@ -79,9 +81,14 @@
         If any timeouts happen while destroying OpenShift, call <code>delete-openshift.sh</code> script from same folder.
       </div>
 
-      Go to
-      <code>Compute Engine/VM instances</code>
-      to find out the OpenShift master IP address.
+      In Cloud Shell, find out the OpenShift Compute Engine VM External IP address:
+      <pre>
+$ gcloud compute instances list
+NAME                            ZONE       MACHINE_TYPE   PREEMPTIBLE  INTERNAL_IP  EXTERNAL_IP     STATUS
+streaming-data-workshop-master  ...        ...                         X.X.X.X      Y.Y.Y.Y         RUNNING
+                                                                                    ^-- This is your OpenShift Master IP!
+      </pre>
+
       The OpenShift console is located in:
       <br/><br/>
       <code>https://console.streaming-data-workshop.${OPENSHIFT_MASTER_IP}.nip.io:8443/console</code>
@@ -92,14 +99,10 @@
       </div>
 
     </li>
-    <li>
-      Clone or download the workshop repository to your machine:
-
-      <br/><br/>
-      <code>https://github.com/infinispan-demos/streaming-data-workshop</code>
-      <br/><br/>
-    </li>
-    <li>Install
+  </ul>
+  <h2>Connect to OpenShift Cluster from Your Machine</h2>
+  <ul>
+   <li>Install
       <a href="https://github.com/openshift/origin/releases/tag/v3.7.2">OpenShift client tools 3.7.2</a>
       in your local machine.
       Once you've installed it, try logging into the OpenShift instance in the cloud:
@@ -112,6 +115,17 @@ You have one project on this server: "myproject"
 
 Using project "myproject".</code></pre>
     </li>
+  </ul>
+  <h2>Setup Your Local Machine</h2>
+  <ul>
+    <li>
+      Clone or download the workshop repository to your machine:
+
+      <br/><br/>
+      <code>https://github.com/infinispan-demos/streaming-data-workshop</code>
+      <br/><br/>
+    </li>
+ 
     <li>Install <a href="https://github.com/creationix/nvm">Node.js Version Manager</a> in your local machine.
       Makes it easy to work with multiple Node.js versions.
       Then install the Node.js version to be used in the workshop:
@@ -119,9 +133,6 @@ Using project "myproject".</code></pre>
     </li>
     <li>Install Apache Maven in your local machine.</li>
   </ul>
-
-
-
 </div>
 
 
