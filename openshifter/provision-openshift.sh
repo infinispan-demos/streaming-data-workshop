@@ -2,9 +2,6 @@
 
 set -e -x
 
-git clone https://github.com/infinispan-demos/streaming-data-workshop
-cd streaming-data-workshop/openshifter/test-account
-
 gcloud compute project-info add-metadata \
   --metadata google-compute-default-region=europe-west1,google-compute-default-zone=europe-west1-b
 
