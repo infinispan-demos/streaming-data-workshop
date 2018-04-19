@@ -92,6 +92,13 @@
       </div>
 
     </li>
+    <li>
+      Clone or download the workshop repository to your machine:
+
+      <br/><br/>
+      <code>https://github.com/infinispan-demos/streaming-data-workshop</code>
+      <br/><br/>
+    </li>
     <li>Install
       <a hre="https://github.com/openshift/origin/releases/tag/v3.7.2">OpenShift client tools 3.7.2</a>
       in your local machine.
@@ -339,8 +346,8 @@ Using project "myproject".</code></pre>
       <li>Check the <strong>Infinispan Visualizer</strong> in:
         <br/><br/>
         <code>
-          <a href="http://datagrid-visualizer-myproject.apps.${OPENSHIFT_NAME}.{OPENSHIFT_MASTER_IP}.nip.io/infinispan-visualizer/">
-            http://datagrid-visualizer-myproject.apps.${OPENSHIFT_NAME}.{OPENSHIFT_MASTER_IP}.nip.io/infinispan-visualizer/
+          <a href="http://datagrid-visualizer-myproject.apps.streaming-data-workshop.{OPENSHIFT_MASTER_IP}.nip.io/infinispan-visualizer/">
+            http://datagrid-visualizer-myproject.apps.streaming-data-workshop.{OPENSHIFT_MASTER_IP}.nip.io/infinispan-visualizer
           </a>
         </code>
         <br/><br/>
@@ -485,7 +492,7 @@ Using project "myproject".</code></pre>
       </li>
       <li>Force the injection to by visiting the URL below or executing:
         <br/><br/>
-        <pre><code>> curl http://workshop-main-myproject.apps.${OPENSHIFT_NAME}.{OPENSHIFT_MASTER_IP}.nip.io/inject</code></pre>
+        <pre><code>> curl http://workshop-main-myproject.apps.streaming-data-workshop.{OPENSHIFT_MASTER_IP}.nip.io/inject</code></pre>
       </li>
       <li>Go to the visualizer and see data being loaded.
         <br/><br/>
@@ -621,7 +628,7 @@ Using project "myproject".</code></pre>
         <br/><br/>
         Launch this class passing in <code>-Dhttp.host=</code> pointing to the route for the <kbd>delayed-listener</kbd> endpoint:
         <br/><br/>
-        <pre><code class="java">-Dhttp.host=delayed-listener-myproject.apps.${OPENSHIFT_NAME}.${OPENSHIFT_MASTER_IP}.nip.io</code></pre>
+        <pre><code class="java">-Dhttp.host=delayed-listener-myproject.apps.streaming-data-workshop.${OPENSHIFT_MASTER_IP}.nip.io</code></pre>
       </li>
       <li>Monitor the delayed trains!
         <br/><br/>
@@ -718,9 +725,9 @@ Using project "myproject".</code></pre>
       <li>
         Open <code>web-viewer/config/default.json</code> and change eventbus hostname to match the one on OpenShift.
         <br/><br/>
-        <pre><code>"eventbus": "http://delayed-trains-myproject.apps.${OPENSHIFT_NAME}.${OPENSHIFT_MASTER_IP}.nip.io/eventbus"</code></pre>
+        <pre><code>"eventbus": "http://delayed-trains-myproject.apps.streaming-data-workshop.${OPENSHIFT_MASTER_IP}.nip.io/eventbus"</code></pre>
         <div class="alert alert-warning">
-          Remember to replace <code>${OPENSHIFT_NAME}</code> and <code>${OPENSHIFT_MASTER_IP}</code> with the correct values!
+          Remember to replace <code>${OPENSHIFT_MASTER_IP}</code> with the correct value!
         </div>
       </li>
       <li>Start train positions visualizer:
