@@ -78,12 +78,12 @@
         <br/><br/>
         <pre><code>> cd streaming-data-workshop/openshifter
 > docker run -e -ti -v `pwd`:/root/data docker.io/osevg/openshifter destroy streaming-data-workshop</code></pre>
-        If any timeouts happen while destroying OpenShift, call <code>delete-openshift.sh</code> script from same folder.
+        If any timeouts happen while destroying OpenShift, call <code>delete-openshift.sh</code> script from the same folder.
       </div>
 
       In Cloud Shell, find out the OpenShift Compute Engine VM External IP address:
-      <pre>
-$ gcloud compute instances list
+      <br/><br/>
+      <pre>$ gcloud compute instances list
 NAME                            ZONE       MACHINE_TYPE   PREEMPTIBLE  INTERNAL_IP  EXTERNAL_IP     STATUS
 streaming-data-workshop-master  ...        ...                         X.X.X.X      Y.Y.Y.Y         RUNNING
                                                                                     ^-- This is your OpenShift Master IP!
@@ -125,7 +125,7 @@ Using project "myproject".</code></pre>
       <code>https://github.com/infinispan-demos/streaming-data-workshop</code>
       <br/><br/>
     </li>
- 
+
     <li>Install <a href="https://github.com/creationix/nvm">Node.js Version Manager</a> in your local machine.
       Makes it easy to work with multiple Node.js versions.
       Then install the Node.js version to be used in the workshop:
@@ -802,6 +802,13 @@ query.setParameter("trainName", trainName);</code></pre>
       <li>Go to the <a href="http://localhost:3000/" target="_target">front-end app</a>, you should see small dots representing trains moving around.
         <br/><br/>
         <img src="img/delayed-trains-map.png" class="img-rounded" height="75%" width="75%">
+      </li>
+      <li>
+        Finally, please delete the OpenShift cluster from the Google Cloud Shell:
+        <br/><br/>
+        <pre><code>> cd streaming-data-workshop/openshifter
+> docker run -e -ti -v `pwd`:/root/data docker.io/osevg/openshifter destroy streaming-data-workshop</code></pre>
+        If any timeouts happen while destroying OpenShift, call <code>delete-openshift.sh</code> script from the same folder.
       </li>
     </ol>
   </section>
